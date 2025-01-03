@@ -35,6 +35,10 @@
       {
         "name": "KMB ETA by Route",
         "url": "https://data.etabus.gov.hk/v1/transport/kmb/route-eta/{route}/{service_type}"
+      },
+      {
+        "name": "MTR Schedule",
+        "url": "https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php"
       }
     ]
   }
