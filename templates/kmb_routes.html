@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KMB Routes</title>
+</head>
+<body>
+    <h1>KMB Routes</h1>
+    <ul>
+        {% for route in data %}
+            <li>
+                <strong>Route:</strong> {{ route['route'] }} <br>
+                <strong>Bound:</strong> {{ route['bound'] }} <br>
+                <strong>Service Type:</strong> {{ route['service_type'] }} <br>
+                <strong>Origin:</strong> {{ route['orig_tc'] }} ({{ route['orig_en'] }}) <br>
+                <strong>Destination:</strong> {{ route['dest_tc'] }} ({{ route['dest_en'] }}) <br>
+                <a href="/kmb_route_detail/{{ route['route'] }}/{{ route['bound'] }}/{{ route['service_type'] }}">Details</a>
+            </li>
+            <hr>
+        {% endfor %}
+    </ul>
+    <a href="/">Back to Home</a>
+</body>
+</html>

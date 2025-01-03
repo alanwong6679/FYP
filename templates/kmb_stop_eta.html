@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KMB Stop ETA</title>
+</head>
+<body>
+    <h1>KMB Stop ETA</h1>
+    <ul>
+        {% for eta in data %}
+            <li>
+                <strong>Route:</strong> {{ eta['route'] }} <br>
+                <strong>Service Type:</strong> {{ eta['service_type'] }} <br>
+                <strong>ETA:</strong> {{ eta['eta'] }} <br>
+            </li>
+            <hr>
+        {% endfor %}
+    </ul>
+    <a href="/">Back to Home</a>
+</body>
+</html>

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KMB Route Stop Detail</title>
+</head>
+<body>
+    <h1>KMB Route Stop Detail</h1>
+    <ul>
+        <li>
+            <strong>Route:</strong> {{ data['route'] }} <br>
+            <strong>Bound:</strong> {{ data['bound'] }} <br>
+            <strong>Service Type:</strong> {{ data['service_type'] }} <br>
+            <strong>Stop:</strong> {{ data['stop'] }} <br>
+        </li>
+    </ul>
+    <a href="/kmb_route_stops">Back to Route Stops</a>
+</body>
+</html>
