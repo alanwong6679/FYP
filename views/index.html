@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Data</title>
+</head>
+<body>
+    <h1>API Data</h1>
+    <ul>
+        <li><a href="/bus_schedule.html">Bus Schedule</a></li>
+    </ul>
+    
+    <h1>Check MTR Schedule</h1>
+    <form action="/mtr_schedule" method="POST">
+        <label for="line">Select Line:</label>
+        <select name="line" id="line" required onchange="updateStations()">
+            <option value="AEL">Airport Express</option>
+            <option value="TCL">Tung Chung Line</option>
+            <option value="TML">Tuen Ma Line</option>
+            <option value="TKL">Tseung Kwan O Line</option>
+            <option value="EAL">East Rail Line</option>
+            <option value="SIL">South Island Line</option>
+            <option value="TWL">Tsuen Wan Line</option>
+            <option value="ISL">Island Line</option>
+            <option value="KTL">Kwun Tong Line</option>
+            <!-- Add other lines as needed -->
+        </select>
+        <br><br>
+        <label for="station">Select Station:</label>
+        <select name="station" id="station" required>
+            <!-- Options will be populated based on the selected line -->
+        </select>
+        <button type="submit">Get Schedule</button>
+    </form>
+
+    <script>
+        // Dynamically load stations.js
+        var script = document.createElement('script');
+        script.src = 'stations.js';
+        script.onload = function() {
+            console.log("stations.js dynamically loaded");
+            updateStations();
+        };
+        document.head.appendChild(script);
+
+        function updateStations() {
+            const line = document.getElementById('line').value;
+            const stationSelect = document.getElementById('station');
+            stationSelect.innerHTML = ''; // Clear existing options
+
+            if (stations[line]) {
+                stations[line].forEach(station => {
+                    const option = document.createElement('option');
+                    option.value = station.value;  // Use the station value
+                    option.textContent = station.text;  // Use the station text
+                    stationSelect.appendChild(option);
+                });
+            }
+        }
+
+
+    </script>
+</body>
+</html>

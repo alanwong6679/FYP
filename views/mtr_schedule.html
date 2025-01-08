@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MTR Schedule for {{line}} - {{station}}</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>MTR Schedule for {{line}} - {{station}}</h1>
+
+    {% if error %}
+        <div style="color: red;">{{error}}</div>
+    {% endif %}
+
+    {% if stations %}
+        <h2>Current Time: {{stations.curr_time}}</h2>
+        <h2>System Time: {{stations.sys_time}}</h2>
+
+        <h3>UP Trains</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Platform</th>
+                    <th>Destination</th>
+                    <th>Sequence</th>
+                    <th>Valid</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if stations.up.length > 0 %}
+                    {% for train in stations.up %}
+                        <tr>
+                            <td>{{train.time}}</td>
+                            <td>{{train.plat}}</td>
+                            <td>{{train.dest}}</td>
+                            <td>{{train.seq}}</td>
+                            <td>{{train.valid}}</td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5">No upcoming trains.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+
+        <h3>DOWN Trains</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Platform</th>
+                    <th>Destination</th>
+                    <th>Sequence</th>
+                    <th>Valid</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if stations.down.length > 0 %}
+                    {% for train in stations.down %}
+                        <tr>
+                            <td>{{train.time}}</td>
+                            <td>{{train.plat}}</td>
+                            <td>{{train.dest}}</td>
+                            <td>{{train.seq}}</td>
+                            <td>{{train.valid}}</td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5">No upcoming trains.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    <a href="/">Check another schedule</a>
+</body>
+</html>
