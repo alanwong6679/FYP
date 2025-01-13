@@ -2,94 +2,181 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>MTR Schedule for {{line}} - {{station}}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MTR Schedule</title>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        .schedule {
+            max-width: 800px;
+            margin: 0 auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
+            margin-bottom: 20px;
         }
         th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
+            padding: 10px;
+            border: 1px solid #ccc;
             text-align: left;
         }
         th {
-            background-color: #f2f2f2;
+            background-color: #f4f4f4;
+        }
+        .error {
+            color: red;
+            text-align: center;
+            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
-    <h1>MTR Schedule for {{line}} - {{station}}</h1>
+    <h1>MTR Schedule</h1>
+    <div class="schedule">
+        <div id="schedule"></div>
+    </div>
 
-    {% if error %}
-        <div style="color: red;">{{error}}</div>
-    {% endif %}
+    <script src="stations.js"></script>
+    <script>
+        const lineNames = {
+            "AEL": "Airport Express Line",
+            "TCL": "Tung Chung Line",
+            "TML": "Tuen Ma Line",
+            "TKL": "Tseung Kwan O Line",
+            "EAL": "East Rail Line",
+            "SIL": "South Island Line",
+            "TWL": "Tsuen Wan Line",
+            "ISL": "Island Line",
+            "KTL": "Kwun Tong Line"
+        };
 
-    {% if stations %}
-        <h2>Current Time: {{stations.curr_time}}</h2>
-        <h2>System Time: {{stations.sys_time}}</h2>
+        async function fetchSchedule() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const currentStation = urlParams.get('currentStation');
+            const destinationStation = urlParams.get('destinationStation');
 
-        <h3>UP Trains</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>Time</th>
-                    <th>Platform</th>
-                    <th>Destination</th>
-                    <th>Sequence</th>
-                    <th>Valid</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% if stations.up.length > 0 %}
-                    {% for train in stations.up %}
-                        <tr>
-                            <td>{{train.time}}</td>
-                            <td>{{train.plat}}</td>
-                            <td>{{train.dest}}</td>
-                            <td>{{train.seq}}</td>
-                            <td>{{train.valid}}</td>
-                        </tr>
-                    {% endfor %}
-                {% else %}
-                    <tr>
-                        <td colspan="5">No upcoming trains.</td>
-                    </tr>
-                {% endif %}
-            </tbody>
-        </table>
+            try {
+                const response = await fetch('/fetch_schedule', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        currentStation: currentStation,
+                        destinationStation: destinationStation,
+                    }),
+                });
 
-        <h3>DOWN Trains</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>Time</th>
-                    <th>Platform</th>
-                    <th>Destination</th>
-                    <th>Sequence</th>
-                    <th>Valid</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% if stations.down.length > 0 %}
-                    {% for train in stations.down %}
-                        <tr>
-                            <td>{{train.time}}</td>
-                            <td>{{train.plat}}</td>
-                            <td>{{train.dest}}</td>
-                            <td>{{train.seq}}</td>
-                            <td>{{train.valid}}</td>
-                        </tr>
-                    {% endfor %}
-                {% else %}
-                    <tr>
-                        <td colspan="5">No upcoming trains.</td>
-                    </tr>
-                {% endif %}
-            </tbody>
-        </table>
-    {% endif %}
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
 
-    <a href="/">Check another schedule</a>
+                const data = await response.json();
+                console.log(data);  // Log the data to inspect the API response
+                displaySchedule(data.schedules);
+            } catch (error) {
+                console.error('Error fetching schedule:', error);
+                document.getElementById('schedule').innerHTML = '<div class="error">An error occurred while fetching the schedule.</div>';
+            }
+        }
+
+        function displaySchedule(data) {
+            if (!data) {
+                document.getElementById('schedule').innerHTML = '<div class="error">No schedule data available.</div>';
+                return;
+            }
+            let html = '';
+            for (let line in data) {
+                const lineName = lineNames[line] || line;
+                html += `<h2>${lineName}</h2>
+                        <div>
+                            <strong>Current Time:</strong> ${data[line].curr_time || '-'}<br>
+                            <strong>System Time:</strong> ${data[line].sys_time || '-'}
+                        </div>
+                        <h3>UP Trains</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Platform</th>
+                                    <th>Destination</th>
+                                    <th>Sequence</th>
+                                    <th>Valid</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                if (data[line].up.length === 0) {
+                    html += `<tr><td colspan="5">No UP trains available</td></tr>`;
+                } else {
+                    data[line].up.forEach(train => {
+                        html += `<tr>
+                                    <td>${train.time}</td>
+                                    <td>${train.plat}</td>
+                                    <td class="dest-cell" data-dest="${train.dest}">${train.dest}</td>
+                                    <td>${train.seq}</td>
+                                    <td>${train.valid}</td>
+                                </tr>`;
+                    });
+                }
+                html += `</tbody></table>
+                        <h3>DOWN Trains</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Platform</th>
+                                    <th>Destination</th>
+                                    <th>Sequence</th>
+                                    <th>Valid</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                if (data[line].down.length === 0) {
+                    html += `<tr><td colspan="5">No DOWN trains available</td></tr>`;
+                } else {
+                    data[line].down.forEach(train => {
+                        html += `<tr>
+                                    <td>${train.time}</td>
+                                    <td>${train.plat}</td>
+                                    <td class="dest-cell" data-dest="${train.dest}">${train.dest}</td>
+                                    <td>${train.seq}</td>
+                                    <td>${train.valid}</td>
+                                </tr>`;
+                    });
+                }
+                html += `</tbody></table>`;
+            }
+            document.getElementById('schedule').innerHTML = html;
+
+            // Update destination codes to full names
+            updateStationNames();
+        }
+
+        function updateStationNames() {
+            const destCells = document.querySelectorAll('.dest-cell');
+            destCells.forEach(cell => {
+                const destCode = cell.dataset.dest;
+                for (const line in lines) {
+                    const station = lines[line].find(station => station.value === destCode);
+                    if (station) {
+                        cell.innerText = station.text;
+                        break;
+                    }
+                }
+            });
+        }
+
+        fetchSchedule();
+    </script>
 </body>
 </html>

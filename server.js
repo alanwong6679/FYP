@@ -1,12 +1,15 @@
 const express = require('express');
+const app = express();
 const axios = require('axios');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
+app.set('view engine', 'ejs');
 require('dotenv').config();
-
-const app = express();
-const PORT = process.env.PORT || 3000;
+app.use(express.urlencoded({ extended: true }));
+app.engine('html', require('ejs').renderFile);
+app.set('view engine', 'html');
+const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -24,79 +27,104 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 
-// MTR Schedule route
-app.post('/mtr_schedule', async (req, res) => {
-    const { line, station } = req.body;
+// Set up the view engine to use EJS
+app.set('view engine', 'ejs');
 
-    console.log("Line:", line);
-    console.log("Station:", station);
 
-    if (!line || !station) {
-        return res.render('mtr_schedule', { error: "Please select both a line and a station.", stations: null, line: null, station: null });
+
+app.use(express.json());
+
+app.post('/fetch_schedule', async (req, res) => {
+    const { currentStation, destinationStation } = req.body;
+
+    console.log("Received request at /fetch_schedule");
+    console.log("Current Station:", currentStation);
+    console.log("Destination Station:", destinationStation);
+
+    if (!currentStation || !destinationStation) {
+        console.log("Missing station information");
+        return res.json({ error: "Please select both a current station and a destination station.", schedules: null });
     }
 
-    const url = `https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=${line}&sta=${station}&lang=en`;
+    const lines = {
+        "AEL": ["HOK", "KOW", "TSY", "AIR", "AWE"],
+        "TCL": ["HOK", "KOW", "OLY", "NAC", "LAK", "TSY", "SUN", "TUC"],
+        "TML": ["WKS", "MOS", "HEO", "TSH", "SHM", "CIO", "STW", "CKT", "TAW", "HIK", "DIH", "KAT", "SUW", "TKW", "HOM", "HUH", "ETS", "AUS", "NAC", "MEF", "TWW", "KSR", "YUL", "LOP", "TIS", "SIH", "TUM"],
+        "TKL": ["NOP", "QUB", "YAT", "TIK", "TKO", "LHP", "HAH", "POA"],
+        "EAL": ["ADM", "EXC", "HUH", "MKK", "KOT", "TAW", "SHT", "FOT", "RAC", "UNI", "TAP", "TWO", "FAN", "SHS", "LOW", "LMC"],
+        "SIL": ["ADM", "OCP", "WCH", "LET", "SOH"],
+        "TWL": ["CEN", "ADM", "TST", "JOR", "YMT", "MOK", "PRE", "SSP", "CSW", "LCK", "MEF", "LAK", "KWF", "KWH", "TWH", "TSW"],
+        "ISL": ["KET", "HKU", "SYP", "SHW", "CEN", "ADM", "WAC", "CAB", "TIH", "FOH", "NOP", "QUB", "TAK", "SWH", "SKW", "HFC", "CHW"],
+        "KTL": ["WHA", "HOM", "YMT", "MOK", "PRE", "SKM", "KOT", "LOF", "WTS", "DIH", "CHH", "KOB", "NTK", "KWT", "LAT", "YAT", "TIK"]
+    };
+
+    const currentLines = [];
+    const destinationLines = [];
+
+    for (const line in lines) {
+        if (lines[line].includes(currentStation)) {
+            currentLines.push(line);
+        }
+        if (lines[line].includes(destinationStation)) {
+            destinationLines.push(line);
+        }
+    }
+
+    const allLines = [...new Set([...currentLines, ...destinationLines])];
+
+    if (allLines.length === 0) {
+        console.log("No direct lines available");
+        return res.json({ error: "No direct lines available. Please check alternative routes or transfers.", schedules: null });
+    }
 
     try {
-        const response = await axios.get(url);
-        const data = response.data;
+        const scheduleRequests = allLines.map(line =>
+            axios.get(`https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php`, {
+                params: {
+                    line: line,
+                    sta: currentStation,
+                    lang: 'en'
+                }
+            })
+        );
 
-        console.log("API Response:", data);
+        const scheduleResponses = await Promise.all(scheduleRequests);
+        const scheduleData = scheduleResponses.map(response => response.data);
 
-        if (!data.status) {
-            return res.render('mtr_schedule', { error: "Unexpected response format from the API.", stations: null, line: null, station: null });
-        }
+        console.log("API Response Schedule Data:", JSON.stringify(scheduleData, null, 2));
 
-        if (data.status === 0) {
-            return res.render('mtr_schedule', { error: data.message || 'An error occurred.', stations: null, line: null, station: null });
-        }
+        const schedules = {};
+        scheduleData.forEach((data, index) => {
+            const line = allLines[index];
+            const stationKey = `${line}-${currentStation}`;
 
-        if (data.status === 1) {
-            const scheduleData = data.data[`${line}-${station}`];
-            if (!scheduleData) {
-                return res.render('mtr_schedule', { error: "No schedule data available for the selected line and station.", stations: null, line: null, station: null });
+            if (data.data && data.data[stationKey]) {
+                schedules[line] = {
+                    curr_time: data.sys_time || '-',
+                    sys_time: data.curr_time || '-',
+                    up: data.data[stationKey].UP || [],
+                    down: data.data[stationKey].DOWN || []
+                };
+            } else {
+                schedules[line] = {
+                    curr_time: '-',
+                    sys_time: '-',
+                    up: [],
+                    down: []
+                };
             }
+        });
 
-            const stations = {
-                curr_time: scheduleData.curr_time || '-',
-                sys_time: scheduleData.sys_time || '-',
-                up: [],
-                down: []
-            };
+        console.log("Schedules:", schedules);
 
-            console.log("Schedule Data:", scheduleData);
-
-            // Process UP trains
-            for (const train of (scheduleData.UP || [])) {
-                stations.up.push({
-                    time: train.time,
-                    plat: train.plat,
-                    dest: train.dest,
-                    seq: train.seq,
-                    valid: train.valid
-                });
-            }
-
-            // Process DOWN trains
-            for (const train of (scheduleData.DOWN || [])) {
-                stations.down.push({
-                    time: train.time,
-                    plat: train.plat,
-                    dest: train.dest,
-                    seq: train.seq,
-                    valid: train.valid
-                });
-            }
-
-            console.log("Stations Data:", stations);
-
-            return res.render('mtr_schedule', { error: null, stations, line, station });
-        }
+        return res.json({ error: null, schedules, currentStation, destinationStation });
     } catch (error) {
         console.error("API Request Error:", error);
-        return res.render('mtr_schedule', { error: "An error occurred while fetching the schedule.", stations: null, line: null, station: null });
+        return res.json({ error: "An error occurred while fetching the schedule.", schedules: null });
     }
 });
+
+
 
 
 // Bus Schedule route
@@ -160,3 +188,7 @@ async function getRoute(startCoords, endCoords) {
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
+
+
+
