@@ -188,6 +188,7 @@
     <script async data-id="3272844625" id="chatling-embed-script" type="text/javascript" src="https://chatling.ai/js/embed.js"></script>
     <script>
         // Swap station inputs
+        
         document.getElementById('swapStations').addEventListener('click', function() {
             const currentInput = document.getElementById('currentStationInput');
             const destinationInput = document.getElementById('destinationStationInput');
@@ -216,27 +217,56 @@
             }
         });
 // Function to get and display location, then fetch temperature
+async function setupAutocomplete() {
+    const response = await fetch('/get-locations');
+    const data = await response.json();
+    const input = document.getElementById('locationInput');
+    new Awesomplete(input, {
+        list: data.locations,
+        minChars: 1,
+        autoFirst: true
+    });
+
+    // Add event listener for selection
+    input.addEventListener('awesomplete-selectcomplete', async (event) => {
+        const selectedLocation = event.text.value;
+        const coordsResponse = await fetch('/get-coordinates', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ location: selectedLocation })
+        });
+        const coordsData = await coordsResponse.json();
+        if (coordsData.error) {
+            document.getElementById('temperature').innerText = 'Error fetching coordinates.';
+            return;
+        }
+        await showLocationAndFetchTemperature({
+            coords: { latitude: coordsData.latitude, longitude: coordsData.longitude }
+        });
+    });
+}
+
+// Get temperature based on coordinates
 function getTemperature() {
-    // Check if geolocation is supported
     if (!navigator.geolocation) {
         document.getElementById("temperature").innerHTML = "Geolocation not supported by your browser.";
         return;
     }
 
-    // Update UI to indicate location is being fetched
     document.getElementById("temperature").innerHTML = "Fetching your location...";
 
-    // Request current position
     navigator.geolocation.getCurrentPosition(
         showLocationAndFetchTemperature,
         showError,
         { timeout: 10000, enableHighAccuracy: true }
     );
 }
+
+// Fetch temperature and display location
 async function showLocationAndFetchTemperature(position) {
     const latitude = position.coords.latitude;
     const longitude = position.coords.longitude;
-    console.log(`GPS Coordinates: Lat ${latitude}, Lon ${longitude}`); // Debug log
+    console.log(`GPS Coordinates: Lat ${latitude}, Lon ${longitude}`);
 
     document.getElementById("temperature").innerHTML = 
         `Your location: Lat ${latitude.toFixed(4)}, Lon ${longitude.toFixed(4)}`;
@@ -254,8 +284,8 @@ async function showLocationAndFetchTemperature(position) {
         if (data.error) {
             document.getElementById("temperature").innerHTML += ` - ${data.error}`;
         } else {
-            document.getElementById("temperature").innerHTML += 
-                ` - ${data.place}: ${data.temperature}°${data.unit}`;
+            document.getElementById("temperature").innerHTML = 
+                `Location: ${data.location}, Temperature: ${data.temperature}°${data.unit}`;
         }
     } catch (error) {
         document.getElementById("temperature").innerHTML += " - Error fetching temperature.";
@@ -281,11 +311,11 @@ function showError(error) {
     document.getElementById("temperature").innerHTML = message;
 }
 
-// Start the process when the page loads
+// Initialize
 window.onload = function() {
+    setupAutocomplete();
     getTemperature();
 };
-
-    </script>
+</script>
 </body>
 </html>

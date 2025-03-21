@@ -10,7 +10,7 @@ app.use(express.urlencoded({ extended: true }));
 app.engine('html', require('ejs').renderFile);
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4000;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -241,13 +241,28 @@ const fetchAndProcessSchedules = async (currentStation, destinationStation) => {
 
     return { schedules, bestRoute, alternativeRoutes };
 };
+// Import coordinates
+const { regionCoordinates } = require('./views/hkostation.js');
+const { placeCoordinates } = require('./views/directloca.js');
 
-// Temperature endpoint with nearest region logic
+function getDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Earth radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // Distance in km
+}
+
+// Temperature endpoint: Find nearest station and location
 app.post('/get-temperature', async (req, res) => {
     const { latitude, longitude } = req.body;
     console.log(`Received request with lat: ${latitude}, lon: ${longitude}`);
 
     try {
+        // Fetch temperature data from HKO API
         const response = await axios.get('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en', {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -260,67 +275,39 @@ app.post('/get-temperature', async (req, res) => {
             throw new Error('No temperature data available from API');
         }
 
-        // Define coordinates for known regions (expand this list as needed)
-        const regionCoordinates = {
-            "Clear Water Bay": { lat: 22.2833, lon: 114.2833 },         // CWB
-            "Hong Kong International Airport": { lat: 22.3080, lon: 113.9146 }, // HKA
-            "Hong Kong Observatory": { lat: 22.3025, lon: 114.1744 },   // HKO
-            "Hong Kong Park": { lat: 22.2772, lon: 114.1612 },          // HKP
-            "Wong Chuk Hang": { lat: 22.2478, lon: 114.1681 },          // HKS
-            "Happy Valley": { lat: 22.2697, lon: 114.1842 },            // HPV
-            "Tseung Kwan O": { lat: 22.3077, lon: 114.2586 },           // JKB
-            "Kowloon City": { lat: 22.3282, lon: 114.1916 },            // KLT
-            "King's Park": { lat: 22.3119, lon: 114.1726 },             // KP
-            "Kau Sai Chau": { lat: 22.3617, lon: 114.3031 },            // KSC
-            "Kwun Tong": { lat: 22.3133, lon: 114.2258 },               // KTG
-            "Lau Fau Shan": { lat: 22.4688, lon: 113.9878 },            // LFS
-            "Ngong Ping": { lat: 22.2556, lon: 113.9040 },              // NGP
-            "Peng Chau": { lat: 22.2850, lon: 114.0400 },               // PEN
-            "Tai Mei Tuk": { lat: 22.4752, lon: 114.2369 },             // PLC
-            "Kai Tak Runway Park": { lat: 22.3100, lon: 114.2140 },     // SE1
-            "Shek Kong": { lat: 22.4333, lon: 114.0833 },               // SEK
-            "Sha Tin": { lat: 22.3819, lon: 114.1888 },                 // SHA
-            "Sai Kung": { lat: 22.3814, lon: 114.2723 },                // SKG
-            "Shau Kei Wan": { lat: 22.2790, lon: 114.2280 },            // SKW
-            "Sheung Shui": { lat: 22.5010, lon: 114.1270 },             // SSH
-            "Sham Shui Po": { lat: 22.3307, lon: 114.1595 },            // SSP
-            "Stanley": { lat: 22.2180, lon: 114.2140 },                 // STY
-            "Tate's Cairn": { lat: 22.3579, lon: 114.2179 },            // TC
-            "Tak Wu Ling": { lat: 22.5285, lon: 114.1567 },             // TKL
-            "Tai Mo Shan": { lat: 22.4083, lon: 114.1250 },             // TMS
-            "Tai Po": { lat: 22.4445, lon: 114.1689 },                  // TPO
-            "Tuen Mun Children and Youth Institute": { lat: 22.3950, lon: 113.9730 }, // TU1
-            "Tsuen Wan Shing Mun Valley": { lat: 22.3710, lon: 114.1170 }, // TW
-            "Tsuen Wan": { lat: 22.3714, lon: 114.1140 },               // TWN
-            "Tsing Yi Station": { lat: 22.3550, lon: 114.1060 },        // TY1
-            "Pak Tam Chung": { lat: 22.3900, lon: 114.3160 },           // TYW
-            "The Peak": { lat: 22.2759, lon: 114.1437 },                // VP1
-            "Waglan Island": { lat: 22.1833, lon: 114.3000 },           // WGL
-            "Wetland Park": { lat: 22.4667, lon: 114.0000 },            // WLP
-            "Wong Tai Sin": { lat: 22.3420, lon: 114.1930 },            // WTS
-            "Yuen Chau Tsai Park": { lat: 22.4510, lon: 114.1740 },     // YLP YCT
-            "Yuen Long Park": { lat: 22.4440, lon: 114.0220 },          // YLP
-        };
-
-        // Find nearest region
-        let nearestRegion = temperatureData[0]; // Default to first region
-        let minDistance = Infinity;
+        // Find nearest weather station (from regionCoordinates)
+        let nearestStation = temperatureData[0]; // Default to first station
+        let minStationDistance = Infinity;
 
         for (const region of temperatureData) {
             const coords = regionCoordinates[region.place];
             if (coords) {
                 const distance = getDistance(latitude, longitude, coords.lat, coords.lon);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    nearestRegion = region;
+                if (distance < minStationDistance) {
+                    minStationDistance = distance;
+                    nearestStation = region;
                 }
             }
         }
 
+        // Find nearest direct location (from placeCoordinates)
+        let nearestLocation = null;
+        let minLocationDistance = Infinity;
+
+        for (const place in placeCoordinates) {
+            const coords = placeCoordinates[place];
+            const distance = getDistance(latitude, longitude, coords.lat, coords.lon);
+            if (distance < minLocationDistance) {
+                minLocationDistance = distance;
+                nearestLocation = place;
+            }
+        }
+
+        // Prepare response
         const result = {
-            place: nearestRegion.place,
-            temperature: nearestRegion.value,
-            unit: nearestRegion.unit
+            location: nearestLocation, // Nearest direct location
+            temperature: nearestStation.value, // Temperature from nearest station
+            unit: nearestStation.unit
         };
         console.log('Sending response:', result);
         res.json(result);
@@ -333,17 +320,22 @@ app.post('/get-temperature', async (req, res) => {
     }
 });
 
-// Haversine formula to calculate distance
-function getDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371; // Earth radius in km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c; // Distance in km
-}
+// Endpoint to get list of locations for user selection
+app.get('/get-locations', (req, res) => {
+    const locations = Object.keys(placeCoordinates);
+    res.json({ locations });
+});
+
+// Endpoint to get coordinates for a specific location
+app.post('/get-coordinates', (req, res) => {
+    const { location } = req.body;
+    const coords = placeCoordinates[location];
+    if (coords) {
+        res.json({ latitude: coords.lat, longitude: coords.lon });
+    } else {
+        res.status(404).json({ error: 'Location not found' });
+    }
+});
 
 // Start the server
 app.listen(PORT, () => {
