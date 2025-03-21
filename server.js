@@ -241,7 +241,6 @@ const fetchAndProcessSchedules = async (currentStation, destinationStation) => {
 
     return { schedules, bestRoute, alternativeRoutes };
 };
-
 app.post('/get-temperature', async (req, res) => {
     const { latitude, longitude } = req.body;
     console.log(`Received request with lat: ${latitude}, lon: ${longitude}`);
@@ -252,28 +251,30 @@ app.post('/get-temperature', async (req, res) => {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
             }
         });
-        console.log('Weather API response:', response.data);
-
         const temperatureData = response.data.temperature.data;
         if (!temperatureData || temperatureData.length === 0) {
             throw new Error('No temperature data available from API');
         }
 
-        // Find nearest region
-        let nearestRegion = temperatureData[0]; // Default to first region
+        let nearestRegion = null;
         let minDistance = Infinity;
 
         for (const region of temperatureData) {
             const coords = regionCoordinates[region.place];
             if (coords) {
                 const distance = getDistance(latitude, longitude, coords.lat, coords.lon);
+                console.log(`Distance to ${region.place}: ${distance.toFixed(2)} km`); // Debug
                 if (distance < minDistance) {
                     minDistance = distance;
                     nearestRegion = region;
                 }
             } else {
-                console.log(`No coordinates defined for ${region.place}`);
+                console.log(`No coordinates for ${region.place}`); // Debug missing stations
             }
+        }
+
+        if (!nearestRegion) {
+            return res.status(404).json({ error: 'No matching weather station found' });
         }
 
         const result = {
@@ -285,9 +286,6 @@ app.post('/get-temperature', async (req, res) => {
         res.json(result);
     } catch (error) {
         console.error('Error fetching weather data:', error.message);
-        if (error.response) {
-            console.error('API response error:', error.response.data);
-        }
         res.status(500).json({ error: 'Failed to fetch weather data from API' });
     }
 });
