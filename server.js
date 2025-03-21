@@ -249,11 +249,16 @@ app.post('/get-temperature', async (req, res) => {
         const response = await axios.get('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en', {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
+            },
+            timeout: 5000 // Add timeout to avoid hanging
         });
-        const temperatureData = response.data.temperature.data;
+        console.log('API response status:', response.status);
+        console.log('API response data:', response.data);
+
+        const temperatureData = response.data.temperature?.data;
         if (!temperatureData || temperatureData.length === 0) {
-            throw new Error('No temperature data available from API');
+            console.log('No temperature data available from API');
+            return res.status(404).json({ error: 'No temperature data available from API' });
         }
 
         let nearestRegion = null;
@@ -263,17 +268,18 @@ app.post('/get-temperature', async (req, res) => {
             const coords = regionCoordinates[region.place];
             if (coords) {
                 const distance = getDistance(latitude, longitude, coords.lat, coords.lon);
-                console.log(`Distance to ${region.place}: ${distance.toFixed(2)} km`); // Debug
+                console.log(`Distance to ${region.place}: ${distance.toFixed(2)} km`);
                 if (distance < minDistance) {
                     minDistance = distance;
                     nearestRegion = region;
                 }
             } else {
-                console.log(`No coordinates for ${region.place}`); // Debug missing stations
+                console.log(`No coordinates for ${region.place} in regionCoordinates`);
             }
         }
 
         if (!nearestRegion) {
+            console.log('No matching weather station found');
             return res.status(404).json({ error: 'No matching weather station found' });
         }
 
@@ -286,6 +292,13 @@ app.post('/get-temperature', async (req, res) => {
         res.json(result);
     } catch (error) {
         console.error('Error fetching weather data:', error.message);
+        if (error.response) {
+            console.error('API response error:', error.response.status, error.response.data);
+        } else if (error.request) {
+            console.error('No response received from API:', error.request);
+        } else {
+            console.error('Error setting up request:', error.message);
+        }
         res.status(500).json({ error: 'Failed to fetch weather data from API' });
     }
 });
