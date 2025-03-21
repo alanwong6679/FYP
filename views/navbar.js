@@ -14,6 +14,7 @@ function createNavbar() {
     const buttons = [
         { id: 'train-btn', text: 'Train', href: 'index.html', icon: src="mtr_button.png" },
         { id: 'bus-btn', text: 'Bus', href: 'KMBbus.html', icon: src="kmb_button.png"},
+        { id: 'bus-btn', text: 'CityBus', href: 'citybus.html', icon: src="kmb_button.png"},
         { id: 'tram-btn', text: 'Tram', href: 'tram_schedule.html', icon: src="tram_button.png" },
         { id: 'mini-btn', text: 'Mini Bus', href: 'minibus_schedule.html', icon: src="minibus_button.png" }
     ];

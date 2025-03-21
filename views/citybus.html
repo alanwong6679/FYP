@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City Bus Route Planner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="navbar.css">
+    <style>
+        /* Reuse the same styles from index.html */
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            background-image: url("mtr.png");
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            flex-direction: column;
+            background-size: cover;
+            background-repeat: no-repeat;
+        }
+        /* ... include other necessary styles ... */
+    </style>
+</head>
+<body>
+    <div class="container" id="main-content">
+        <h1>City Bus Route Planner</h1>
+        <!-- Add your city bus specific content here -->
+        <form id="cityBusRouteForm">
+            <!-- Similar form structure as index.html but modified for city bus -->
+            <div class="place-container">
+                <!-- ... similar input fields ... -->
+            </div>
+            <button type="submit">Find City Bus Route</button>
+        </form>
+        <div id="route"></div>
+    </div>
+
+    <div class="bottom-bar">
+        <div id="temperature">Fetching your location...</div>
+    </div>
+
+    <!-- Include necessary scripts -->
+    <script src="stations.js"></script>
+    <script src="script.js"></script>
+    <script src="RTHK.js"></script>
+    <script src="navbar.js"></script>
+</body>
+</html>
