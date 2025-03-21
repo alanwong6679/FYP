@@ -242,7 +242,6 @@ const fetchAndProcessSchedules = async (currentStation, destinationStation) => {
     return { schedules, bestRoute, alternativeRoutes };
 };
 
-// Temperature endpoint with nearest region logic
 app.post('/get-temperature', async (req, res) => {
     const { latitude, longitude } = req.body;
     console.log(`Received request with lat: ${latitude}, lon: ${longitude}`);
@@ -260,21 +259,6 @@ app.post('/get-temperature', async (req, res) => {
             throw new Error('No temperature data available from API');
         }
 
-        // Define coordinates for known regions (expand this list as needed)
-        const regionCoordinates = {
-            "京士柏": { lat: 22.3089, lon: 114.1717 },
-            "香港天文台": { lat: 22.3027, lon: 114.1743 },
-            "黃竹坑": { lat: 22.2483, lon: 114.1685 },
-            "打鼓嶺": { lat: 22.5285, lon: 114.1572 },
-            "流浮山": { lat: 22.4688, lon: 113.9898 },
-            "大埔": { lat: 22.4455, lon: 114.1719 },
-            "沙田": { lat: 22.3819, lon: 114.1888 },
-            "屯門": { lat: 22.3919, lon: 113.9758 },
-            "將軍澳": { lat: 22.3077, lon: 114.2586 },
-            "西貢": { lat: 22.3814, lon: 114.2723 }
-            // Add more coordinates for other regions from the API
-        };
-
         // Find nearest region
         let nearestRegion = temperatureData[0]; // Default to first region
         let minDistance = Infinity;
@@ -287,6 +271,8 @@ app.post('/get-temperature', async (req, res) => {
                     minDistance = distance;
                     nearestRegion = region;
                 }
+            } else {
+                console.log(`No coordinates defined for ${region.place}`);
             }
         }
 
@@ -305,6 +291,19 @@ app.post('/get-temperature', async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch weather data from API' });
     }
 });
+// Define coordinates for known regions (expand this list as needed)
+        const regionCoordinates = {
+            "King's Park": { lat: 22.3119, lon: 114.1726 },           
+            "Wong Chuk Hang": { lat: 22.2478, lon: 114.1681 },        
+            "Tak Wu Ling": { lat: 22.5285, lon: 114.1567 },           
+            "Lau Fau Shan": { lat: 22.4688, lon: 113.9878 },          
+            "Tai Po": { lat: 22.4445, lon: 114.1689 },                
+            "Sha Tin": { lat: 22.3819, lon: 114.1888 },               
+            "Tuen Mun": { lat: 22.3919, lon: 113.9758 },              
+            "Tseung Kwan O": { lat: 22.3077, lon: 114.2586 },         
+            "Sai Kung": { lat: 22.3814, lon: 114.2723 },              
+            // Add more stations as needed
+        };
 
 // Haversine formula to calculate distance
 function getDistance(lat1, lon1, lat2, lon2) {
