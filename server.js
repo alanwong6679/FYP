@@ -291,20 +291,33 @@ app.post('/get-temperature', async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch weather data from API' });
     }
 });
-// Define coordinates for known regions (expand this list as needed)
-        const regionCoordinates = {
-            "King's Park": { lat: 22.3119, lon: 114.1726 },           
-            "Wong Chuk Hang": { lat: 22.2478, lon: 114.1681 },        
-            "Tak Wu Ling": { lat: 22.5285, lon: 114.1567 },           
-            "Lau Fau Shan": { lat: 22.4688, lon: 113.9878 },          
-            "Tai Po": { lat: 22.4445, lon: 114.1689 },                
-            "Sha Tin": { lat: 22.3819, lon: 114.1888 },               
-            "Tuen Mun": { lat: 22.3919, lon: 113.9758 },              
-            "Tseung Kwan O": { lat: 22.3077, lon: 114.2586 },         
-            "Sai Kung": { lat: 22.3814, lon: 114.2723 },              
-            // Add more stations as needed
-        };
+const fs = require('fs');
 
+let regionCoordinates = {};
+try {
+    const rawData = JSON.parse(fs.readFileSync('./location.json', 'utf8'));
+    
+    // Iterate through the nested structure to build regionCoordinates
+    for (const city in rawData) {
+        for (const district in rawData[city]) {
+            const locations = rawData[city][district].locations || [];
+            locations.forEach(location => {
+                if (location.name && Array.isArray(location.coordinates) && location.coordinates.length === 2) {
+                    regionCoordinates[location.name] = {
+                        lat: location.coordinates[0],
+                        lon: location.coordinates[1]
+                    };
+                }
+            });
+        }
+    }
+} catch (error) {
+    console.error('Error loading or parsing location.json:', error);
+    regionCoordinates = {}; // Fallback to empty object
+}
+
+// Log for debugging
+console.log('Loaded regionCoordinates:', regionCoordinates);
 // Haversine formula to calculate distance
 function getDistance(lat1, lon1, lat2, lon2) {
     const R = 6371; // Earth radius in km
