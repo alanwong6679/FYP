@@ -1,4 +1,5 @@
 console.log("stations.js loaded");
+
 const lines = {
     "AEL": [
         { value: "AIR", text: "Airport" },
@@ -23,8 +24,7 @@ const lines = {
         { value: "CIO", text: "City One" },
         { value: "DIH", text: "Diamond Hill" },
         { value: "ETS", text: "East Tsim Sha Tsui" },
-        { value: "FOT", text: "Fo Tan" },
-        { value: "HEO", text: "Heung Yuen Wai" },
+        { value: "HEO", text: "Heng On" }, 
         { value: "HIK", text: "Hin Keng" },
         { value: "HOM", text: "Ho Man Tin" },
         { value: "HUH", text: "Hung Hom" },
@@ -35,17 +35,15 @@ const lines = {
         { value: "MEF", text: "Mei Foo" },
         { value: "NAC", text: "Nam Cheong" },
         { value: "SIH", text: "Siu Hong" },
-        { value: "SHT", text: "Sha Tin" },
         { value: "STW", text: "Sha Tin Wai" },
         { value: "SHM", text: "Shek Mun" },
         { value: "SUW", text: "Sung Wong Toi" },
-        { value: "TAW", text: "Tai Wai" },
+        { value: "TAW", text: "Tai Wai" }, 
         { value: "TSH", text: "Tai Shui Hang" },
         { value: "TIS", text: "Tin Shui Wai" },
         { value: "TKW", text: "To Kwa Wan" },
         { value: "TWW", text: "Tsuen Wan West" },
         { value: "TUM", text: "Tuen Mun" },
-        { value: "UNI", text: "University" },
         { value: "WKS", text: "Wu Kai Sha" },
         { value: "YUL", text: "Yuen Long" }
     ],

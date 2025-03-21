@@ -3,62 +3,288 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API Data</title>
+    <title>Route Planner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="navbar.css">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9; 
+            background-image: url("mtr.png");
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            flex-direction: column;
+            background-size: cover;
+            background-repeat: no-repeat;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 60px;
+            margin-left: 160px; /* Offset for navbar width */
+        }
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: #007dc5;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .place-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            position: relative;
+        }
+        .station-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+        }
+        .station-row dt {
+            flex-shrink: 0;
+        }
+        .station-row dd {
+            flex: 1;
+            margin: 0;
+        }
+        .searchable-select {
+            position: relative;
+            width: 100%;
+        }
+        .searchable-select input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .searchable-select .options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            z-index: 1000;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .searchable-select .options div {
+            padding: 10px;
+            cursor: pointer;
+        }
+        .searchable-select .options div:hover {
+            background-color: #f0f0f0;
+        }
+        .input-change {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            padding: 5px;
+            z-index: 10;
+        }
+        .input-change img {
+            width: 24px;
+            height: 24px;
+        }
+        button {
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        /* Bottom bar for temperature */
+        .bottom-bar {
+            background-color: rgba(51, 51, 51, 0.8);
+            color: white;
+            padding: 10px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            z-index: 1000;
+        }
+        #temperature {
+            font-size: 16px;
+            margin-left: 20px;
+        }
+    </style>
 </head>
 <body>
-    <h1>API Data</h1>
-    <ul>
-        <li><a href="/bus_schedule.html">Bus Schedule</a></li>
-    </ul>
+    <div class="container" id="main-content">
+        <form id="routeForm">
+            <div class="place-container">
+                <div class="station-row">
+                    <dl>
+                        <dt class="starting-station">Starting Station</dt>
+                    </dl>
+                    <dd>
+                        <div class="searchable-select" id="currentStationContainer">
+                            <input type="text" id="currentStationInput" placeholder="Type to search...">
+                            <div class="options" id="currentStationOptions"></div>
+                        </div>
+                    </dd>
+                </div>
+                <div class="input-change">
+                    <img src="switch.png" alt="Swap Starting and Destination Stations" id="swapStations">
+                </div>
+                <div class="station-row">
+                    <dl class="condition-item">
+                        <dt class="destination-station">Destination Station</dt>
+                    </dl>
+                    <dd>
+                        <div class="searchable-select" id="destinationStationContainer">
+                            <input type="text" id="destinationStationInput" placeholder="Type to search...">
+                            <div class="options" id="destinationStationOptions"></div>
+                        </div>
+                    </dd>
+                </div>
+            </div>
+            <button type="submit">Find Route</button>
+        </form>
+        <div id="route"></div>
+    </div>
+
+    <!-- Bottom bar with temperature -->
+    <div class="bottom-bar">
+        <div id="temperature">Fetching your location...</div>
+    </div>
+
+    <script src="stations.js"></script>
+    <script src="script.js"></script>
+    <script src="RTHK.js"></script>
+    <script src="navbar.js"></script>
     
-    <h1>Check MTR Schedule</h1>
-    <form action="/mtr_schedule" method="POST">
-        <label for="line">Select Line:</label>
-        <select name="line" id="line" required onchange="updateStations()">
-            <option value="AEL">Airport Express</option>
-            <option value="TCL">Tung Chung Line</option>
-            <option value="TML">Tuen Ma Line</option>
-            <option value="TKL">Tseung Kwan O Line</option>
-            <option value="EAL">East Rail Line</option>
-            <option value="SIL">South Island Line</option>
-            <option value="TWL">Tsuen Wan Line</option>
-            <option value="ISL">Island Line</option>
-            <option value="KTL">Kwun Tong Line</option>
-            <!-- Add other lines as needed -->
-        </select>
-        <br><br>
-        <label for="station">Select Station:</label>
-        <select name="station" id="station" required>
-            <!-- Options will be populated based on the selected line -->
-        </select>
-        <button type="submit">Get Schedule</button>
-    </form>
-
+    <script> window.chtlConfig = { chatbotId: "3272844625" } </script>
+    <script async data-id="3272844625" id="chatling-embed-script" type="text/javascript" src="https://chatling.ai/js/embed.js"></script>
     <script>
-        // Dynamically load stations.js
-        var script = document.createElement('script');
-        script.src = 'stations.js';
-        script.onload = function() {
-            console.log("stations.js dynamically loaded");
-            updateStations();
-        };
-        document.head.appendChild(script);
-
-        function updateStations() {
-            const line = document.getElementById('line').value;
-            const stationSelect = document.getElementById('station');
-            stationSelect.innerHTML = ''; // Clear existing options
-
-            if (stations[line]) {
-                stations[line].forEach(station => {
-                    const option = document.createElement('option');
-                    option.value = station.value;  // Use the station value
-                    option.textContent = station.text;  // Use the station text
-                    stationSelect.appendChild(option);
-                });
+        // Swap station inputs
+        document.getElementById('swapStations').addEventListener('click', function() {
+            const currentInput = document.getElementById('currentStationInput');
+            const destinationInput = document.getElementById('destinationStationInput');
+            
+            const tempValue = currentInput.value;
+            currentInput.value = destinationInput.value;
+            destinationInput.value = tempValue;
+            
+            const tempDataValue = currentInput.dataset.value;
+            currentInput.dataset.value = destinationInput.dataset.value || '';
+            destinationInput.dataset.value = tempDataValue || '';
+        });
+        
+        // Form submission
+        document.getElementById('routeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const currentStation = document.getElementById('currentStationInput').dataset.value;
+            const destinationStation = document.getElementById('destinationStationInput').dataset.value;
+            
+            document.getElementById('route').innerHTML = '';
+            
+            if (currentStation && destinationStation) {
+                window.location.href = `/mtr_schedule.html?currentStation=${currentStation}&destinationStation=${destinationStation}`;
+            } else {
+                alert("Please select both a current station and a destination station.");
             }
-        }
+        });
+// Function to get and display location, then fetch temperature
+function getTemperature() {
+    // Check if geolocation is supported
+    if (!navigator.geolocation) {
+        document.getElementById("temperature").innerHTML = "Geolocation not supported by your browser.";
+        return;
+    }
 
+    // Update UI to indicate location is being fetched
+    document.getElementById("temperature").innerHTML = "Fetching your location...";
+
+    // Request current position
+    navigator.geolocation.getCurrentPosition(
+        showLocationAndFetchTemperature,
+        showError,
+        { timeout: 10000, enableHighAccuracy: true }
+    );
+}
+async function showLocationAndFetchTemperature(position) {
+    const latitude = position.coords.latitude;
+    const longitude = position.coords.longitude;
+    console.log(`GPS Coordinates: Lat ${latitude}, Lon ${longitude}`); // Debug log
+
+    document.getElementById("temperature").innerHTML = 
+        `Your location: Lat ${latitude.toFixed(4)}, Lon ${longitude.toFixed(4)}`;
+
+    try {
+        const response = await fetch('/get-temperature', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ latitude, longitude })
+        });
+
+        if (!response.ok) throw new Error("Server error");
+
+        const data = await response.json();
+        if (data.error) {
+            document.getElementById("temperature").innerHTML += ` - ${data.error}`;
+        } else {
+            document.getElementById("temperature").innerHTML += 
+                ` - ${data.place}: ${data.temperature}°${data.unit}`;
+        }
+    } catch (error) {
+        document.getElementById("temperature").innerHTML += " - Error fetching temperature.";
+    }
+}
+
+// Error callback: Display error message
+function showError(error) {
+    let message;
+    switch (error.code) {
+        case error.PERMISSION_DENIED:
+            message = "Location access denied.";
+            break;
+        case error.POSITION_UNAVAILABLE:
+            message = "Location unavailable.";
+            break;
+        case error.TIMEOUT:
+            message = "Location request timed out.";
+            break;
+        default:
+            message = "Unknown geolocation error.";
+    }
+    document.getElementById("temperature").innerHTML = message;
+}
+
+// Start the process when the page loads
+window.onload = function() {
+    getTemperature();
+};
 
     </script>
 </body>

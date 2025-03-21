@@ -2,193 +2,323 @@ const express = require('express');
 const app = express();
 const axios = require('axios');
 const bodyParser = require('body-parser');
-const fs = require('fs');
-const path = require('path');
-app.set('view engine', 'ejs');
 require('dotenv').config();
+const path = require('path');
+
+app.set('view engine', 'html');
 app.use(express.urlencoded({ extended: true }));
 app.engine('html', require('ejs').renderFile);
-app.set('view engine', 'html');
-const PORT = process.env.PORT || 5000;
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json());
+const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());  // Add this to parse JSON data
+app.use(bodyParser.json());
 app.use(express.static('views'));
 
-// Load API configuration
-const config = JSON.parse(fs.readFileSync(path.join(__dirname, 'config', 'api_config.json')));
+const lines = {
+    "AEL": { order: ["HOK", "KOW", "TSY", "AIR", "AWE"], first: "HOK", last: "AWE" },
+    "TCL": { order: ["HOK", "KOW", "OLY", "NAC", "LAK", "TSY", "SUN", "TUC"], first: "HOK", last: "TUC" },
+    "TML": { order: ["WKS", "MOS", "HEO", "TSH", "SHM", "CIO", "STW", "CKT", "TAW", "HIK", "DIH", "KAT", "SUW", "TKW", "HOM", "HUH", "ETS", "AUS", "NAC", "MEF", "TWW", "KSR", "YUL", "LOP", "TIS", "SIH", "TUM"], first: "WKS", last: "TUM" },
+    "TKL": { order: ["NOP", "QUB", "YAT", "TIK", "TKO", "LHP", "HAH", "POA"], first: "NOP", last: ["POA", "LOP"] },
+    "EAL": { order: ["HUH", "MKK", "KOT", "TAW", "SHT", "FOT", "UNI", "TAP", "TWO", "FAN", "SHS", "LOW"], first: "HUH", last: "LOW" }, 
+    "SIL": { order: ["ADM", "OCP", "WCH", "LET", "SOH"], first: "ADM", last: "SOH" },
+    "TWL": { order: ["CEN", "ADM", "TST", "JOR", "YMT", "MOK", "PRE", "SSP", "CSW", "LCK", "MEF", "LAK", "KWF", "KWH", "TWH", "TSW"], first: "CEN", last: "TSW" },
+    "ISL": { order: ["KET", "HKU", "SYP", "SHW", "CEN", "ADM", "WAC", "CAB", "TIH", "FOH", "NOP", "QUB", "TAK", "SWH", "SKW", "HFC", "CHW"], first: "KET", last: "CHW" },
+    "KTL": { order: ["WHA", "HOM", "YMT", "MOK", "PRE", "SKM", "KOT", "LOF", "WTS", "DIH", "CHH", "KOB", "NTK", "KWT", "LAT", "YAT", "TIK"], first: "WHA", last: "TIK" }
+};
 
-// Extract API URLs
-const apiUrls = Object.fromEntries(config.apis.map(api => [api.name, api.url]));
+const interchangeStations = {
+    "ADM": ["ISL", "TWL", "SIL"],
+    "NOP": ["TKL", "ISL"],
+    "QUB": ["TKL", "ISL"],
+    "HUH": ["TML", "EAL"],
+    "MEF": ["TML", "TWL"],
+    "YAT": ["KTL", "TKL"],
+    "TIK": ["KTL", "TKL"],
+    "KOT": ["EAL", "KTL"],
+    "PRE": ["KTL", "TWL"],
+    "LAK": ["TWL", "TCL"],
+    "NAC": ["TCL", "TML"],
+    "DIH": ["KTL", "TML"],
+    "HOK": ["AEL", "TCL", "ISL", "TWL"],
+    "CEN": ["ISL", "TWL", "AEL", "TCL"],
+    "TSY": ["AEL", "TCL"],
+    "KOW": ["AEL", "TCL"]
+};
 
-// Home route
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views', 'index.html'));
-});
+const validInterchangeStations = Object.keys(interchangeStations).filter(station => interchangeStations[station].length > 1);
 
-// Set up the view engine to use EJS
-app.set('view engine', 'ejs');
+// Helper function to fetch schedule data
+const fetchScheduleData = async (line, station) => {
+    try {
+        const response = await axios.get(`https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php`, {
+            params: {
+                line: line,
+                sta: station,
+                lang: 'en'
+            }
+        });
+        return { line, station, data: response.data };
+    } catch (error) {
+        console.error(`Error fetching schedule for ${line}-${station}:`, error.message);
+        return { line, station, error: error.message };
+    }
+};
 
+const processScheduleResponses = async (responses, schedules) => {
+    const processedStations = new Set();
 
+    responses.forEach(response => {
+        const { line, station, data, error } = response;
+        const stationKey = `${line}-${station}`;
 
-app.use(express.json());
+        if (data && data.data && data.data[stationKey] && !processedStations.has(stationKey)) {
+            processedStations.add(stationKey);
+            schedules[line] = schedules[line] || { curr_time: '-', sys_time: '-', up: [], down: [] };
+            schedules[line].curr_time = data.sys_time || '-';
+            schedules[line].sys_time = data.curr_time || '-';
+
+            const stationIndex = lines[line].order.indexOf(station);
+            if (stationIndex > 0 && data.data[stationKey].UP) {
+                schedules[line].up = [...new Map((data.data[stationKey].UP || []).map(item => [item.time, item])).values()].slice(0, 5);
+            }
+            if (stationIndex < lines[line].order.length - 1 && data.data[stationKey].DOWN) {
+                schedules[line].down = [...new Map((data.data[stationKey].DOWN || []).map(item => [item.time, item])).values()].slice(0, 5);
+            }
+        } else {
+            console.error(`No schedule data for ${station} on ${line}. Error: ${error || 'API returned no data'}`);
+            schedules[line] = schedules[line] || { curr_time: '-', sys_time: '-', up: [], down: [] };
+            schedules[line].message = `No schedule available for ${station} on ${line}`;
+        }
+    });
+    return schedules;
+};
+
+const findRoutesDFS = (
+    currentLine, currentStation, destinationStation, 
+    currentRoute, visited, interchangeCount, routes, 
+    pathStations, interchanges = [], stationsPassed = 0, 
+    boardingStations = []
+) => {
+    if (pathStations.includes(currentStation)) return;
+    const newPathStations = [...pathStations, currentStation];
+
+    if (visited.has(`${currentLine}-${currentStation}`)) return;
+    visited.add(`${currentLine}-${currentStation}`);
+
+    const currentLineStations = lines[currentLine].order;
+
+    if (currentLineStations.includes(destinationStation)) {
+        const stationsOnCurrentLine = calculateStationsBetween(currentLine, currentStation, destinationStation);
+        routes.push({
+            route: [...currentRoute, currentLine],
+            boardingStations: boardingStations,
+            interchanges: [...interchanges, destinationStation],
+            interchangeCount,
+            stationsPassed: stationsPassed + stationsOnCurrentLine
+        });
+        return;
+    }
+
+    if (interchangeCount >= 5) return;
+
+    for (const interchange of validInterchangeStations) {
+        if (!lines[currentLine].order.includes(interchange)) continue;
+
+        for (const nextLine of interchangeStations[interchange]) {
+            if (
+                nextLine !== currentLine && 
+                lines[nextLine].order.includes(interchange) && 
+                !currentRoute.includes(nextLine)
+            ) {
+                const stationsOnCurrentLine = calculateStationsBetween(currentLine, currentStation, interchange);
+                findRoutesDFS(
+                    nextLine, interchange, destinationStation, 
+                    [...currentRoute, currentLine], new Set([...visited]), 
+                    interchangeCount + 1, routes, newPathStations, 
+                    [...interchanges, interchange], 
+                    stationsPassed + stationsOnCurrentLine,
+                    [...boardingStations, interchange]
+                );
+            }
+        }
+    }
+};
+
+const calculateRoutesDFS = (currentStation, destinationStation) => {
+    let validRoutes = [];
+    for (const line in lines) {
+        if (lines[line].order.includes(currentStation)) {
+            findRoutesDFS(line, currentStation, destinationStation, [], new Set(), 0, validRoutes, [], [], 0, [currentStation]);
+        }
+    }
+    validRoutes.sort((a, b) => calculateTravelTime(a) - calculateTravelTime(b));
+    return validRoutes.slice(0, 3);
+};
 
 app.post('/fetch_schedule', async (req, res) => {
     const { currentStation, destinationStation } = req.body;
 
-    console.log("Received request at /fetch_schedule");
-    console.log("Current Station:", currentStation);
-    console.log("Destination Station:", destinationStation);
-
     if (!currentStation || !destinationStation) {
-        console.log("Missing station information");
+        console.error("Invalid station selection: Missing currentStation or destinationStation");
         return res.json({ error: "Please select both a current station and a destination station.", schedules: null });
     }
 
-    const lines = {
-        "AEL": ["HOK", "KOW", "TSY", "AIR", "AWE"],
-        "TCL": ["HOK", "KOW", "OLY", "NAC", "LAK", "TSY", "SUN", "TUC"],
-        "TML": ["WKS", "MOS", "HEO", "TSH", "SHM", "CIO", "STW", "CKT", "TAW", "HIK", "DIH", "KAT", "SUW", "TKW", "HOM", "HUH", "ETS", "AUS", "NAC", "MEF", "TWW", "KSR", "YUL", "LOP", "TIS", "SIH", "TUM"],
-        "TKL": ["NOP", "QUB", "YAT", "TIK", "TKO", "LHP", "HAH", "POA"],
-        "EAL": ["ADM", "EXC", "HUH", "MKK", "KOT", "TAW", "SHT", "FOT", "RAC", "UNI", "TAP", "TWO", "FAN", "SHS", "LOW", "LMC"],
-        "SIL": ["ADM", "OCP", "WCH", "LET", "SOH"],
-        "TWL": ["CEN", "ADM", "TST", "JOR", "YMT", "MOK", "PRE", "SSP", "CSW", "LCK", "MEF", "LAK", "KWF", "KWH", "TWH", "TSW"],
-        "ISL": ["KET", "HKU", "SYP", "SHW", "CEN", "ADM", "WAC", "CAB", "TIH", "FOH", "NOP", "QUB", "TAK", "SWH", "SKW", "HFC", "CHW"],
-        "KTL": ["WHA", "HOM", "YMT", "MOK", "PRE", "SKM", "KOT", "LOF", "WTS", "DIH", "CHH", "KOB", "NTK", "KWT", "LAT", "YAT", "TIK"]
-    };
-
-    const currentLines = [];
-    const destinationLines = [];
-
-    for (const line in lines) {
-        if (lines[line].includes(currentStation)) {
-            currentLines.push(line);
-        }
-        if (lines[line].includes(destinationStation)) {
-            destinationLines.push(line);
-        }
-    }
-
-    const allLines = [...new Set([...currentLines, ...destinationLines])];
-
-    if (allLines.length === 0) {
-        console.log("No direct lines available");
-        return res.json({ error: "No direct lines available. Please check alternative routes or transfers.", schedules: null });
-    }
-
     try {
-        const scheduleRequests = allLines.map(line =>
-            axios.get(`https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php`, {
-                params: {
-                    line: line,
-                    sta: currentStation,
-                    lang: 'en'
-                }
-            })
-        );
+        console.log(`Fetching schedule for ${currentStation} to ${destinationStation}`);
+        const validRoutes = calculateRoutesDFS(currentStation, destinationStation);
 
-        const scheduleResponses = await Promise.all(scheduleRequests);
-        const scheduleData = scheduleResponses.map(response => response.data);
+        if (!validRoutes.length) {
+            console.error("No valid routes found");
+            return res.json({ error: "No valid route found.", schedules: null });
+        }
 
-        console.log("API Response Schedule Data:", JSON.stringify(scheduleData, null, 2));
-
-        const schedules = {};
-        scheduleData.forEach((data, index) => {
-            const line = allLines[index];
-            const stationKey = `${line}-${currentStation}`;
-
-            if (data.data && data.data[stationKey]) {
-                schedules[line] = {
-                    curr_time: data.sys_time || '-',
-                    sys_time: data.curr_time || '-',
-                    up: data.data[stationKey].UP || [],
-                    down: data.data[stationKey].DOWN || []
-                };
-            } else {
-                schedules[line] = {
-                    curr_time: '-',
-                    sys_time: '-',
-                    up: [],
-                    down: []
-                };
-            }
-        });
-
+        const { schedules, bestRoute, alternativeRoutes } = await fetchAndProcessSchedules(currentStation, destinationStation);
+        console.log("Best Route:", bestRoute);
+        console.log("Alternative Routes:", alternativeRoutes);
         console.log("Schedules:", schedules);
 
-        return res.json({ error: null, schedules, currentStation, destinationStation });
+        return res.json({
+            error: null,
+            schedules,
+            bestRoute,
+            alternativeRoutes,
+            currentStation,
+            destinationStation
+        });
     } catch (error) {
-        console.error("API Request Error:", error);
+        console.error("Error in /fetch_schedule:", error);
         return res.json({ error: "An error occurred while fetching the schedule.", schedules: null });
     }
 });
 
+function calculateStationsBetween(line, startStation, endStation) {
+    const stations = lines[line].order;
+    const startIndex = stations.indexOf(startStation);
+    const endIndex = stations.indexOf(endStation);
 
-
-
-// Bus Schedule route
-app.post('/bus_schedule', async (req, res) => {
-    const { start_stop, end_stop } = req.body;
-
-/*     if (!start_stop || !end_stop) {
-        return res.send({ error: "Please enter both bus stops." });
-    }
- */
-    const startCoords = await getCoordinates(start_stop);
-    const endCoords = await getCoordinates(end_stop);
-
-    if (!startCoords || !endCoords) {
-        return res.send({ error: "One or both bus stops not found." });
-    }
-
-    const route = await getRoute(startCoords, endCoords);
-    return res.send({ route, start_stop, end_stop });
-});
-
-// Function to get coordinates for a given bus stop
-async function getCoordinates(busStopName) {
-    try {
-        const response = await axios.get(apiUrls['KMB Stop List']);
-        const busStops = response.data.data;
-
-        for (const stop of busStops) {
-            if (stop.name_en.toLowerCase() === busStopName.toLowerCase()) {
-                return [parseFloat(stop.long), parseFloat(stop.lat)];
-            }
-        }
-    } catch (error) {
-        console.error("Error fetching bus stops:", error);
-    }
-    return null;
+    if (startIndex === -1 || endIndex === -1) return Infinity;
+    return Math.abs(endIndex - startIndex);
 }
 
-// Function to get route data from OpenRouteService
-async function getRoute(startCoords, endCoords) {
-    const url = "https://api.openrouteservice.org/v2/directions/driving-car";
-    const headers = {
-        'Authorization': process.env.ORS_API_KEY,
-        'Content-Type': 'application/json'
-    };
-    const body = {
-        "start": startCoords,
-        "end": endCoords
-    };
+const calculateTravelTime = route => {
+    const interchangePenalty = route.interchangeCount * 5;
+    return route.stationsPassed + interchangePenalty;
+};
+
+const fetchAndProcessSchedules = async (currentStation, destinationStation) => {
+    const validRoutes = calculateRoutesDFS(currentStation, destinationStation);
+
+    let bestRoute = null;
+    let alternativeRoutes = [];
+
+    validRoutes.forEach(route => {
+        const travelTime = calculateTravelTime(route);
+        if (!bestRoute || travelTime < bestRoute.travelTime) {
+            if (bestRoute) alternativeRoutes.push(bestRoute);
+            bestRoute = { ...route, travelTime };
+        } else {
+            alternativeRoutes.push({ ...route, travelTime });
+        }
+    });
+
+    if (bestRoute && bestRoute.interchangeCount === 0) {
+        alternativeRoutes = [];
+    } else {
+        alternativeRoutes = alternativeRoutes.slice(0, 2);
+    }
+
+    const scheduleRequests = [];
+    [bestRoute, ...alternativeRoutes].forEach(route => {
+        route.route.forEach((line, index) => {
+            scheduleRequests.push(fetchScheduleData(line, route.boardingStations[index]));
+        });
+    });
+
+    const initialResponses = await Promise.all(scheduleRequests);
+    const schedules = await processScheduleResponses(initialResponses, {});
+
+    return { schedules, bestRoute, alternativeRoutes };
+};
+
+// Temperature endpoint with nearest region logic
+app.post('/get-temperature', async (req, res) => {
+    const { latitude, longitude } = req.body;
+    console.log(`Received request with lat: ${latitude}, lon: ${longitude}`);
 
     try {
-        const response = await axios.post(url, body, { headers });
-        return response.data;
+        const response = await axios.get('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en', {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+        });
+        console.log('Weather API response:', response.data);
+
+        const temperatureData = response.data.temperature.data;
+        if (!temperatureData || temperatureData.length === 0) {
+            throw new Error('No temperature data available from API');
+        }
+
+        // Define coordinates for known regions (expand this list as needed)
+        const regionCoordinates = {
+            "京士柏": { lat: 22.3089, lon: 114.1717 },
+            "香港天文台": { lat: 22.3027, lon: 114.1743 },
+            "黃竹坑": { lat: 22.2483, lon: 114.1685 },
+            "打鼓嶺": { lat: 22.5285, lon: 114.1572 },
+            "流浮山": { lat: 22.4688, lon: 113.9898 },
+            "大埔": { lat: 22.4455, lon: 114.1719 },
+            "沙田": { lat: 22.3819, lon: 114.1888 },
+            "屯門": { lat: 22.3919, lon: 113.9758 },
+            "將軍澳": { lat: 22.3077, lon: 114.2586 },
+            "西貢": { lat: 22.3814, lon: 114.2723 }
+            // Add more coordinates for other regions from the API
+        };
+
+        // Find nearest region
+        let nearestRegion = temperatureData[0]; // Default to first region
+        let minDistance = Infinity;
+
+        for (const region of temperatureData) {
+            const coords = regionCoordinates[region.place];
+            if (coords) {
+                const distance = getDistance(latitude, longitude, coords.lat, coords.lon);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestRegion = region;
+                }
+            }
+        }
+
+        const result = {
+            place: nearestRegion.place,
+            temperature: nearestRegion.value,
+            unit: nearestRegion.unit
+        };
+        console.log('Sending response:', result);
+        res.json(result);
     } catch (error) {
-        console.error("Error fetching route:", error);
+        console.error('Error fetching weather data:', error.message);
+        if (error.response) {
+            console.error('API response error:', error.response.data);
+        }
+        res.status(500).json({ error: 'Failed to fetch weather data from API' });
     }
-    return null;
+});
+
+// Haversine formula to calculate distance
+function getDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Earth radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c; // Distance in km
 }
 
 // Start the server
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });
-
-
-
-

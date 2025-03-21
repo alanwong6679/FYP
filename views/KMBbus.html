@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Point-to-Point Planner and Bus Route Lookup</title>
+
+    <!-- Inline CSS -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        #map {
+            height: 400px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        select, input {
+            margin: 10px 0;
+            padding: 10px;
+            width: 100%;
+        }
+        button {
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Point-to-Point Planner</h1>
+    <label for="startSelect">Start Location:</label>
+    <select id="startSelect"></select>
+
+    <label for="destSelect">Destination Location:</label>
+    <select id="destSelect"></select>
+
+    <button id="planRoute">Plan Route</button>
+
+    <h1>Bus Route Lookup</h1>
+    <input type="text" id="busRouteInput" placeholder="Enter Bus Route Number">
+    <select id="boundSelect">
+        <option value="O">Outbound</option>
+        <option value="I">Inbound</option>
+    </select>
+    <button id="showBusRoute">Show Bus Route</button>
+
+    <div id="etaContainer"></div>
+    <div id="map"></div>
+
+    <!-- Leaflet CSS and JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+    <!-- External JavaScript -->
+    <script src="kmb.js"></script>
+
+</body>
+</html>
