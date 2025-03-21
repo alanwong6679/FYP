@@ -297,27 +297,23 @@ let regionCoordinates = {};
 try {
     const rawData = JSON.parse(fs.readFileSync('./location.json', 'utf8'));
     
-    // Iterate through the nested structure to build regionCoordinates
-    for (const city in rawData) {
-        for (const district in rawData[city]) {
-            const locations = rawData[city][district].locations || [];
-            locations.forEach(location => {
-                if (location.name && Array.isArray(location.coordinates) && location.coordinates.length === 2) {
-                    regionCoordinates[location.name] = {
-                        lat: location.coordinates[0],
-                        lon: location.coordinates[1]
-                    };
-                }
-            });
-        }
+    // Flatten the nested structure into the desired format
+    for (const district in rawData) {
+        const locations = rawData[district].locations || [];
+        locations.forEach(location => {
+            if (location.name && Array.isArray(location.coordinates) && location.coordinates.length === 2) {
+                regionCoordinates[location.name] = {
+                    lat: location.coordinates[0],
+                    lon: location.coordinates[1]
+                };
+            }
+        });
     }
 } catch (error) {
     console.error('Error loading or parsing location.json:', error);
     regionCoordinates = {}; // Fallback to empty object
 }
 
-// Log for debugging
-console.log('Loaded regionCoordinates:', regionCoordinates);
 // Haversine formula to calculate distance
 function getDistance(lat1, lon1, lat2, lon2) {
     const R = 6371; // Earth radius in km
