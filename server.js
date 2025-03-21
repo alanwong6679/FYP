@@ -241,6 +241,7 @@ const fetchAndProcessSchedules = async (currentStation, destinationStation) => {
 
     return { schedules, bestRoute, alternativeRoutes };
 };
+
 app.post('/get-temperature', async (req, res) => {
     const { latitude, longitude } = req.body;
     console.log(`Received request with lat: ${latitude}, lon: ${longitude}`);
@@ -249,38 +250,30 @@ app.post('/get-temperature', async (req, res) => {
         const response = await axios.get('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en', {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            },
-            timeout: 5000 // Add timeout to avoid hanging
+            }
         });
-        console.log('API response status:', response.status);
-        console.log('API response data:', response.data);
+        console.log('Weather API response:', response.data);
 
-        const temperatureData = response.data.temperature?.data;
+        const temperatureData = response.data.temperature.data;
         if (!temperatureData || temperatureData.length === 0) {
-            console.log('No temperature data available from API');
-            return res.status(404).json({ error: 'No temperature data available from API' });
+            throw new Error('No temperature data available from API');
         }
 
-        let nearestRegion = null;
+        // Find nearest region
+        let nearestRegion = temperatureData[0]; // Default to first region
         let minDistance = Infinity;
 
         for (const region of temperatureData) {
             const coords = regionCoordinates[region.place];
             if (coords) {
                 const distance = getDistance(latitude, longitude, coords.lat, coords.lon);
-                console.log(`Distance to ${region.place}: ${distance.toFixed(2)} km`);
                 if (distance < minDistance) {
                     minDistance = distance;
                     nearestRegion = region;
                 }
             } else {
-                console.log(`No coordinates for ${region.place} in regionCoordinates`);
+                console.log(`No coordinates defined for ${region.place}`);
             }
-        }
-
-        if (!nearestRegion) {
-            console.log('No matching weather station found');
-            return res.status(404).json({ error: 'No matching weather station found' });
         }
 
         const result = {
@@ -293,37 +286,24 @@ app.post('/get-temperature', async (req, res) => {
     } catch (error) {
         console.error('Error fetching weather data:', error.message);
         if (error.response) {
-            console.error('API response error:', error.response.status, error.response.data);
-        } else if (error.request) {
-            console.error('No response received from API:', error.request);
-        } else {
-            console.error('Error setting up request:', error.message);
+            console.error('API response error:', error.response.data);
         }
         res.status(500).json({ error: 'Failed to fetch weather data from API' });
     }
 });
-const fs = require('fs');
-
-let regionCoordinates = {};
-try {
-    const rawData = JSON.parse(fs.readFileSync('./location.json', 'utf8'));
-    
-    // Flatten the nested structure into the desired format
-    for (const district in rawData) {
-        const locations = rawData[district].locations || [];
-        locations.forEach(location => {
-            if (location.name && Array.isArray(location.coordinates) && location.coordinates.length === 2) {
-                regionCoordinates[location.name] = {
-                    lat: location.coordinates[0],
-                    lon: location.coordinates[1]
-                };
-            }
-        });
-    }
-} catch (error) {
-    console.error('Error loading or parsing location.json:', error);
-    regionCoordinates = {}; // Fallback to empty object
-}
+const regionCoordinates = require('./location.json');
+        const regionCoordinates = {
+            "King's Park": { lat: 22.3119, lon: 114.1726 },           
+            "Wong Chuk Hang": { lat: 22.2478, lon: 114.1681 },        
+            "Tak Wu Ling": { lat: 22.5285, lon: 114.1567 },           
+            "Lau Fau Shan": { lat: 22.4688, lon: 113.9878 },          
+            "Tai Po": { lat: 22.4445, lon: 114.1689 },                
+            "Sha Tin": { lat: 22.3819, lon: 114.1888 },               
+            "Tuen Mun": { lat: 22.3919, lon: 113.9758 },              
+            "Tseung Kwan O": { lat: 22.3077, lon: 114.2586 },         
+            "Sai Kung": { lat: 22.3814, lon: 114.2723 },              
+            // Add more stations as needed
+        };
 
 // Haversine formula to calculate distance
 function getDistance(lat1, lon1, lat2, lon2) {
