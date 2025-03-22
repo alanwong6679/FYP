@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>City Bus Route Planner</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="navbar.css">
     <style>
         body {
             font-family: 'Roboto', sans-serif;
@@ -151,6 +152,16 @@
     </style>
 </head>
 <body>
+    <div class="nav-bar">
+        <button id="train-btn">Train</button>
+        <button id="bus-btn">Bus</button>
+        <button id="tram-btn" class="active">Tram</button>
+        <button id="mini-btn">Mini Bus</button>
+    </div>
+
+    <script src="tramData.js"></script>
+    <script src="navbar.js"></script>
+    <script src="RTHK.js"></script>
     <div class="container">
         <h1>City Bus Route Planner</h1>
         <div class="tabs">
@@ -187,7 +198,7 @@
         let currentDirection = 'outbound';
         let selectedStartStop = null;
         let selectedEndStop = null;
-
+    
         // Fetch all routes
         async function fetchAllRoutes() {
             try {
@@ -199,7 +210,7 @@
                 return [];
             }
         }
-
+    
         // Fetch all stops and map them to routes
         async function fetchAllStops() {
             const stopsMap = {};
@@ -225,7 +236,7 @@
             await Promise.all(routePromises);
             return Object.values(stopsMap);
         }
-
+    
         // Fetch stop details
         async function fetchStopDetails(stopId) {
             try {
@@ -237,7 +248,7 @@
                 return null;
             }
         }
-
+    
         // Initialize data on page load
         async function initializeData() {
             try {
@@ -267,7 +278,7 @@
             }
         }
         document.addEventListener('DOMContentLoaded', initializeData);
-
+    
         // Tab switching
         function showTab(tabId) {
             const tabs = document.querySelectorAll('.tab');
@@ -277,7 +288,7 @@
             document.querySelector(`.tab[onclick="showTab('${tabId}')"]`).classList.add('active');
             document.getElementById(tabId).classList.add('active');
         }
-
+    
         // Route Number Search
         document.getElementById('routeNumber').addEventListener('input', function () {
             const input = this.value.trim().toLowerCase();
@@ -285,34 +296,32 @@
             if (input && allRoutes.length > 0) {
                 const matchingRoutes = allRoutes.filter(route => route.route.toLowerCase().includes(input));
                 suggestionsDiv.innerHTML = matchingRoutes.length > 0
-                    ? matchingRoutes.map(route => 
-                        `<div onclick="selectRoute('${route.route}')">${route.route}</div>`
-                      ).join('')
+                    ? matchingRoutes.map(route => `<div onclick="selectRoute('${route.route}')">${route.route}</div>`).join('')
                     : '<div>No matching routes</div>';
             } else {
                 suggestionsDiv.innerHTML = '';
             }
         });
-
+    
         async function selectRoute(routeNumber) {
             const routeDiv = document.getElementById('route');
             const suggestionsDiv = document.getElementById('suggestions');
             document.getElementById('routeNumber').value = routeNumber;
             suggestionsDiv.innerHTML = '';
             routeDiv.innerHTML = '<p>Loading...</p>';
-
+    
             const key = `${routeNumber}-${currentDirection}`;
             const stops = routeStopsMap[key] || [];
             if (stops.length === 0) {
                 routeDiv.innerHTML = '<p>No stops found for this route.</p>';
                 return;
             }
-
-            const stopDetails = await Promise.all(stops.map(async stopId => {
-                const detail = await fetchStopDetails(stopId);
-                return detail ? detail.name_en : 'Unknown Stop';
-            }));
-
+    
+            const stopDetails = stops.map(stopId => {
+                const stop = allStops.find(s => s.stop === stopId);
+                return stop ? stop.name_en : 'Unknown Stop';
+            });
+    
             routeDiv.innerHTML = `
                 <div class="route-info">
                     <strong>Route ${routeNumber} (${currentDirection})</strong>
@@ -321,14 +330,14 @@
             `;
             document.getElementById('routeClearButton').style.display = 'block';
         }
-
+    
         document.getElementById('routeClearButton').addEventListener('click', () => {
             document.getElementById('routeNumber').value = '';
             document.getElementById('suggestions').innerHTML = '';
             document.getElementById('route').innerHTML = '';
             document.getElementById('routeClearButton').style.display = 'none';
         });
-
+    
         // Haversine distance formula
         function haversineDistance(lat1, lon1, lat2, lon2) {
             const R = 6371e3; // Earth's radius in meters
@@ -341,48 +350,71 @@
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
             return R * c;
         }
-
-        // Find nearby stops within 500 meters
+    
+        // Find nearby stops within 1 km (1000 meters)
         function findNearbyStops(targetStop) {
             return allStops.filter(stop => {
                 const distance = haversineDistance(targetStop.lat, targetStop.long, stop.lat, stop.long);
-                return distance <= 500;
+                return distance <= 1000; // Changed from 500 to 1000 meters
             });
         }
-
+    
+        // Get current location using GPS
+        function getCurrentLocation(callback) {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const userLocation = {
+                            stop: 'current-location',
+                            name_en: 'My Location',
+                            lat: position.coords.latitude,
+                            long: position.coords.longitude
+                        };
+                        callback(userLocation);
+                    },
+                    (error) => {
+                        console.error('Error getting location:', error);
+                        alert('Unable to get your location. Please allow location access or select a station manually.');
+                    }
+                );
+            } else {
+                console.error('Geolocation not supported by this browser.');
+                alert('Geolocation is not supported by your browser.');
+            }
+        }
+    
         // Station to Station Search
         document.getElementById('startStation').addEventListener('input', function () {
             const input = this.value.trim().toLowerCase();
             const suggestionsDiv = document.getElementById('startSuggestions');
             if (input && allStops.length > 0) {
                 const matchingStops = allStops.filter(stop => stop.name_en.toLowerCase().includes(input));
-                suggestionsDiv.innerHTML = matchingStops.length > 0
-                    ? matchingStops.map(stop => 
-                        `<div onclick="selectStation('start', '${stop.stop}', '${stop.name_en}')">${stop.name_en}</div>`
-                      ).join('')
-                    : '<div>No matching stops</div>';
+                suggestionsDiv.innerHTML = `<div onclick="getCurrentLocation((loc) => selectStation('start', loc.stop, loc.name_en))">My Location</div>` +
+                    (matchingStops.length > 0
+                        ? matchingStops.map(stop => `<div onclick="selectStation('start', '${stop.stop}', '${stop.name_en}')">${stop.name_en}</div>`).join('')
+                        : '<div>No matching stops</div>');
             } else {
-                suggestionsDiv.innerHTML = '';
+                suggestionsDiv.innerHTML = `<div onclick="getCurrentLocation((loc) => selectStation('start', loc.stop, loc.name_en))">My Location</div>`;
             }
         });
-
+    
         document.getElementById('endStation').addEventListener('input', function () {
             const input = this.value.trim().toLowerCase();
             const suggestionsDiv = document.getElementById('endSuggestions');
             if (input && allStops.length > 0) {
                 const matchingStops = allStops.filter(stop => stop.name_en.toLowerCase().includes(input));
                 suggestionsDiv.innerHTML = matchingStops.length > 0
-                    ? matchingStops.map(stop => 
-                        `<div onclick="selectStation('end', '${stop.stop}', '${stop.name_en}')">${stop.name_en}</div>`
-                      ).join('')
+                    ? matchingStops.map(stop => `<div onclick="selectStation('end', '${stop.stop}', '${stop.name_en}')">${stop.name_en}</div>`).join('')
                     : '<div>No matching stops</div>';
             } else {
                 suggestionsDiv.innerHTML = '';
             }
         });
-
+    
         function selectStation(type, stopId, stopName) {
-            const stop = allStops.find(s => s.stop === stopId);
+            const stop = stopId === 'current-location' 
+                ? { stop: stopId, name_en: stopName, lat: selectedStartStop?.lat || 0, long: selectedStartStop?.long || 0 }
+                : allStops.find(s => s.stop === stopId);
             if (!stop) {
                 console.error(`Stop ${stopId} not found`);
                 return;
@@ -398,21 +430,21 @@
             }
             console.log(`${type} station selected:`, stop);
         }
-
+    
         async function searchStationToStation() {
             const resultsDiv = document.getElementById('stationResults');
             resultsDiv.innerHTML = '<p>Loading...</p>';
-
+    
             if (!selectedStartStop || !selectedEndStop) {
                 resultsDiv.innerHTML = '<p style="color: red;">Please select both start and end stations.</p>';
                 return;
             }
-
+    
             const startStops = findNearbyStops(selectedStartStop);
             const endStops = findNearbyStops(selectedEndStop);
             const startStopIds = startStops.map(s => s.stop);
             const endStopIds = endStops.map(s => s.stop);
-
+    
             const directRoutes = [];
             for (const route of allRoutes) {
                 const routeId = route.route;
@@ -422,9 +454,8 @@
                     const stops = routeStopsMap[key] || [];
                     const startMatches = stops.filter(id => startStopIds.includes(id));
                     const endMatches = stops.filter(id => endStopIds.includes(id));
-
+    
                     if (startMatches.length > 0 && endMatches.length > 0) {
-                        // Find closest start stop
                         let closestStartStop = null;
                         let minStartDistance = Infinity;
                         for (const stopId of startMatches) {
@@ -435,8 +466,7 @@
                                 closestStartStop = stopId;
                             }
                         }
-
-                        // Find closest end stop after start stop
+    
                         const startIndex = stops.indexOf(closestStartStop);
                         const possibleEndStops = endMatches.filter(id => stops.indexOf(id) > startIndex);
                         if (possibleEndStops.length > 0) {
@@ -450,24 +480,25 @@
                                     closestEndStop = stopId;
                                 }
                             }
-
-                            // Use the full route stops, not just the segment
-                            const allStopDetails = await Promise.all(stops.map(async id => {
-                                const detail = await fetchStopDetails(id);
-                                return { id, name: detail ? detail.name_en : 'Unknown Stop' };
-                            }));
+    
+                            const allStopDetails = stops.map(id => {
+                                const stop = allStops.find(s => s.stop === id);
+                                return { id, name: stop ? stop.name_en : 'Unknown Stop' };
+                            });
                             directRoutes.push({
                                 route: routeId,
                                 direction,
                                 stops: allStopDetails,
                                 boardingStop: closestStartStop,
-                                alightingStop: closestEndStop
+                                alightingStop: closestEndStop,
+                                boardingDistance: minStartDistance,
+                                alightingDistance: minEndDistance
                             });
                         }
                     }
                 }
             }
-
+    
             resultsDiv.innerHTML = '';
             if (directRoutes.length > 0) {
                 resultsDiv.innerHTML += '<h3>Direct Routes</h3>' + renderRoutes(directRoutes, 'direct');
@@ -476,42 +507,111 @@
             }
             document.getElementById('stationClearButton').style.display = 'block';
         }
-
+    
         function renderRoutes(routes, type) {
             return routes.map((routeObj, index) => {
                 const summaryId = `${type}-summary-${index}`;
                 const detailsId = `${type}-details-${index}`;
-                const summaryText = `${routeObj.route} (${routeObj.direction})`;
-                let html = `<div class="route-summary" id="${summaryId}" onclick="toggleRouteDetails('${detailsId}')">${summaryText}</div>`;
+                const boardingStopName = routeObj.stops.find(stop => stop.id === routeObj.boardingStop)?.name || 'Unknown';
+                const alightingStopName = routeObj.stops.find(stop => stop.id === routeObj.alightingStop)?.name || 'Unknown';
+                const startIndex = routeObj.stops.findIndex(stop => stop.id === routeObj.boardingStop);
+                const endIndex = routeObj.stops.findIndex(stop => stop.id === routeObj.alightingStop);
+                const numStops = endIndex - startIndex;
+                const summaryText = `${routeObj.route} (${routeObj.direction}) - ${numStops} stops, Board at ${boardingStopName} (${Math.round(routeObj.boardingDistance || 0)}m), Alight at ${alightingStopName} (${Math.round(routeObj.alightingDistance || 0)}m)`;
+    
+                console.log(`Rendering route ${routeObj.route} (${routeObj.direction}), boarding stop ID: ${routeObj.boardingStop}`);
+    
+                let html = `
+                    <div 
+                        class="route-summary" 
+                        id="${summaryId}" 
+                        data-route="${routeObj.route}" 
+                        data-direction="${routeObj.direction}" 
+                        data-boarding-stop="${routeObj.boardingStop}" 
+                        onclick="toggleRouteDetails('${detailsId}', this)"
+                    >
+                        ${summaryText}
+                    </div>
+                `;
                 html += `<div class="route-details" id="${detailsId}" style="display: none;">`;
                 html += '<ul class="stop-list">';
                 routeObj.stops.forEach(stop => {
-                    let className = '';
-                    if (stop.id === routeObj.boardingStop) className = 'boarding-stop';
-                    else if (stop.id === routeObj.alightingStop) className = 'alighting-stop';
-                    html += `<li class="${className}">${stop.name}</li>`;
+                    let className = stop.id === routeObj.boardingStop ? 'boarding-stop' : stop.id === routeObj.alightingStop ? 'alighting-stop' : '';
+                    let etaSpan = stop.id === routeObj.boardingStop ? `<span id="eta-${type}-${index}"></span>` : '';
+                    html += `<li class="${className}">${stop.name}${etaSpan}</li>`;
                 });
                 html += '</ul></div>';
                 return html;
             }).join('');
         }
-
-        function toggleRouteDetails(detailsId) {
+    
+        function toggleRouteDetails(detailsId, summaryElement) {
             const detailsDiv = document.getElementById(detailsId);
-            detailsDiv.style.display = detailsDiv.style.display === 'block' ? 'none' : 'block';
+            if (!detailsDiv) {
+                console.error(`Details div with ID ${detailsId} not found`);
+                return;
+            }
+            if (detailsDiv.style.display === 'none') {
+                detailsDiv.style.display = 'block';
+                const route = summaryElement.getAttribute('data-route');
+                const direction = summaryElement.getAttribute('data-direction');
+                const boardingStop = summaryElement.getAttribute('data-boarding-stop');
+                if (route && direction && boardingStop) {
+                    fetchETA(route, direction, boardingStop, detailsId);
+                } else {
+                    console.error('Missing route, direction, or boarding stop data:', { route, direction, boardingStop });
+                    const etaSpan = document.querySelector(`#${detailsId} .boarding-stop span`);
+                    if (etaSpan) etaSpan.textContent = ' (Data missing)';
+                }
+            } else {
+                detailsDiv.style.display = 'none';
+            }
         }
-
-        document.getElementById('stationClearButton').addEventListener('click', () => {
-            document.getElementById('startStation').value = '';
-            document.getElementById('endStation').value = '';
-            document.getElementById('startSuggestions').innerHTML = '';
-            document.getElementById('endSuggestions').innerHTML = '';
-            document.getElementById('stationResults').innerHTML = '';
-            document.getElementById('stationClearButton').style.display = 'none';
-            selectedStartStop = null;
-            selectedEndStop = null;
-            document.getElementById('startStation').focus();
-        });
+    
+        async function fetchETA(route, direction, stopId, detailsId) {
+            const etaSpan = document.querySelector(`#${detailsId} .boarding-stop span`);
+            if (!etaSpan) {
+                console.error(`ETA span not found for details ID ${detailsId}`);
+                return;
+            }
+    
+            try {
+                const url = `https://rt.data.gov.hk/v2/transport/citybus/eta/CTB/${stopId}/${route}`;
+                console.log(`Fetching ETA from: ${url}`);
+                const response = await fetch(url);
+                console.log(`Response status for ${route} at ${stopId}: ${response.status}`);
+    
+                if (!response.ok) {
+                    console.error(`HTTP error for ${route} at ${stopId}: ${response.status} - ${response.statusText}`);
+                    etaSpan.textContent = ` (ETA unavailable - HTTP ${response.status})`;
+                    return;
+                }
+    
+                const data = await response.json();
+                console.log(`ETA data for ${route} (${direction}) at ${stopId}:`, data);
+    
+                if (data.data && data.data.length > 0) {
+                    const dirMapping = { "outbound": "O", "inbound": "I" };
+                    let firstETA = data.data.find(eta => eta.eta_seq === 1 && eta.dir === dirMapping[direction]);
+                    if (!firstETA) {
+                        console.warn(`No ETA for direction ${direction} (${dirMapping[direction]}) on ${route}, falling back to any direction`);
+                        firstETA = data.data.find(eta => eta.eta_seq === 1);
+                    }
+    
+                    if (firstETA) {
+                        const etaTime = new Date(firstETA.eta);
+                        const dataTime = new Date(firstETA.data_timestamp);
+                        const minutesLeft = Math.round((etaTime - dataTime) / 60000);
+                        etaSpan.textContent = minutesLeft >= 0 ? ` (Next bus in ${minutesLeft} minutes)` : ` (Next bus due now or passed)`;
+                    } else {
+                        etaSpan.textContent = ` (No ETA available)`;
+                    }
+                } else {
+                    etaSpan.textContent = ` (No ETA data returned)`;
+                }
+            } catch (error) {
+                console.error(`Error fetching ETA for ${route} (${direction}) at ${stopId}:`, error);
+                etaSpan.textContent = ` (ETA fetch failed: ${error.message})`;
+            }
+        }
     </script>
-</body>
-</html>
