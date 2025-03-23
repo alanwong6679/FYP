@@ -190,7 +190,6 @@
             <div id="stationResults"></div>
         </div>
     </div>
-
     <script>
         let allRoutes = [];
         let allStops = [];
@@ -244,7 +243,7 @@
                 const data = await response.json();
                 return data.data;
             } catch (error) {
-                console.error('Error fetching stop details:', error);
+                console.error('Error fetching stop details for ID', stopId, ':', error);
                 return null;
             }
         }
@@ -264,13 +263,14 @@
                     const details = await fetchStopDetails(stop.stop);
                     return {
                         stop: stop.stop,
-                        name_en: details ? details.name_en : 'Unknown Stop',
+                        name_en: details ? details.name_en : `Stop ${stop.stop} (Name Missing)`,
                         lat: details ? details.lat : 0,
                         long: details ? details.long : 0
                     };
                 });
                 allStops = await Promise.all(stopDetailsPromises);
-                console.log('Initialization complete:', allRoutes.length, 'routes,', allStops.length, 'stops');
+                console.log('Initialization complete:', allRoutes.length, 'routes,', allStops.length, 'stops loaded');
+                console.log('Sample stops:', allStops.slice(0, 5)); // Log some stops to verify
             } catch (error) {
                 console.error('Initialization failed:', error);
                 document.getElementById('route').innerHTML = '<p>Error: Initialization failed.</p>';
@@ -293,7 +293,7 @@
         document.getElementById('routeNumber').addEventListener('input', function () {
             const input = this.value.trim().toLowerCase();
             const suggestionsDiv = document.getElementById('suggestions');
-            if (input && allRoutes.length > 0) {
+            if (input && allStops.length > 0) {
                 const matchingRoutes = allRoutes.filter(route => route.route.toLowerCase().includes(input));
                 suggestionsDiv.innerHTML = matchingRoutes.length > 0
                     ? matchingRoutes.map(route => `<div onclick="selectRoute('${route.route}')">${route.route}</div>`).join('')
@@ -319,7 +319,7 @@
     
             const stopDetails = stops.map(stopId => {
                 const stop = allStops.find(s => s.stop === stopId);
-                return stop ? stop.name_en : 'Unknown Stop';
+                return stop ? stop.name_en : `Stop ${stopId} (Name Missing)`;
             });
     
             routeDiv.innerHTML = `
@@ -355,7 +355,7 @@
         function findNearbyStops(targetStop) {
             return allStops.filter(stop => {
                 const distance = haversineDistance(targetStop.lat, targetStop.long, stop.lat, stop.long);
-                return distance <= 1000; // Changed from 500 to 1000 meters
+                return distance <= 1000; // 1 km radius
             });
         }
     
@@ -370,6 +370,7 @@
                             lat: position.coords.latitude,
                             long: position.coords.longitude
                         };
+                        console.log('Current location fetched:', userLocation);
                         callback(userLocation);
                     },
                     (error) => {
@@ -412,19 +413,28 @@
         });
     
         function selectStation(type, stopId, stopName) {
-            const stop = stopId === 'current-location' 
-                ? { stop: stopId, name_en: stopName, lat: selectedStartStop?.lat || 0, long: selectedStartStop?.long || 0 }
-                : allStops.find(s => s.stop === stopId);
-            if (!stop) {
-                console.error(`Stop ${stopId} not found`);
-                return;
+            let stop;
+            if (stopId === 'current-location') {
+                stop = { stop: stopId, name_en: stopName, lat: 0, long: 0 }; // Temporary placeholder, updated by getCurrentLocation
+                getCurrentLocation((loc) => {
+                    stop.lat = loc.lat;
+                    stop.long = loc.long;
+                    if (type === 'start') selectedStartStop = stop;
+                    else selectedEndStop = stop;
+                });
+            } else {
+                stop = allStops.find(s => s.stop === stopId);
+                if (!stop) {
+                    console.error(`Stop ${stopId} not found in allStops`);
+                    return;
+                }
+                if (type === 'start') selectedStartStop = stop;
+                else selectedEndStop = stop;
             }
             if (type === 'start') {
-                selectedStartStop = stop;
                 document.getElementById('startStation').value = stopName;
                 document.getElementById('startSuggestions').innerHTML = '';
             } else {
-                selectedEndStop = stop;
                 document.getElementById('endStation').value = stopName;
                 document.getElementById('endSuggestions').innerHTML = '';
             }
@@ -445,7 +455,13 @@
             const startStopIds = startStops.map(s => s.stop);
             const endStopIds = endStops.map(s => s.stop);
     
+            console.log('Nearby start stops within 1km:', startStops.map(s => ({ id: s.stop, name: s.name_en, distance: Math.round(haversineDistance(selectedStartStop.lat, selectedStartStop.long, s.lat, s.long))})));
+            console.log('Nearby end stops within 1km:', endStops.map(s => ({ id: s.stop, name: s.name_en, distance: Math.round(haversineDistance(selectedEndStop.lat, selectedEndStop.long, s.lat, s.long))})));
+    
             const directRoutes = [];
+            const interchangeRoutes = [];
+    
+            // Find direct routes
             for (const route of allRoutes) {
                 const routeId = route.route;
                 const directions = ['outbound', 'inbound'];
@@ -460,12 +476,15 @@
                         let minStartDistance = Infinity;
                         for (const stopId of startMatches) {
                             const stop = allStops.find(s => s.stop === stopId);
+                            if (!stop) continue;
                             const distance = haversineDistance(selectedStartStop.lat, selectedStartStop.long, stop.lat, stop.long);
                             if (distance < minStartDistance) {
                                 minStartDistance = distance;
                                 closestStartStop = stopId;
                             }
                         }
+    
+                        if (!closestStartStop) continue;
     
                         const startIndex = stops.indexOf(closestStartStop);
                         const possibleEndStops = endMatches.filter(id => stops.indexOf(id) > startIndex);
@@ -474,6 +493,7 @@
                             let minEndDistance = Infinity;
                             for (const stopId of possibleEndStops) {
                                 const stop = allStops.find(s => s.stop === stopId);
+                                if (!stop) continue;
                                 const distance = haversineDistance(selectedEndStop.lat, selectedEndStop.long, stop.lat, stop.long);
                                 if (distance < minEndDistance) {
                                     minEndDistance = distance;
@@ -481,9 +501,11 @@
                                 }
                             }
     
+                            if (!closestEndStop) continue;
+    
                             const allStopDetails = stops.map(id => {
                                 const stop = allStops.find(s => s.stop === id);
-                                return { id, name: stop ? stop.name_en : 'Unknown Stop' };
+                                return { id, name: stop ? stop.name_en : `Stop ${id} (Name Missing)` };
                             });
                             directRoutes.push({
                                 route: routeId,
@@ -499,27 +521,132 @@
                 }
             }
     
+            // Find interchange routes (one transfer)
+            if (directRoutes.length === 0) {
+                for (const firstRoute of allRoutes) {
+                    const firstRouteId = firstRoute.route;
+                    for (const firstDir of ['outbound', 'inbound']) {
+                        const firstKey = `${firstRouteId}-${firstDir}`;
+                        const firstStops = routeStopsMap[firstKey] || [];
+                        const firstStartMatches = firstStops.filter(id => startStopIds.includes(id));
+    
+                        if (firstStartMatches.length > 0) {
+                            let firstBoardingStop = null;
+                            let minFirstDistance = Infinity;
+                            for (const stopId of firstStartMatches) {
+                                const stop = allStops.find(s => s.stop === stopId);
+                                if (!stop) continue;
+                                const distance = haversineDistance(selectedStartStop.lat, selectedStartStop.long, stop.lat, stop.long);
+                                if (distance < minFirstDistance) {
+                                    minFirstDistance = distance;
+                                    firstBoardingStop = stopId;
+                                }
+                            }
+    
+                            if (!firstBoardingStop) continue;
+    
+                            const firstBoardingIndex = firstStops.indexOf(firstBoardingStop);
+                            for (const secondRoute of allRoutes) {
+                                const secondRouteId = secondRoute.route;
+                                for (const secondDir of ['outbound', 'inbound']) {
+                                    const secondKey = `${secondRouteId}-${secondDir}`;
+                                    const secondStops = routeStopsMap[secondKey] || [];
+                                    const secondEndMatches = secondStops.filter(id => endStopIds.includes(id));
+    
+                                    if (secondEndMatches.length > 0) {
+                                        const interchangeStops = firstStops.filter(id => secondStops.includes(id) && firstStops.indexOf(id) > firstBoardingIndex);
+                                        if (interchangeStops.length > 0) {
+                                            let interchangeStop = null;
+                                            let minInterchangeDistance = Infinity;
+                                            for (const stopId of interchangeStops) {
+                                                const stop = allStops.find(s => s.stop === stopId);
+                                                if (!stop) continue;
+                                                const distance = haversineDistance(selectedStartStop.lat, selectedStartStop.long, stop.lat, stop.long);
+                                                if (distance < minInterchangeDistance) {
+                                                    minInterchangeDistance = distance;
+                                                    interchangeStop = stopId;
+                                                }
+                                            }
+    
+                                            let secondAlightingStop = null;
+                                            let minSecondDistance = Infinity;
+                                            for (const stopId of secondEndMatches) {
+                                                const stop = allStops.find(s => s.stop === stopId);
+                                                if (!stop) continue;
+                                                const distance = haversineDistance(selectedEndStop.lat, selectedEndStop.long, stop.lat, stop.long);
+                                                if (distance < minSecondDistance && secondStops.indexOf(stopId) > secondStops.indexOf(interchangeStop)) {
+                                                    minSecondDistance = distance;
+                                                    secondAlightingStop = stopId;
+                                                }
+                                            }
+    
+                                            if (secondAlightingStop) {
+                                                const firstStopDetails = firstStops.slice(0, firstStops.indexOf(interchangeStop) + 1).map(id => {
+                                                    const stop = allStops.find(s => s.stop === id);
+                                                    return { id, name: stop ? stop.name_en : `Stop ${id} (Name Missing)` };
+                                                });
+                                                const secondStopDetails = secondStops.slice(secondStops.indexOf(interchangeStop)).map(id => {
+                                                    const stop = allStops.find(s => s.stop === id);
+                                                    return { id, name: stop ? stop.name_en : `Stop ${id} (Name Missing)` };
+                                                });
+                                                interchangeRoutes.push({
+                                                    firstRoute: firstRouteId,
+                                                    firstDirection: firstDir,
+                                                    firstStops: firstStopDetails,
+                                                    firstBoardingStop,
+                                                    interchangeStop,
+                                                    secondRoute: secondRouteId,
+                                                    secondDirection: secondDir,
+                                                    secondStops: secondStopDetails,
+                                                    secondAlightingStop,
+                                                    boardingDistance: minFirstDistance,
+                                                    interchangeDistance: haversineDistance(
+                                                        allStops.find(s => s.stop === firstBoardingStop).lat,
+                                                        allStops.find(s => s.stop === firstBoardingStop).long,
+                                                        allStops.find(s => s.stop === interchangeStop).lat,
+                                                        allStops.find(s => s.stop === interchangeStop).long
+                                                    ),
+                                                    alightingDistance: minSecondDistance
+                                                });
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+    
             resultsDiv.innerHTML = '';
             if (directRoutes.length > 0) {
-                resultsDiv.innerHTML += '<h3>Direct Routes</h3>' + renderRoutes(directRoutes, 'direct');
-            } else {
-                resultsDiv.innerHTML = '<p>No direct routes found. Try different stations.</p>';
+                resultsDiv.innerHTML += '<h3>Direct Routes</h3>' + renderDirectRoutes(directRoutes, 'direct');
+            }
+            if (interchangeRoutes.length > 0) {
+                resultsDiv.innerHTML += '<h3>Interchange Routes (1 Transfer)</h3>' + renderInterchangeRoutes(interchangeRoutes, 'interchange');
+            }
+            if (directRoutes.length === 0 && interchangeRoutes.length === 0) {
+                resultsDiv.innerHTML = '<p>No direct or interchange routes found within 1 km. Try different stations or a larger radius.</p>';
             }
             document.getElementById('stationClearButton').style.display = 'block';
         }
     
-        function renderRoutes(routes, type) {
+        function renderDirectRoutes(routes, type) {
             return routes.map((routeObj, index) => {
                 const summaryId = `${type}-summary-${index}`;
                 const detailsId = `${type}-details-${index}`;
-                const boardingStopName = routeObj.stops.find(stop => stop.id === routeObj.boardingStop)?.name || 'Unknown';
-                const alightingStopName = routeObj.stops.find(stop => stop.id === routeObj.alightingStop)?.name || 'Unknown';
+                const boardingStop = allStops.find(s => s.stop === routeObj.boardingStop);
+                const alightingStop = allStops.find(s => s.stop === routeObj.alightingStop);
+                const boardingStopName = boardingStop ? boardingStop.name_en : `Stop ${routeObj.boardingStop} (Name Missing)`;
+                const alightingStopName = alightingStop ? alightingStop.name_en : `Stop ${routeObj.alightingStop} (Name Missing)`;
                 const startIndex = routeObj.stops.findIndex(stop => stop.id === routeObj.boardingStop);
                 const endIndex = routeObj.stops.findIndex(stop => stop.id === routeObj.alightingStop);
                 const numStops = endIndex - startIndex;
-                const summaryText = `${routeObj.route} (${routeObj.direction}) - ${numStops} stops, Board at ${boardingStopName} (${Math.round(routeObj.boardingDistance || 0)}m), Alight at ${alightingStopName} (${Math.round(routeObj.alightingDistance || 0)}m)`;
+                const boardingDistance = Math.round(routeObj.boardingDistance || 0);
+                const alightingDistance = Math.round(routeObj.alightingDistance || 0);
+                const summaryText = `${routeObj.route} (${routeObj.direction}) - ${numStops} stops, Walk ${boardingDistance}m to ${boardingStopName}, Alight at ${alightingStopName} (${alightingDistance}m)`;
     
-                console.log(`Rendering route ${routeObj.route} (${routeObj.direction}), boarding stop ID: ${routeObj.boardingStop}`);
+                console.log(`Rendering direct route ${routeObj.route} (${routeObj.direction}), boarding stop ID: ${routeObj.boardingStop}, distance: ${boardingDistance}m`);
     
                 let html = `
                     <div 
@@ -536,9 +663,61 @@
                 html += `<div class="route-details" id="${detailsId}" style="display: none;">`;
                 html += '<ul class="stop-list">';
                 routeObj.stops.forEach(stop => {
+                    const stopInfo = allStops.find(s => s.stop === stop.id);
+                    const stopName = stopInfo ? stopInfo.name_en : `Stop ${stop.id} (Name Missing)`;
                     let className = stop.id === routeObj.boardingStop ? 'boarding-stop' : stop.id === routeObj.alightingStop ? 'alighting-stop' : '';
                     let etaSpan = stop.id === routeObj.boardingStop ? `<span id="eta-${type}-${index}"></span>` : '';
-                    html += `<li class="${className}">${stop.name}${etaSpan}</li>`;
+                    html += `<li class="${className}">${stopName}${etaSpan}</li>`;
+                });
+                html += '</ul></div>';
+                return html;
+            }).join('');
+        }
+    
+        function renderInterchangeRoutes(routes, type) {
+            return routes.map((routeObj, index) => {
+                const summaryId = `${type}-summary-${index}`;
+                const detailsId = `${type}-details-${index}`;
+                const firstBoardingStop = allStops.find(s => s.stop === routeObj.firstBoardingStop);
+                const interchangeStop = allStops.find(s => s.stop === routeObj.interchangeStop);
+                const secondAlightingStop = allStops.find(s => s.stop === routeObj.secondAlightingStop);
+                const firstBoardingName = firstBoardingStop ? firstBoardingStop.name_en : `Stop ${routeObj.firstBoardingStop} (Name Missing)`;
+                const interchangeName = interchangeStop ? interchangeStop.name_en : `Stop ${routeObj.interchangeStop} (Name Missing)`;
+                const secondAlightingName = secondAlightingStop ? secondAlightingStop.name_en : `Stop ${routeObj.secondAlightingStop} (Name Missing)`;
+                const summaryText = `Walk ${Math.round(routeObj.boardingDistance)}m to ${firstBoardingName}, Take ${routeObj.firstRoute} (${routeObj.firstDirection}) to ${interchangeName} (${Math.round(routeObj.interchangeDistance)}m), Then ${routeObj.secondRoute} (${routeObj.secondDirection}) to ${secondAlightingName} (${Math.round(routeObj.alightingDistance)}m)`;
+    
+                console.log(`Rendering interchange route: ${routeObj.firstRoute} to ${routeObj.secondRoute}, boarding stop ID: ${routeObj.firstBoardingStop}, distance: ${Math.round(routeObj.boardingDistance)}m`);
+    
+                let html = `
+                    <div 
+                        class="route-summary" 
+                        id="${summaryId}" 
+                        data-route="${routeObj.firstRoute}" 
+                        data-direction="${routeObj.firstDirection}" 
+                        data-boarding-stop="${routeObj.firstBoardingStop}" 
+                        onclick="toggleRouteDetails('${detailsId}', this)"
+                    >
+                        ${summaryText}
+                    </div>
+                `;
+                html += `<div class="route-details" id="${detailsId}" style="display: none;">`;
+                html += '<h4>First Leg: ' + routeObj.firstRoute + ' (' + routeObj.firstDirection + ')</h4>';
+                html += '<ul class="stop-list">';
+                routeObj.firstStops.forEach(stop => {
+                    const stopInfo = allStops.find(s => s.stop === stop.id);
+                    const stopName = stopInfo ? stopInfo.name_en : `Stop ${stop.id} (Name Missing)`;
+                    let className = stop.id === routeObj.firstBoardingStop ? 'boarding-stop' : stop.id === routeObj.interchangeStop ? 'alighting-stop' : '';
+                    let etaSpan = stop.id === routeObj.firstBoardingStop ? `<span id="eta-${type}-${index}-first"></span>` : '';
+                    html += `<li class="${className}">${stopName}${etaSpan}</li>`;
+                });
+                html += '</ul>';
+                html += '<h4>Second Leg: ' + routeObj.secondRoute + ' (' + routeObj.secondDirection + ')</h4>';
+                html += '<ul class="stop-list">';
+                routeObj.secondStops.forEach(stop => {
+                    const stopInfo = allStops.find(s => s.stop === stop.id);
+                    const stopName = stopInfo ? stopInfo.name_en : `Stop ${stop.id} (Name Missing)`;
+                    let className = stop.id === routeObj.secondAlightingStop ? 'alighting-stop' : '';
+                    html += `<li class="${className}">${stopName}</li>`;
                 });
                 html += '</ul></div>';
                 return html;
