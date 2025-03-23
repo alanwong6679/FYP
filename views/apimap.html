@@ -648,14 +648,18 @@
             <h1 class="heading">Estimate commute time</h1>
             <p>See travel time and directions for places nearby</p>
           </div>
-          <button class="set-origin-button">Set Starting Point</button>
-          <button class="add-button" autofocus>
+          <button class="add-button" data-action="set-origin">
+            <svg aria-label="Home Icon" width="24px" height="24px" xmlns="http://www.w3.org/2000/svg">
+              <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5z"/>
+            </svg>
+            <div class="label">Set Starting Point</div>
+          </button>
+          <button class="add-button" data-action="add-destination">
             <svg aria-label="Add Icon" width="24px" height="24px" xmlns="http://www.w3.org/2000/svg">
               <use href="#commutes-add-icon"/>
             </svg>
-            <span class="label">Add destination</span>
+            <div class="label">Add destination</div>
           </button>
-        </div>
 
         <<div class="commutes-destinations">
           <div class="destinations-container">
@@ -666,11 +670,17 @@
               <div class="label">Set Origin</div>
             </button>
             <div class="destination-list"></div>
-            <button class="add-button">
+            <button class="add-button" data-action="set-origin">
+              <svg aria-label="Home Icon" width="24px" height="24px" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5z"/>
+              </svg>
+              <span class="label">Set Starting Point</span>
+            </button>
+            <button class="add-button" data-action="add-destination" autofocus>
               <svg aria-label="Add Icon" width="24px" height="24px" xmlns="http://www.w3.org/2000/svg">
                 <use href="#commutes-add-icon"/>
               </svg>
-              <div class="label">Add destination</div>
+              <span class="label">Add destination</span>
             </button>
           </div>
 
@@ -918,41 +928,41 @@
       }
     
       function initCommutesPanel() {
-        const addCommutesButtonEls = document.querySelectorAll('.add-button');
-        const setOriginButtons = document.querySelectorAll('.set-origin-button');
-        addCommutesButtonEls.forEach(addButton => {
-          addButton.addEventListener('click', () => {
-            modalMode = 'destination';
-            destinationModalEl.title.innerHTML = 'Add Destination';
-            hideElement(destinationModalEl.deleteButton);
-            hideElement(destinationModalEl.editButton);
-            showElement(destinationModalEl.addButton);
-            destinationModalEl.addButton.textContent = 'Add';
-            showElement(destinationModalEl.form.querySelector('.travel-modes'));
-            showModal();
-            const travelModeEnum = configuration.defaultTravelModeEnum || TravelMode.DRIVING;
-            const travelModeId = travelModeEnum.toLowerCase() + '-mode';
-            document.forms['destination-form'][travelModeId].checked = true;
-            destinationModalEl.destinationInput.value = '';
-            destinationModalEl.destinationInput.placeholder = 'Enter a place or address';
-          });
-        });
-    
-        setOriginButtons.forEach(button => {
+        const actionButtons = document.querySelectorAll('.add-button');
+        actionButtons.forEach(button => {
           button.addEventListener('click', () => {
-            modalMode = 'origin';
-            destinationModalEl.title.innerHTML = 'Set Starting Point';
-            hideElement(destinationModalEl.deleteButton);
-            hideElement(destinationModalEl.editButton);
-            showElement(destinationModalEl.addButton);
-            destinationModalEl.addButton.textContent = 'Set';
-            hideElement(destinationModalEl.form.querySelector('.travel-modes'));
-            showModal();
-            destinationModalEl.destinationInput.value = '';
-            destinationModalEl.destinationInput.placeholder = 'Enter starting point';
+            const action = button.dataset.action;
+            if (action === 'set-origin') {
+              console.log('Set origin button clicked');
+              modalMode = 'origin';
+              destinationModalEl.title.innerHTML = 'Set Starting Point';
+              hideElement(destinationModalEl.deleteButton);
+              hideElement(destinationModalEl.editButton);
+              showElement(destinationModalEl.addButton);
+              destinationModalEl.addButton.textContent = 'Set';
+              hideElement(destinationModalEl.form.querySelector('.travel-modes'));
+              showModal();
+              destinationModalEl.destinationInput.value = '';
+              destinationModalEl.destinationInput.placeholder = 'Enter starting point';
+            } else if (action === 'add-destination') {
+              console.log('Add destination button clicked');
+              modalMode = 'destination';
+              destinationModalEl.title.innerHTML = 'Add Destination';
+              hideElement(destinationModalEl.deleteButton);
+              hideElement(destinationModalEl.editButton);
+              showElement(destinationModalEl.addButton);
+              destinationModalEl.addButton.textContent = 'Add';
+              showElement(destinationModalEl.form.querySelector('.travel-modes'));
+              showModal();
+              const travelModeEnum = configuration.defaultTravelModeEnum || TravelMode.DRIVING;
+              const travelModeId = travelModeEnum.toLowerCase() + '-mode';
+              document.forms['destination-form'][travelModeId].checked = true;
+              destinationModalEl.destinationInput.value = '';
+              destinationModalEl.destinationInput.placeholder = 'Enter a place or address';
+            }
           });
         });
-    
+      
         destinationPanelEl.scrollLeftButton.addEventListener('click', handleScrollButtonClick);
         destinationPanelEl.scrollRightButton.addEventListener('click', handleScrollButtonClick);
         destinationPanelEl.list.addEventListener('keydown', (e) => {
