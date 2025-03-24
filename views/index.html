@@ -12,7 +12,7 @@
             margin: 0;
             padding: 0;
             background-color: #f4f4f9; 
-            background-image: url("mtr.png");
+            background-image: url("index.png");
             color: #333;
             display: flex;
             justify-content: center;
@@ -140,39 +140,7 @@
     </style>
 </head>
 <body>
-    <div class="container" id="main-content">
-        <form id="routeForm">
-            <div class="place-container">
-                <div class="station-row">
-                    <dl>
-                        <dt class="starting-station">Starting Station</dt>
-                    </dl>
-                    <dd>
-                        <div class="searchable-select" id="currentStationContainer">
-                            <input type="text" id="currentStationInput" placeholder="Type to search...">
-                            <div class="options" id="currentStationOptions"></div>
-                        </div>
-                    </dd>
-                </div>
-                <div class="input-change">
-                    <img src="switch.png" alt="Swap Starting and Destination Stations" id="swapStations">
-                </div>
-                <div class="station-row">
-                    <dl class="condition-item">
-                        <dt class="destination-station">Destination Station</dt>
-                    </dl>
-                    <dd>
-                        <div class="searchable-select" id="destinationStationContainer">
-                            <input type="text" id="destinationStationInput" placeholder="Type to search...">
-                            <div class="options" id="destinationStationOptions"></div>
-                        </div>
-                    </dd>
-                </div>
-            </div>
-            <button type="submit">Find Route</button>
-        </form>
-        <div id="route"></div>
-    </div>
+
 
     <!-- Bottom bar with temperature -->
     <div class="bottom-bar">
@@ -184,8 +152,7 @@
     <script src="RTHK.js"></script>
     <script src="navbar.js"></script>
     
-    <script> window.chtlConfig = { chatbotId: "3272844625" } </script>
-    <script async data-id="3272844625" id="chatling-embed-script" type="text/javascript" src="https://chatling.ai/js/embed.js"></script>
+
     <script>
         // Swap station inputs
         

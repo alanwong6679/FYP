@@ -4,21 +4,35 @@ function createNavbar() {
     const navbar = document.createElement('div');
     navbar.classList.add('nav-bar');
 
-    // Add the title
-    const title = document.createElement('div');
-    title.classList.add('nav-title');
-    title.textContent = 'Route Planner';
-    navbar.appendChild(title);
-
+// Add the title
+const title = document.createElement('a');
+title.href = 'index.html';
+title.classList.add('nav-title');
+title.textContent = 'Route Planner';
+navbar.appendChild(title);
     // Define the buttons with their properties, including icon URLs
     const buttons = [
-        { id: 'train-btn', text: 'Train', href: 'index.html', icon: src="mtr_button.png" },
+        { id: 'train-btn', text: 'Train', href: 'mtr.html', icon: src="mtr_button.png" },
         { id: 'bus-btn', text: 'Bus', href: 'KMBbus.html', icon: src="kmb_button.png"},
         { id: 'bus-btn', text: 'CityBus', href: 'citybus.html', icon: src="kmb_button.png"},
         { id: 'tram-btn', text: 'Tram', href: 'tram_schedule.html', icon: src="tram_button.png" },
         { id: 'mini-btn', text: 'Mini Bus', href: 'minibus_schedule.html', icon: src="minibus_button.png" }
     ];
-
+    function createNavbar() {
+        // Create the nav-bar element
+        const navbar = document.createElement('div');
+        navbar.classList.add('nav-bar');
+    
+        // Add the title
+        const title = document.createElement('a');
+        title.href = 'index.html';
+        title.classList.add('nav-title');
+        title.textContent = 'Route Planner';
+        navbar.appendChild(title);
+    
+        // Rest of the function (buttons, etc.) remains unchanged
+        // ...
+    }
     // Get the current page to set the active class
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
 
