@@ -15,6 +15,9 @@ const PORT = process.env.PORT || 4000;
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static('views'));
+// Please install OpenAI SDK first: `
+// `
+
 
 const lines = {
     "AEL": { order: ["HOK", "KOW", "TSY", "AIR", "AWE"], first: "HOK", last: "AWE" },
