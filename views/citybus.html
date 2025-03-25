@@ -314,45 +314,19 @@
             document.getElementById('routeNumber').value = routeNumber;
             suggestionsDiv.innerHTML = '';
             routeDiv.innerHTML = '<p>Loading...</p>';
-        
-            // Step 1: Fetch the service schedule from the Citybus API
-            try {
-                const response = await fetch(`https://rt.data.gov.hk/v2/transport/citybus/route/CTB/${routeNumber}`);
-                const data = await response.json();
-                const routeData = data.data[0]; // Adjust based on actual API response structure
-        
-                // Step 2: Parse the service schedule and check current time
-                const serviceHours = routeData.service_hours; // Placeholder; adjust to match API data
-                const currentTime = new Date();
-                const currentHour = currentTime.getHours();
-                const currentMinute = currentTime.getMinutes();
-        
-                const isInService = checkIfInService(serviceHours, currentHour, currentMinute);
-        
-                // Step 3: Display only if in service
-                if (!isInService) {
-                    routeDiv.innerHTML = `<p>Route ${routeNumber} is not in service at this time.</p>`;
-                    return; // Exit the function if the route isn’t in service
-                }
-            } catch (error) {
-                console.error('Error fetching route service schedule:', error);
-                routeDiv.innerHTML = '<p>Error loading route information.</p>';
-                return;
-            }
-        
-            // If the route is in service, proceed to display it
-            const key = `${routeNumber}-${currentDirection}`; // Assuming currentDirection is defined elsewhere
-            const stops = routeStopsMap[key] || []; // Assuming routeStopsMap is your data structure
+    
+            const key = `${routeNumber}-${currentDirection}`;
+            const stops = routeStopsMap[key] || [];
             if (stops.length === 0) {
                 routeDiv.innerHTML = '<p>No stops found for this route.</p>';
                 return;
             }
-        
+    
             const stopDetails = stops.map(stopId => {
-                const stop = allStops.find(s => s.stop === stopId); // Assuming allStops is your stops data
+                const stop = allStops.find(s => s.stop === stopId);
                 return stop ? stop.name_en : `Stop ${stopId} (Name Missing)`;
             });
-        
+    
             routeDiv.innerHTML = `
                 <div class="route-info">
                     <strong>Route ${routeNumber} (${currentDirection})</strong>
@@ -360,20 +334,6 @@
                 </div>
             `;
             document.getElementById('routeClearButton').style.display = 'block';
-        }
-        
-        // Helper function to check if the route is in service
-        function checkIfInService(serviceHours, currentHour, currentMinute) {
-            // Adjust this based on the actual structure of serviceHours from the API
-            // Example assumes serviceHours has start and end times like { start: "06:00", end: "23:00" }
-            const [startHour, startMinute] = serviceHours.start.split(':').map(Number);
-            const [endHour, endMinute] = serviceHours.end.split(':').map(Number);
-        
-            const currentTimeInMinutes = currentHour * 60 + currentMinute;
-            const startTimeInMinutes = startHour * 60 + startMinute;
-            const endTimeInMinutes = endHour * 60 + endMinute;
-        
-            return currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes <= endTimeInMinutes;
         }
     
         document.getElementById('routeClearButton').addEventListener('click', () => {
