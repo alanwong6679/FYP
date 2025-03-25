@@ -192,6 +192,8 @@
     <script src="stations.js"></script>
     <script src="navbar.js"></script>
     <script src="RTHK.js"></script>
+    <script src="minibus.js"></script>
+    <script src="temperature.js"></script>
     <script>
         const lineNames = {
             "AEL": "Airport Express Line <span style='display: inline-block; width: 20px; height: 10px; background-color: #00888A; border-radius: 5px;'></span>",
@@ -311,6 +313,7 @@
             html += `<h2>From ${currentStationName} to ${destinationStationName}</h2>`;
         
             // Loop through each line in the route
+            
             route.forEach(line => {
                 const lineName = lineNames[line] || line;
                 html += `

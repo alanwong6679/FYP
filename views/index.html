@@ -6,6 +6,7 @@
     <title>Route Planner</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="navbar.css">
+    <link rel="stylesheet" href="temperature.css">
     <style>
         body {
             font-family: 'Roboto', sans-serif;
@@ -151,11 +152,14 @@
     <script src="script.js"></script>
     <script src="RTHK.js"></script>
     <script src="navbar.js"></script>
+    <script src="temperature.js"></script>
     
 
     <script>
         // Swap station inputs
-        
+        <div class="bottom-bar">
+            <div id="temperature">Fetching your location...</div>
+        </div>
         document.getElementById('swapStations').addEventListener('click', function() {
             const currentInput = document.getElementById('currentStationInput');
             const destinationInput = document.getElementById('destinationStationInput');
