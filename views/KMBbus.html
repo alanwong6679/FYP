@@ -3,59 +3,519 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Point-to-Point Planner and Bus Route Lookup</title>
-
-    <!-- Inline CSS -->
+    <title>Transit Planner</title>
     <style>
+        /* Your existing CSS remains unchanged */
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Roboto', sans-serif;
             margin: 0;
             padding: 20px;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+            position: relative;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .back-button {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .back-button:hover {
+            background-color: #0056b3;
         }
         #map {
             height: 400px;
             width: 100%;
-            margin-bottom: 20px;
+            margin-top: 20px;
+            border-radius: 5px;
         }
-        select, input {
-            margin: 10px 0;
+        input[readonly] {
             padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
             width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+            background-color: #f0f0f0;
+            cursor: not-allowed;
         }
         button {
-            padding: 10px 15px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-weight: 500;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .route-list {
+            margin-top: 20px;
+            max-height: 150px;
+            overflow-y: auto;
+            list-style: none;
+            padding: 0;
+        }
+        .route-list li {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-bottom: 10px;
             cursor: pointer;
         }
+        .route-list li:hover {
+            background-color: #f0f0f0;
+        }
+        .route-info {
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+        #keypad {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-bottom: 20px;
+            width: 200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .keypad-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+        }
+        .number-row {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        .zero-clear-row {
+            grid-template-columns: 1fr 2fr;
+        }
+        #keypad button {
+            padding: 8px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #f0f0f0;
+            color: #333333;
+            cursor: pointer;
+        }
+        #keypad button:hover {
+            background-color: #e0e0e0;
+        }
+        #clear-btn {
+            background-color: #ff4d4d;
+            color: #ffffff;
+        }
+        #clear-btn:hover {
+            background-color: #cc0000;
+        }
+        .loading-message {
+            color: #666;
+            font-size: 14px;
+            margin-top: 10px;
+        }
     </style>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBBY8WRPKMG0sPNFkHAYNcCwkwTn4T5jGw&libraries=routes"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <div class="container">
+        <a href="index.html" class="back-button"></a>
+        <h1>Transit Planner</h1>
 
-    <h1>Point-to-Point Planner</h1>
-    <label for="startSelect">Start Location:</label>
-    <select id="startSelect"></select>
+        <div id="busRouteSection" class="section active">
+            <h2>Bus Route Lookup</h2>
+            <input id="input-display" readonly value="Enter Bus Route Number">
+            <div id="loadingMessage" class="loading-message">Loading data...</div>
+            <div id="keypad">
+                <div class="keypad-row number-row">
+                    <button data-value="7">7</button>
+                    <button data-value="8">8</button>
+                    <button data-value="9">9</button>
+                </div>
+                <div class="keypad-row number-row">
+                    <button data-value="4">4</button>
+                    <button data-value="5">5</button>
+                    <button data-value="6">6</button>
+                </div>
+                <div class="keypad-row number-row">
+                    <button data-value="1">1</button>
+                    <button data-value="2">2</button>
+                    <button data-value="3">3</button>
+                </div>
+                <div class="keypad-row zero-clear-row">
+                    <button data-value="0">0</button>
+                    <button id="clear-btn">Clear</button>
+                </div>
+                <div class="keypad-row">
+                    <button data-value="A">A</button>
+                    <button data-value="B">B</button>
+                    <button data-value="C">C</button>
+                    <button data-value="D">D</button>
+                    <button data-value="E">E</button>
+                </div>
+                <div class="keypad-row">
+                    <button data-value="H">H</button>
+                    <button data-value="I">I</button>
+                    <button data-value="K">K</button>
+                    <button data-value="M">M</button>
+                    <button data-value="N">N</button>
+                </div>
+                <div class="keypad-row">
+                    <button data-value="P">P</button>
+                    <button data-value="R">R</button>
+                    <button data-value="S">S</button>
+                    <button data-value="T">T</button>
+                    <button data-value="W">W</button>
+                </div>
+                <div class="keypad-row" style="grid-template-columns: 1fr;">
+                    <button data-value="X">X</button>
+                </div>
+            </div>
+            <ul id="routeList" class="route-list"></ul>
+            <p id="selectedRouteDisplay" class="route-info">Selected Route: None</p>
+            <button id="displayBusRoute">Show Bus Route</button>
+            <div id="etaContainer"></div>
+            <div id="map"></div>
+        </div>
+    </div>
 
-    <label for="destSelect">Destination Location:</label>
-    <select id="destSelect"></select>
+    <script>
+        let map;
+        let busRouteMarkers = [];
+        let routePolyline;
+        let kmbRouteList = null;
+        let ctbRouteList = null;
+        let selectedRoute = null;
+        let selectedBound = null;
+        let selectedProvider = null;
+        let currentInput = '';
+        let currentInfoWindow = null;
+        const loadingMessage = document.getElementById('loadingMessage');
+        const API_KEY = 'AIzaSyBBY8WRPKMG0sPNFkHAYNcCwkwTn4T5jGw';
 
-    <button id="planRoute">Plan Route</button>
+        function initMap() {
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: { lat: 22.3193, lng: 114.1694 },
+                zoom: 12
+            });
+            loadRouteData();
+        }
 
-    <h1>Bus Route Lookup</h1>
-    <input type="text" id="busRouteInput" placeholder="Enter Bus Route Number">
-    <select id="boundSelect">
-        <option value="O">Outbound</option>
-        <option value="I">Inbound</option>
-    </select>
-    <button id="showBusRoute">Show Bus Route</button>
+        async function fetchWithRetry(url, retries = 5, backoff = 1000) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return await response.json();
+                } catch (err) {
+                    if (i === retries - 1) throw err;
+                    const delay = backoff * Math.pow(2, i);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+        }
 
-    <div id="etaContainer"></div>
-    <div id="map"></div>
+        async function loadRouteData() {
+            try {
+                const kmbRouteResponse = await fetchWithRetry("https://data.etabus.gov.hk/v1/transport/kmb/route/");
+                const kmbUniqueRoutes = [];
+                const kmbSeen = new Set();
+                kmbRouteResponse.data.forEach(route => {
+                    const key = `${route.route}-${route.bound}`;
+                    if (!kmbSeen.has(key)) {
+                        kmbSeen.add(key);
+                        kmbUniqueRoutes.push({ ...route, provider: 'kmb' });
+                    }
+                });
+                kmbRouteList = kmbUniqueRoutes;
 
-    <!-- Leaflet CSS and JS -->
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+                const ctbRouteResponse = await fetchWithRetry("https://rt.data.gov.hk/v2/transport/citybus/route/CTB");
+                const ctbUniqueRoutes = [];
+                const ctbSeen = new Set();
+                ctbRouteResponse.data.forEach(route => {
+                    const key = `${route.route}-${route.direction}`;
+                    if (!ctbSeen.has(key)) {
+                        ctbSeen.add(key);
+                        ctbUniqueRoutes.push({ 
+                            route: route.route, 
+                            bound: route.direction === 'outbound' ? 'O' : 'I', 
+                            orig_en: route.orig_en, 
+                            dest_en: route.dest_en, 
+                            provider: 'ctb' 
+                        });
+                    }
+                });
+                ctbRouteList = ctbUniqueRoutes;
 
-    <!-- External JavaScript -->
-    <script src="kmb.js"></script>
+                loadingMessage.textContent = "Route data loaded successfully!";
+                setTimeout(() => loadingMessage.style.display = 'none', 2000);
+            } catch (err) {
+                loadingMessage.textContent = "Failed to load route data. Please refresh the page.";
+            }
+        }
 
+        async function fetchRouteStops(provider, route, bound) {
+            if (provider === 'kmb') {
+                const data = await fetchWithRetry(`https://data.etabus.gov.hk/v1/transport/kmb/route-stop`);
+                return data.data.filter(item => item.route === route && item.bound === bound)
+                    .sort((a, b) => a.seq - b.seq); // Sort by seq ascending
+            } else if (provider === 'ctb') {
+                const direction = bound === 'O' ? 'outbound' : 'inbound';
+                const data = await fetchWithRetry(`https://rt.data.gov.hk/v2/transport/citybus/route-stop/CTB/${route}/${direction}`);
+                return data.data ? data.data.sort((a, b) => a.seq - b.seq) : []; // Sort by seq ascending
+            }
+        }
+
+        async function fetchStopDetails(provider, stopId) {
+            if (provider === 'kmb') {
+                const data = await fetchWithRetry(`https://data.etabus.gov.hk/v1/transport/kmb/stop/${stopId}`);
+                return data.data;
+            } else if (provider === 'ctb') {
+                const data = await fetchWithRetry(`https://rt.data.gov.hk/v2/transport/citybus/stop/${stopId}`);
+                return data.data;
+            }
+        }
+
+        async function fetchETA(stopId, provider) {
+            try {
+                if (provider === 'kmb') {
+                    const data = await fetchWithRetry(`https://data.etabus.gov.hk/v1/transport/kmb/stop-eta/${stopId}`, 3);
+                    return data;
+                } else if (provider === 'ctb') {
+                    const data = await fetchWithRetry(`https://rt.data.gov.hk/v2/transport/citybus/eta/CTB/${stopId}/${selectedRoute}`, 3);
+                    return data;
+                }
+            } catch (err) {
+                console.error("Error fetching ETA:", err);
+                return null;
+            }
+        }
+
+        const inputDisplay = document.getElementById("input-display");
+        const routeListUl = document.getElementById("routeList");
+        const selectedRouteDisplay = document.getElementById("selectedRouteDisplay");
+        const keypad = document.getElementById("keypad");
+
+        keypad.querySelectorAll("button").forEach(button => {
+            button.addEventListener("click", function() {
+                if (button.id === "clear-btn") {
+                    currentInput = '';
+                    inputDisplay.value = "Enter Bus Route Number";
+                    filterRoutes();
+                } else {
+                    currentInput += button.dataset.value;
+                    inputDisplay.value = currentInput;
+                    filterRoutes();
+                }
+            });
+        });
+
+        function filterRoutes() {
+            routeListUl.innerHTML = '';
+            if (!kmbRouteList || !ctbRouteList) {
+                routeListUl.innerHTML = '<li>Please wait for data to load...</li>';
+                return;
+            }
+            const input = currentInput.toLowerCase();
+            const kmbFilteredRoutes = kmbRouteList.filter(route => route.route.toLowerCase().startsWith(input));
+            const ctbFilteredRoutes = ctbRouteList.filter(route => route.route.toLowerCase().startsWith(input));
+            const allFilteredRoutes = [...kmbFilteredRoutes, ...ctbFilteredRoutes];
+            
+            allFilteredRoutes.forEach((route) => {
+                const li = document.createElement('li');
+                li.textContent = `${route.route} - ${route.bound === 'O' ? 'Outbound' : 'Inbound'} - from ${route.orig_en} to ${route.dest_en} (${route.provider.toUpperCase()})`;
+                li.addEventListener('click', () => {
+                    selectedRoute = route.route;
+                    selectedBound = route.bound;
+                    selectedProvider = route.provider;
+                    selectedRouteDisplay.textContent = `Selected Route: ${route.route} - ${route.bound === 'O' ? 'Outbound' : 'Inbound'} - from ${route.orig_en} to ${route.dest_en} (${route.provider.toUpperCase()})`;
+                    routeListUl.innerHTML = '';
+                });
+                routeListUl.appendChild(li);
+            });
+        }
+
+        // Sample path to 100 points or fewer for Roads API
+        function samplePath(path, maxPoints = 100) {
+            if (path.length <= maxPoints) return path;
+            const step = Math.floor(path.length / (maxPoints - 1));
+            const sampled = [];
+            for (let i = 0; i < path.length; i += step) {
+                sampled.push(path[i]);
+                if (sampled.length === maxPoints - 1) break;
+            }
+            sampled.push(path[path.length - 1]); // Ensure endpoint is included
+            return sampled;
+        }
+
+        document.getElementById("displayBusRoute").addEventListener("click", async function() {
+            if (!selectedRoute || !selectedBound || !selectedProvider) {
+                alert("Please select a route from the list.");
+                return;
+            }
+
+            // Clear previous markers and polyline
+            busRouteMarkers.forEach(marker => marker.setMap(null));
+            busRouteMarkers = [];
+            if (routePolyline) routePolyline.setMap(null);
+            if (currentInfoWindow) currentInfoWindow.close();
+            currentInfoWindow = null;
+            document.getElementById("etaContainer").innerHTML = "";
+
+            try {
+                const stopsForRoute = await fetchRouteStops(selectedProvider, selectedRoute, selectedBound);
+                if (!stopsForRoute || stopsForRoute.length === 0) {
+                    alert(`No stops found for route ${selectedRoute} (${selectedProvider.toUpperCase()}).`);
+                    return;
+                }
+
+                // Stops are already sorted by seq in fetchRouteStops
+                const stopPromises = stopsForRoute.map(item => 
+                    fetchStopDetails(selectedProvider, item.stop).catch(err => null)
+                );
+                const stopsDetails = await Promise.all(stopPromises);
+                const validStops = stopsDetails.filter(stop => stop);
+                const pathCoordinates = [];
+
+                validStops.forEach((stop) => {
+                    const coords = { 
+                        lat: parseFloat(stop.lat || stop.latitude), 
+                        lng: parseFloat(stop.long || stop.longitude) 
+                    };
+                    if (isNaN(coords.lat) || isNaN(coords.lng)) {
+                        console.warn(`Invalid coordinates for stop ${stop.name_en || stop.stop_name_en}:`, coords);
+                        return;
+                    }
+                    pathCoordinates.push(coords);
+
+                    const marker = new google.maps.Marker({
+                        position: coords,
+                        map: map,
+                        title: stop.name_en || stop.stop_name_en
+                    });
+
+                    const infoWindow = new google.maps.InfoWindow({
+                        content: `<strong>${stop.name_en || stop.stop_name_en}</strong><br/>Loading ETA...`
+                    });
+
+                    marker.addListener('click', () => {
+                        if (currentInfoWindow) currentInfoWindow.close();
+                        infoWindow.open(map, marker);
+                        currentInfoWindow = infoWindow;
+
+                        fetchETA(stop.stop || stop.stop_id, selectedProvider).then(etaData => {
+                            if (etaData && etaData.data) {
+                                const now = new Date();
+                                const etaInfo = etaData.data
+                                    .filter(bus => bus.route === selectedRoute)
+                                    .map(bus => {
+                                        const arriveTime = new Date(bus.eta || bus.eta_time);
+                                        const timeDiff = Math.round((arriveTime - now) / 60000);
+                                        let displayTime = timeDiff >= 0 && timeDiff <= 2 ? "Arrived" : timeDiff < -2 ? "Not Available" : `${timeDiff} mins`;
+                                        return `${bus.route} (${displayTime})`;
+                                    })
+                                    .join('<br/>');
+                                infoWindow.setContent(`<strong>${stop.name_en || stop.stop_name_en}</strong><br/>${etaInfo || "No ETA available."}`);
+                            }
+                        });
+                    });
+
+                    busRouteMarkers.push(marker);
+                });
+
+                if (pathCoordinates.length < 2) {
+                    alert("Not enough valid stops to draw a route.");
+                    return;
+                }
+
+                // Use stop coordinates directly, sorted by seq
+                const sampledPath = samplePath(pathCoordinates, 100);
+                const pathString = sampledPath.map(coord => `${coord.lat},${coord.lng}`).join('|');
+
+                try {
+                    const response = await fetch(`https://roads.googleapis.com/v1/snapToRoads?path=${pathString}&interpolate=true&key=${API_KEY}`);
+                    if (!response.ok) throw new Error(`Roads API request failed: ${response.statusText}`);
+                    const data = await response.json();
+
+                    let snappedCoords = pathCoordinates;
+                    if (data.snappedPoints) {
+                        snappedCoords = data.snappedPoints.map(point => ({
+                            lat: point.location.latitude,
+                            lng: point.location.longitude
+                        }));
+                        console.log("Roads API Success:", snappedCoords);
+                    } else {
+                        console.warn("Roads API returned no snapped points, using stop coordinates.");
+                    }
+
+                    routePolyline = new google.maps.Polyline({
+                        path: snappedCoords,
+                        geodesic: true,
+                        strokeColor: '#0000FF',
+                        strokeOpacity: 1.0,
+                        strokeWeight: 4
+                    });
+                    routePolyline.setMap(map);
+
+                    const bounds = new google.maps.LatLngBounds();
+                    snappedCoords.forEach(coord => bounds.extend(coord));
+                    map.fitBounds(bounds);
+                } catch (err) {
+                    console.error("Roads API error:", err);
+                    alert("Roads API failed. Drawing unsnapped stop path.");
+
+                    routePolyline = new google.maps.Polyline({
+                        path: pathCoordinates,
+                        geodesic: true,
+                        strokeColor: '#0000FF',
+                        strokeOpacity: 1.0,
+                        strokeWeight: 4
+                    });
+                    routePolyline.setMap(map);
+
+                    const bounds = new google.maps.LatLngBounds();
+                    pathCoordinates.forEach(coord => bounds.extend(coord));
+                    map.fitBounds(bounds);
+                }
+            } catch (err) {
+                console.error("Error displaying route:", err);
+                alert("Failed to load route details. Please try again.");
+            }
+        });
+
+        window.onload = initMap;
+    </script>
 </body>
 </html>
