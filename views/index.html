@@ -121,7 +121,6 @@
         button:hover {
             background-color: #0056b3;
         }
-        /* Bottom bar for temperature */
         .bottom-bar {
             background-color: rgba(51, 51, 51, 0.8);
             color: white;
@@ -141,9 +140,6 @@
     </style>
 </head>
 <body>
-
-
-    <!-- Bottom bar with temperature -->
     <div class="bottom-bar">
         <div id="temperature">Fetching your location...</div>
     </div>
@@ -154,12 +150,122 @@
     <script src="navbar.js"></script>
     <script src="temperature.js"></script>
     
+    <div class="container" id="main-content">
+        <h1>General Planner</h1>
+        <form id="routeForm">
+            <div class="place-container">
+                <div class="station-row">
+                    <dl>
+                        <dt class="starting-station">Starting Station</dt>
+                    </dl>
+                    <dd>
+                        <div class="searchable-select" id="currentStationContainer">
+                            <input type="text" id="currentStationInput" placeholder="Type to search...">
+                            <div class="options" id="currentStationOptions"></div>
+                        </div>
+                    </dd>
+                </div>
+                <div class="input-change">
+                    <img src="switch.png" alt="Swap Starting and Destination Stations" id="swapStations">
+                </div>
+                <div class="station-row">
+                    <dl class="condition-item">
+                        <dt class="destination-station">Destination Station</dt>
+                    </dl>
+                    <dd>
+                        <div class="searchable-select" id="destinationStationContainer">
+                            <input type="text" id="destinationStationInput" placeholder="Type to search...">
+                            <div class="options" id="destinationStationOptions"></div>
+                        </div>
+                    </dd>
+                </div>
+            </div>
+            <button type="submit">Find Route</button>
+        </form>
+        <div id="route"></div>
+    </div>
+  <!-- Bottom bar with temperature -->
+  <div class="bottom-bar">
+    <div id="temperature">Fetching your location...</div>
+</div>
+
+<script src="stations.js"></script>
+<script src="script.js"></script>
+<script src="RTHK.js"></script>
+<script src="navbar.js"></script>
 
     <script>
-        // Swap station inputs
-        <div class="bottom-bar">
-            <div id="temperature">Fetching your location...</div>
-        </div>
+        // Fetch Citybus stops from the API
+        async function fetchBusStops() {
+            try {
+                const response = await fetch('https://rt.data.gov.hk/v2/transport/citybus/stop');
+                const data = await response.json();
+                return data.data.map(stop => ({
+                    value: stop.stop,        // Stop ID (e.g., numeric or unique identifier)
+                    text: stop.name_en,      // Stop name in English
+                    type: 'Bus'              // Type for display and internal use
+                }));
+            } catch (error) {
+                console.error('Error fetching bus stops:', error);
+                return [];
+            }
+        }
+
+        // Extract unique MTR stations from stations.js
+        function getUniqueMTRStations() {
+            const stationSet = new Set();
+            const stations = [];
+            for (let line in lines) {
+                lines[line].forEach(station => {
+                    if (!stationSet.has(station.value)) {
+                        stationSet.add(station.value);
+                        stations.push({
+                            value: station.value,  // Station ID (e.g., "TSY")
+                            text: station.text,    // Station name (e.g., "Tsing Yi")
+                            type: 'MTR'            // Type for display
+                        });
+                    }
+                });
+            }
+            return stations;
+        }
+
+        // Set up searchable dropdowns
+        function makeSearchable(inputId, optionsId, options) {
+            const input = document.getElementById(inputId);
+            const optionsContainer = document.getElementById(optionsId);
+
+            input.addEventListener('input', function() {
+                const filter = input.value.toLowerCase();
+                optionsContainer.innerHTML = '';
+                const filteredOptions = options.filter(option => 
+                    option.text.toLowerCase().includes(filter)
+                );
+                filteredOptions.forEach(option => {
+                    const div = document.createElement('div');
+                    div.textContent = `${option.text} (${option.type})`; // Display name and type
+                    div.addEventListener('click', function() {
+                        input.value = option.text;
+                        input.dataset.value = option.value; // Store only the ID
+                        optionsContainer.style.display = 'none';
+                    });
+                    optionsContainer.appendChild(div);
+                });
+                optionsContainer.style.display = filteredOptions.length > 0 ? 'block' : 'none';
+            });
+
+            input.addEventListener('focus', function() {
+                optionsContainer.style.display = 'block';
+            });
+
+            document.addEventListener('click', function(event) {
+                if (!input.contains(event.target) && !optionsContainer.contains(event.target)) {
+                    optionsContainer.style.display = 'none';
+                }
+            });
+        }
+
+        // Swap stations functionality
         document.getElementById('swapStations').addEventListener('click', function() {
             const currentInput = document.getElementById('currentStationInput');
             const destinationInput = document.getElementById('destinationStationInput');
@@ -172,7 +278,7 @@
             currentInput.dataset.value = destinationInput.dataset.value || '';
             destinationInput.dataset.value = tempDataValue || '';
         });
-        
+
         // Form submission
         document.getElementById('routeForm').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -187,106 +293,18 @@
                 alert("Please select both a current station and a destination station.");
             }
         });
-// Function to get and display location, then fetch temperature
-async function setupAutocomplete() {
-    const response = await fetch('/get-locations');
-    const data = await response.json();
-    const input = document.getElementById('locationInput');
-    new Awesomplete(input, {
-        list: data.locations,
-        minChars: 1,
-        autoFirst: true
-    });
 
-    // Add event listener for selection
-    input.addEventListener('awesomplete-selectcomplete', async (event) => {
-        const selectedLocation = event.text.value;
-        const coordsResponse = await fetch('/get-coordinates', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ location: selectedLocation })
-        });
-        const coordsData = await coordsResponse.json();
-        if (coordsData.error) {
-            document.getElementById('temperature').innerText = 'Error fetching coordinates.';
-            return;
-        }
-        await showLocationAndFetchTemperature({
-            coords: { latitude: coordsData.latitude, longitude: coordsData.longitude }
-        });
-    });
-}
+        // Initialize on page load
+        window.onload = async function() {
+            const mtrStations = getUniqueMTRStations();
+            const busStops = await fetchBusStops();
+            const allOptions = [...mtrStations, ...busStops];
+           
 
-// Get temperature based on coordinates
-function getTemperature() {
-    if (!navigator.geolocation) {
-        document.getElementById("temperature").innerHTML = "Geolocation not supported by your browser.";
-        return;
-    }
-
-    document.getElementById("temperature").innerHTML = "Fetching your location...";
-
-    navigator.geolocation.getCurrentPosition(
-        showLocationAndFetchTemperature,
-        showError,
-        { timeout: 10000, enableHighAccuracy: true }
-    );
-}
-
-// Fetch temperature and display location
-async function showLocationAndFetchTemperature(position) {
-    const latitude = position.coords.latitude;
-    const longitude = position.coords.longitude;
-    console.log(`GPS Coordinates: Lat ${latitude}, Lon ${longitude}`);
-
-    document.getElementById("temperature").innerHTML = 
-        `Your location: Lat ${latitude.toFixed(4)}, Lon ${longitude.toFixed(4)}`;
-
-    try {
-        const response = await fetch('/get-temperature', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ latitude, longitude })
-        });
-
-        if (!response.ok) throw new Error("Server error");
-
-        const data = await response.json();
-        if (data.error) {
-            document.getElementById("temperature").innerHTML += ` - ${data.error}`;
-        } else {
-            document.getElementById("temperature").innerHTML = 
-                `Location: ${data.location}, Temperature: ${data.temperature}°${data.unit}`;
-        }
-    } catch (error) {
-        document.getElementById("temperature").innerHTML += " - Error fetching temperature.";
-    }
-}
-
-// Error callback: Display error message
-function showError(error) {
-    let message;
-    switch (error.code) {
-        case error.PERMISSION_DENIED:
-            message = "Location access denied.";
-            break;
-        case error.POSITION_UNAVAILABLE:
-            message = "Location unavailable.";
-            break;
-        case error.TIMEOUT:
-            message = "Location request timed out.";
-            break;
-        default:
-            message = "Unknown geolocation error.";
-    }
-    document.getElementById("temperature").innerHTML = message;
-}
-
-// Initialize
-window.onload = function() {
-    setupAutocomplete();
-    getTemperature();
-};
-</script>
+            makeSearchable('currentStationInput', 'currentStationOptions', allOptions);
+            makeSearchable('destinationStationInput', 'destinationStationOptions', allOptions);
+            getTemperature(); // Existing temperature function from temperature.js
+        };
+    </script>
 </body>
 </html>

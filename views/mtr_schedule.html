@@ -71,7 +71,8 @@
             font-size: 12px;
             color: gray;
             text-align: center;
-        }body {
+        }
+        body {
             font-family: 'Roboto', sans-serif;
             margin: 0;
             padding: 0;
@@ -124,7 +125,6 @@
             background-color: #007dc5;
             color: #fff;
         }
-        
     </style>
     <script>
         let originalContent = '';
@@ -174,7 +174,7 @@
     <div class="news-icon"></div>
     <div id="newsModal" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="toggleModal()">&times;</span>
+            <span class="close" onclick="toggleModal()">×</span>
             <div class="language-switch">
                 <button id="btnChinese">中文</button>
                 <button id="btnEnglish">English</button> <!-- Placeholder for future use -->
@@ -183,11 +183,6 @@
             <div class="source-reference">Source: RTHK</div>
         </div>
     </div>
-</body>
-</html>
-
-
-
 
     <script src="stations.js"></script>
     <script src="navbar.js"></script>
@@ -206,6 +201,16 @@
             "ISL": "Island Line <span style='display: inline-block; width: 20px; height: 10px; background-color: #007DC5; border-radius: 5px;'></span>",
             "KTL": "Kwun Tong Line <span style='display: inline-block; width: 20px; height: 10px; background-color: #00AB4E; border-radius: 5px;'></span>"
         };
+
+        // Function to calculate ETA in minutes
+        function calculateETA(scheduledTime, currentTime) {
+            const trainTime = new Date(scheduledTime);
+            const currTime = new Date(currentTime);
+            const diffMs = trainTime - currTime;
+            const etaMin = Math.ceil(diffMs / 60000); // Convert to minutes and round up
+            return etaMin > 0 ? `${etaMin} min` : "Arriving";
+        }
+
         async function fetchSchedule() {
             const urlParams = new URLSearchParams(window.location.search);
             const currentStation = urlParams.get('currentStation');
@@ -241,14 +246,15 @@
                     console.error("API Error:", data.error);
                     document.getElementById('schedule').innerHTML = `<div class="error">${data.error}</div>`;
                 } else {
-                    displayRouteOptions(data.bestRoute, data.alternativeRoutes, data.schedules, currentStation, destinationStation);
+                    displayRouteOptions(data.bestRoute, data.alternativeRoutes, data.schedules, data.curr_time, currentStation, destinationStation);
                 }
             } catch (error) {
                 console.error('Error fetching schedule:', error);
                 document.getElementById('schedule').innerHTML = '<div class="error">An error occurred while fetching the schedule.</div>';
             }
         }
-        function displayRouteOptions(bestRoute, alternativeRoutes, schedules, currentStation, destinationStation) {
+
+        function displayRouteOptions(bestRoute, alternativeRoutes, schedules, currTime, currentStation, destinationStation) {
             const routeOptions = document.getElementById('route-options');
             const scheduleDetail = document.getElementById('schedule');
             routeOptions.innerHTML = ''; // Clear previous content
@@ -269,36 +275,29 @@
                 const interchanges = routeData.route.interchanges;
         
                 for (let i = 0; i < lines.length; i++) {
-                    // Add the line name
                     routeParts.push(lineNames[lines[i]]);
-        
-                    // Add the interchange station (if it exists)
-                    if (i < interchanges.length - 1) { // Skip the last interchange (destination)
+                    if (i < interchanges.length - 1) {
                         routeParts.push(getStationFullName(interchanges[i]));
                     }
                 }
-        
-                // Add the destination station
                 routeParts.push(getStationFullName(destinationStation));
-        
-                // Display the route string
                 const routeString = routeParts.join(' → ');
                 routeOption.innerHTML = `
                     <strong>${routeData.name}:</strong> ${routeString} 
                     (${routeData.route.interchangeCount} interchange${routeData.route.interchangeCount !== 1 ? 's' : ''})
                 `;
         
-                // Add click event to show schedule details
+                // Add click event to show schedule details with currTime
                 routeOption.addEventListener('click', () => {
-                    displaySchedule(schedules, routeData.route.route, currentStation, destinationStation);
+                    displaySchedule(schedules, routeData.route.route, currTime, currentStation, destinationStation);
                     scheduleDetail.style.display = 'block';
                 });
         
-                // Append the route option to the container
                 routeOptions.appendChild(routeOption);
             });
         }
-        function displaySchedule(data, route, currentStation, destinationStation) {
+
+        function displaySchedule(data, route, currTime, currentStation, destinationStation) {
             const scheduleDetail = document.getElementById('schedule');
             if (!data) {
                 scheduleDetail.innerHTML = '<div class="error">No schedule data available.</div>';
@@ -313,7 +312,6 @@
             html += `<h2>From ${currentStationName} to ${destinationStationName}</h2>`;
         
             // Loop through each line in the route
-            
             route.forEach(line => {
                 const lineName = lineNames[line] || line;
                 html += `
@@ -326,27 +324,26 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>Time</th>
+                                <th>Time Until Arrival</th>
                                 <th>Platform</th>
                                 <th>Destination</th>
                                 <th>Sequence</th>
-                                <th>Valid</th>
                             </tr>
                         </thead>
                         <tbody>`;
         
-                // Display UP trains
+                // Display UP trains with ETA
                 if (data[line]?.up?.length === 0) {
-                    html += `<tr><td colspan="5">No UP trains available</td></tr>`;
+                    html += `<tr><td colspan="4">No UP trains available</td></tr>`;
                 } else {
                     data[line]?.up?.forEach(train => {
+                        const eta = calculateETA(train.time, currTime);
                         html += `
                             <tr>
-                                <td>${train.time}</td>
+                                <td>${eta}</td>
                                 <td>${train.plat}</td>
                                 <td class="dest-cell" data-dest="${train.dest}">${train.dest}</td>
                                 <td>${train.seq}</td>
-                                <td>${train.valid}</td>
                             </tr>`;
                     });
                 }
@@ -356,27 +353,26 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Time</th>
+                                    <th>ETA</th>
                                     <th>Platform</th>
                                     <th>Destination</th>
                                     <th>Sequence</th>
-                                    <th>Valid</th>
                                 </tr>
                             </thead>
                             <tbody>`;
         
-                // Display DOWN trains
+                // Display DOWN trains with ETA
                 if (data[line]?.down?.length === 0) {
-                    html += `<tr><td colspan="5">No DOWN trains available</td></tr>`;
+                    html += `<tr><td colspan="4">No DOWN trains available</td></tr>`;
                 } else {
                     data[line]?.down?.forEach(train => {
+                        const eta = calculateETA(train.time, currTime);
                         html += `
                             <tr>
-                                <td>${train.time}</td>
+                                <td>${eta}</td>
                                 <td>${train.plat}</td>
                                 <td class="dest-cell" data-dest="${train.dest}">${train.dest}</td>
                                 <td>${train.seq}</td>
-                                <td>${train.valid}</td>
                             </tr>`;
                     });
                 }
@@ -390,6 +386,7 @@
             // Update destination codes to full names
             updateStationNames();
         }
+
         function getStationFullName(code) {
             for (const line in lines) {
                 const station = lines[line].find(station => station.value === code);
@@ -399,6 +396,7 @@
             }
             return code; // Return the code if no full name is found
         }
+
         function updateStationNames() {
             const destCells = document.querySelectorAll('.dest-cell');
             destCells.forEach(cell => {
@@ -407,6 +405,10 @@
             });
         }
 
+        // Refresh every 30 seconds
+        setInterval(fetchSchedule, 30000); // Corrected from updateTrainTable to fetchSchedule
+
+        // Initial fetch
         fetchSchedule();
     </script>
 </body>
