@@ -221,20 +221,15 @@
     <div class="bottom-bar">
         <div id="temperature">Fetching your location...</div>
     </div>
-
     <script src="stations.js"></script>
     <script src="navbar.js"></script>
     <script src="temperature.js"></script>
+    <script src="citybusstop.js"></script>
     <script>
-        let allRoutes = [];
-        let allStops = [];
-        let routeStopsMap = {};
-
-        async function initializeData() {
+        function initializeData() {
             const loadingDiv = document.getElementById('loading');
             loadingDiv.style.display = 'block';
             try {
-                await fetchCitybusData();
                 if (allRoutes.length === 0 || allStops.length === 0) {
                     loadingDiv.textContent = 'No bus data available. Some features may not work.';
                 } else {
@@ -245,6 +240,24 @@
                 console.error('Initialization failed:', error);
             }
         }
+    
+        // Rest of your functions remain unchanged (getUniqueMTRStations, haversineDistance, etc.)
+    
+        window.onload = function() {
+            initializeData();
+            const mtrStations = getUniqueMTRStations();
+            const busStops = allStops.map(stop => ({
+                value: stop.stop,
+                text: stop.name_en,
+                type: 'Bus'
+            }));
+            const allOptions = [...mtrStations, ...busStops];
+            makeSearchable('currentStationInput', 'currentStationOptions', allOptions);
+            makeSearchable('destinationStationInput', 'destinationStationOptions', allOptions);
+            getTemperature();
+        };
+ 
+    
 
         async function fetchCitybusData() {
             try {
@@ -557,11 +570,13 @@
 
             if (currentType === 'MTR' && destinationType === 'MTR') {
                 window.location.href = `/general_schedule.html?currentStation=${currentId}&destinationStation=${destinationId}`;
-            } else if (currentType === 'Bus' && destinationType === 'Bus') {
-                findBusRoutes(currentId, destinationId);
-            } else {
-                routeDiv.innerHTML = '<p>Mixed selection of MTR and bus stops is not supported yet.</p>';
+            }  else if (currentType === 'Bus' && destinationType === 'Bus') {
+                localStorage.setItem('allRoutes', JSON.stringify(allRoutes));
+                localStorage.setItem('allStops', JSON.stringify(allStops));
+                localStorage.setItem('routeStopsMap', JSON.stringify(routeStopsMap));
+                window.location.href = `/general_schedule.html?startBusStop=${currentId}&endBusStop=${destinationId}`;
             }
+       
         });
 
         window.onload = async function() {

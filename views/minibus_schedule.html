@@ -222,7 +222,99 @@
         const clearBtn = document.getElementById('clear-btn');
         const regionButtons = document.querySelectorAll('.region-btn');
         let currentRegion = 'all';
-
+        const fetch = require('node-fetch');
+        const fs = require('fs');
+        
+        // Fetch all routes
+        async function fetchAllRoutes() {
+            try {
+                const response = await fetch('https://rt.data.gov.hk/v2/transport/citybus/route/CTB');
+                const data = await response.json();
+                return data.data;
+            } catch (error) {
+                console.error('Error fetching routes:', error);
+                return [];
+            }
+        }
+        
+        // Fetch stops for a specific route and direction
+        async function fetchRouteStops(route, direction) {
+            try {
+                const response = await fetch(`https://rt.data.gov.hk/v2/transport/citybus/route-stop/CTB/${route}/${direction}`);
+                const data = await response.json();
+                if (data.data) {
+                    return data.data.map(item => item.stop);
+                } else {
+                    return [];
+                }
+            } catch (error) {
+                console.error(`Error fetching stops for ${route} (${direction}):`, error);
+                return [];
+            }
+        }
+        
+        // Fetch stop details
+        async function fetchStopDetails(stopId) {
+            try {
+                const response = await fetch(`https://rt.data.gov.hk/v2/transport/citybus/stop/${stopId}`);
+                const data = await response.json();
+                return data.data;
+            } catch (error) {
+                console.error('Error fetching stop details for ID', stopId, ':', error);
+                return null;
+            }
+        }
+        
+        async function main() {
+            const allRoutes = await fetchAllRoutes();
+            if (allRoutes.length === 0) {
+                console.error('No routes fetched.');
+                return;
+            }
+            console.log(`Fetched ${allRoutes.length} routes.`);
+        
+            const routeStopsMap = {};
+            const stopIdsSet = new Set();
+        
+            const routePromises = allRoutes.map(async route => {
+                const directions = ['outbound', 'inbound'];
+                for (const direction of directions) {
+                    const stops = await fetchRouteStops(route.route, direction);
+                    const key = `${route.route}-${direction}`;
+                    routeStopsMap[key] = stops;
+                    stops.forEach(stopId => stopIdsSet.add(stopId));
+                }
+            });
+        
+            await Promise.all(routePromises);
+        
+            const stopIds = Array.from(stopIdsSet);
+            console.log(`Collected ${stopIds.length} unique stops.`);
+        
+            const stopDetailsPromises = stopIds.map(async stopId => {
+                const details = await fetchStopDetails(stopId);
+                return {
+                    stop: stopId,
+                    name_en: details && details.name_en ? details.name_en : `Stop ${stopId} (Name Missing)`,
+                    lat: details && details.lat ? details.lat : 0,
+                    long: details && details.long ? details.long : 0
+                };
+            });
+        
+            const allStops = await Promise.all(stopDetailsPromises);
+        
+            // Write to file
+            const data = `
+        var allRoutes = ${JSON.stringify(allRoutes, null, 2)};
+        var allStops = ${JSON.stringify(allStops, null, 2)};
+        var routeStopsMap = ${JSON.stringify(routeStopsMap, null, 2)};
+            `;
+        
+            fs.writeFileSync('data.js', data);
+            console.log('Data written to data.js');
+        }
+        
+        main().catch(console.error);
         // Navigation
         document.getElementById('train-btn').addEventListener('click', () => window.location.href = 'index.html');
         document.getElementById('bus-btn').addEventListener('click', () => window.location.href = '/bus_schedule.html');
