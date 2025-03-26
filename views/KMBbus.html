@@ -5,12 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Transit Planner</title>
     <style>
-        /* Your existing CSS remains unchanged */
         body {
             font-family: 'Roboto', sans-serif;
             margin: 0;
             padding: 20px;
-            background-color: #f4f4f9;
+            background: linear-gradient(135deg, #e0e7ff, #f4f4f9);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -18,34 +17,47 @@
             flex-direction: column;
         }
         .container {
-            background: rgba(255, 255, 255, 0.9);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
             width: 90%;
             max-width: 600px;
             text-align: center;
             position: relative;
+            transition: transform 0.2s ease;
+        }
+        .container:hover {
+            transform: translateY(-5px);
         }
         h1 {
-            font-size: 24px;
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        h2 {
+            font-size: 20px;
+            color: #555;
             margin-bottom: 20px;
+            font-weight: 500;
         }
         .back-button {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            padding: 5px 10px;
+            top: 15px;
+            left: 15px;
+            padding: 8px 12px;
             background-color: #007bff;
             color: #ffffff;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 16px;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            transition: background-color 0.3s ease;
         }
         .back-button:hover {
             background-color: #0056b3;
@@ -54,31 +66,40 @@
             height: 400px;
             width: 100%;
             margin-top: 20px;
-            border-radius: 5px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
         }
         input[readonly] {
-            padding: 10px;
+            padding: 12px;
             font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
             width: 100%;
             box-sizing: border-box;
-            margin-bottom: 10px;
-            background-color: #f0f0f0;
+            margin-bottom: 15px;
+            background-color: #f8f8f8;
+            color: #333;
             cursor: not-allowed;
-        }
-        button {
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: #ffffff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 10px;
+            text-align: center;
             font-weight: 500;
         }
+        button {
+            padding: 12px 24px;
+            background-color: #28a745;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+        }
         button:hover {
-            background-color: #0056b3;
+            background-color: #218838;
+            transform: scale(1.05);
+        }
+        button:active {
+            transform: scale(0.95);
         }
         .route-list {
             margin-top: 20px;
@@ -86,34 +107,43 @@
             overflow-y: auto;
             list-style: none;
             padding: 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
         }
         .route-list li {
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            margin-bottom: 10px;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
             cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .route-list li:last-child {
+            border-bottom: none;
         }
         .route-list li:hover {
             background-color: #f0f0f0;
         }
         .route-info {
-            margin-bottom: 20px;
+            margin: 20px 0;
             font-size: 18px;
+            color: #444;
+            font-weight: 500;
+            background: #e9f7ef;
+            padding: 10px;
+            border-radius: 8px;
         }
         #keypad {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 8px;
             margin-bottom: 20px;
-            width: 200px;
+            width: 240px;
             margin-left: auto;
             margin-right: auto;
         }
         .keypad-row {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 5px;
+            gap: 8px;
         }
         .number-row {
             grid-template-columns: repeat(3, 1fr);
@@ -122,28 +152,41 @@
             grid-template-columns: 1fr 2fr;
         }
         #keypad button {
-            padding: 8px;
-            font-size: 14px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            background-color: #f0f0f0;
-            color: #333333;
+            padding: 12px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            background-color: #e0e0e0;
+            color: #333;
             cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
         }
         #keypad button:hover {
-            background-color: #e0e0e0;
+            background-color: #d0d0d0;
+            transform: scale(1.05);
+        }
+        #keypad button:active {
+            transform: scale(0.95);
         }
         #clear-btn {
-            background-color: #ff4d4d;
+            background-color: #dc3545;
             color: #ffffff;
         }
         #clear-btn:hover {
-            background-color: #cc0000;
+            background-color: #c82333;
         }
         .loading-message {
             color: #666;
             font-size: 14px;
             margin-top: 10px;
+        }
+        .error-message {
+            background-color: #ffcccc;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            color: #721c24;
+            font-weight: 500;
         }
     </style>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBBY8WRPKMG0sPNFkHAYNcCwkwTn4T5jGw&libraries=routes"></script>
@@ -151,67 +194,68 @@
 </head>
 <body>
     <div class="container">
-        <a href="index.html" class="back-button"></a>
+        <a href="index.html" class="back-button" aria-label="Back to Home">&#8592;</a>
         <h1>Transit Planner</h1>
 
         <div id="busRouteSection" class="section active">
             <h2>Bus Route Lookup</h2>
-            <input id="input-display" readonly value="Enter Bus Route Number">
+            <input id="input-display" readonly value="Enter Bus Route Number" aria-label="Bus Route Input">
             <div id="loadingMessage" class="loading-message">Loading data...</div>
-            <div id="keypad">
+            <div id="keypad" role="group" aria-label="Keypad for route entry">
                 <div class="keypad-row number-row">
-                    <button data-value="7">7</button>
-                    <button data-value="8">8</button>
-                    <button data-value="9">9</button>
+                    <button data-value="7" aria-label="Number 7">7</button>
+                    <button data-value="8" aria-label="Number 8">8</button>
+                    <button data-value="9" aria-label="Number 9">9</button>
                 </div>
                 <div class="keypad-row number-row">
-                    <button data-value="4">4</button>
-                    <button data-value="5">5</button>
-                    <button data-value="6">6</button>
+                    <button data-value="4" aria-label="Number 4">4</button>
+                    <button data-value="5" aria-label="Number 5">5</button>
+                    <button data-value="6" aria-label="Number 6">6</button>
                 </div>
                 <div class="keypad-row number-row">
-                    <button data-value="1">1</button>
-                    <button data-value="2">2</button>
-                    <button data-value="3">3</button>
+                    <button data-value="1" aria-label="Number 1">1</button>
+                    <button data-value="2" aria-label="Number 2">2</button>
+                    <button data-value="3" aria-label="Number 3">3</button>
                 </div>
                 <div class="keypad-row zero-clear-row">
-                    <button data-value="0">0</button>
-                    <button id="clear-btn">Clear</button>
+                    <button data-value="0" aria-label="Number 0">0</button>
+                    <button id="clear-btn" aria-label="Clear input">Clear</button>
                 </div>
                 <div class="keypad-row">
-                    <button data-value="A">A</button>
-                    <button data-value="B">B</button>
-                    <button data-value="C">C</button>
-                    <button data-value="D">D</button>
-                    <button data-value="E">E</button>
+                    <button data-value="A" aria-label="Letter A">A</button>
+                    <button data-value="B" aria-label="Letter B">B</button>
+                    <button data-value="C" aria-label="Letter C">C</button>
+                    <button data-value="D" aria-label="Letter D">D</button>
+                    <button data-value="E" aria-label="Letter E">E</button>
                 </div>
                 <div class="keypad-row">
-                    <button data-value="H">H</button>
-                    <button data-value="I">I</button>
-                    <button data-value="K">K</button>
-                    <button data-value="M">M</button>
-                    <button data-value="N">N</button>
+                    <button data-value="H" aria-label="Letter H">H</button>
+                    <button data-value="I" aria-label="Letter I">I</button>
+                    <button data-value="K" aria-label="Letter K">K</button>
+                    <button data-value="M" aria-label="Letter M">M</button>
+                    <button data-value="N" aria-label="Letter N">N</button>
                 </div>
                 <div class="keypad-row">
-                    <button data-value="P">P</button>
-                    <button data-value="R">R</button>
-                    <button data-value="S">S</button>
-                    <button data-value="T">T</button>
-                    <button data-value="W">W</button>
+                    <button data-value="P" aria-label="Letter P">P</button>
+                    <button data-value="R" aria-label="Letter R">R</button>
+                    <button data-value="S" aria-label="Letter S">S</button>
+                    <button data-value="T" aria-label="Letter T">T</button>
+                    <button data-value="W" aria-label="Letter W">W</button>
                 </div>
                 <div class="keypad-row" style="grid-template-columns: 1fr;">
-                    <button data-value="X">X</button>
+                    <button data-value="X" aria-label="Letter X">X</button>
                 </div>
             </div>
-            <ul id="routeList" class="route-list"></ul>
+            <ul id="routeList" class="route-list" role="listbox" aria-label="Available Routes"></ul>
             <p id="selectedRouteDisplay" class="route-info">Selected Route: None</p>
-            <button id="displayBusRoute">Show Bus Route</button>
+            <button id="displayBusRoute" aria-label="Show selected bus route">Show Bus Route</button>
             <div id="etaContainer"></div>
-            <div id="map"></div>
+            <div id="map" role="region" aria-label="Bus Route Map"></div>
         </div>
     </div>
 
     <script>
+        const API_KEY = 'AIzaSyBBY8WRPKMG0sPNFkHAYNcCwkwTn4T5jGw'; // Ideally, secure this via backend
         let map;
         let busRouteMarkers = [];
         let routePolyline;
@@ -222,27 +266,53 @@
         let selectedProvider = null;
         let currentInput = '';
         let currentInfoWindow = null;
+        let debounceTimeout;
         const loadingMessage = document.getElementById('loadingMessage');
-        const API_KEY = 'AIzaSyBBY8WRPKMG0sPNFkHAYNcCwkwTn4T5jGw';
+        const inputDisplay = document.getElementById("input-display");
 
         function initMap() {
             map = new google.maps.Map(document.getElementById('map'), {
-                center: { lat: 22.3193, lng: 114.1694 },
                 zoom: 12
             });
+            // Dynamic centering with geolocation
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        map.setCenter({
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        });
+                    },
+                    () => map.setCenter({ lat: 22.3193, lng: 114.1694 }) // Fallback
+                );
+            } else {
+                map.setCenter({ lat: 22.3193, lng: 114.1694 });
+            }
             loadRouteData();
+        }
+
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            document.querySelector('.container').prepend(errorDiv);
+            setTimeout(() => errorDiv.remove(), 5000);
         }
 
         async function fetchWithRetry(url, retries = 5, backoff = 1000) {
             for (let i = 0; i < retries; i++) {
                 try {
                     const response = await fetch(url);
+                    if (response.status === 429) {
+                        showError("Rate limit exceeded. Retrying...");
+                        await new Promise(resolve => setTimeout(resolve, backoff * Math.pow(2, i)));
+                        continue;
+                    }
                     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                     return await response.json();
                 } catch (err) {
                     if (i === retries - 1) throw err;
-                    const delay = backoff * Math.pow(2, i);
-                    await new Promise(resolve => setTimeout(resolve, delay));
+                    await new Promise(resolve => setTimeout(resolve, backoff * Math.pow(2, i)));
                 }
             }
         }
@@ -282,7 +352,7 @@
                 loadingMessage.textContent = "Route data loaded successfully!";
                 setTimeout(() => loadingMessage.style.display = 'none', 2000);
             } catch (err) {
-                loadingMessage.textContent = "Failed to load route data. Please refresh the page.";
+                showError("Failed to load route data. Please refresh the page.");
             }
         }
 
@@ -290,11 +360,11 @@
             if (provider === 'kmb') {
                 const data = await fetchWithRetry(`https://data.etabus.gov.hk/v1/transport/kmb/route-stop`);
                 return data.data.filter(item => item.route === route && item.bound === bound)
-                    .sort((a, b) => a.seq - b.seq); // Sort by seq ascending
+                    .sort((a, b) => a.seq - b.seq);
             } else if (provider === 'ctb') {
                 const direction = bound === 'O' ? 'outbound' : 'inbound';
                 const data = await fetchWithRetry(`https://rt.data.gov.hk/v2/transport/citybus/route-stop/CTB/${route}/${direction}`);
-                return data.data ? data.data.sort((a, b) => a.seq - b.seq) : []; // Sort by seq ascending
+                return data.data ? data.data.sort((a, b) => a.seq - b.seq) : [];
             }
         }
 
@@ -323,10 +393,14 @@
             }
         }
 
-        const inputDisplay = document.getElementById("input-display");
         const routeListUl = document.getElementById("routeList");
         const selectedRouteDisplay = document.getElementById("selectedRouteDisplay");
         const keypad = document.getElementById("keypad");
+
+        // Fix "undefined" issue by ensuring proper initialization
+        if (inputDisplay.value === "undefined") {
+            inputDisplay.value = "Enter Bus Route Number";
+        }
 
         keypad.querySelectorAll("button").forEach(button => {
             button.addEventListener("click", function() {
@@ -335,6 +409,9 @@
                     inputDisplay.value = "Enter Bus Route Number";
                     filterRoutes();
                 } else {
+                    if (currentInput === '' && inputDisplay.value === "Enter Bus Route Number") {
+                        inputDisplay.value = '';
+                    }
                     currentInput += button.dataset.value;
                     inputDisplay.value = currentInput;
                     filterRoutes();
@@ -343,31 +420,34 @@
         });
 
         function filterRoutes() {
-            routeListUl.innerHTML = '';
-            if (!kmbRouteList || !ctbRouteList) {
-                routeListUl.innerHTML = '<li>Please wait for data to load...</li>';
-                return;
-            }
-            const input = currentInput.toLowerCase();
-            const kmbFilteredRoutes = kmbRouteList.filter(route => route.route.toLowerCase().startsWith(input));
-            const ctbFilteredRoutes = ctbRouteList.filter(route => route.route.toLowerCase().startsWith(input));
-            const allFilteredRoutes = [...kmbFilteredRoutes, ...ctbFilteredRoutes];
-            
-            allFilteredRoutes.forEach((route) => {
-                const li = document.createElement('li');
-                li.textContent = `${route.route} - ${route.bound === 'O' ? 'Outbound' : 'Inbound'} - from ${route.orig_en} to ${route.dest_en} (${route.provider.toUpperCase()})`;
-                li.addEventListener('click', () => {
-                    selectedRoute = route.route;
-                    selectedBound = route.bound;
-                    selectedProvider = route.provider;
-                    selectedRouteDisplay.textContent = `Selected Route: ${route.route} - ${route.bound === 'O' ? 'Outbound' : 'Inbound'} - from ${route.orig_en} to ${route.dest_en} (${route.provider.toUpperCase()})`;
-                    routeListUl.innerHTML = '';
+            clearTimeout(debounceTimeout);
+            debounceTimeout = setTimeout(() => {
+                routeListUl.innerHTML = '';
+                if (!kmbRouteList || !ctbRouteList) {
+                    routeListUl.innerHTML = '<li>Please wait for data to load...</li>';
+                    return;
+                }
+                const input = currentInput.toLowerCase();
+                const kmbFilteredRoutes = kmbRouteList.filter(route => route.route.toLowerCase().startsWith(input));
+                const ctbFilteredRoutes = ctbRouteList.filter(route => route.route.toLowerCase().startsWith(input));
+                const allFilteredRoutes = [...kmbFilteredRoutes, ...ctbFilteredRoutes];
+                
+                allFilteredRoutes.forEach((route) => {
+                    const li = document.createElement('li');
+                    li.textContent = `${route.route} from ${route.orig_en} to ${route.dest_en} (${route.provider.toUpperCase()})`;
+                    li.setAttribute('role', 'option');
+                    li.addEventListener('click', () => {
+                        selectedRoute = route.route;
+                        selectedBound = route.bound;
+                        selectedProvider = route.provider;
+                        selectedRouteDisplay.textContent = `Selected Route: ${route.route} from ${route.orig_en} to ${route.dest_en} (${route.provider.toUpperCase()})`;
+                        routeListUl.innerHTML = '';
+                    });
+                    routeListUl.appendChild(li);
                 });
-                routeListUl.appendChild(li);
-            });
+            }, 300);
         }
 
-        // Sample path to 100 points or fewer for Roads API
         function samplePath(path, maxPoints = 100) {
             if (path.length <= maxPoints) return path;
             const step = Math.floor(path.length / (maxPoints - 1));
@@ -376,17 +456,16 @@
                 sampled.push(path[i]);
                 if (sampled.length === maxPoints - 1) break;
             }
-            sampled.push(path[path.length - 1]); // Ensure endpoint is included
+            sampled.push(path[path.length - 1]);
             return sampled;
         }
 
         document.getElementById("displayBusRoute").addEventListener("click", async function() {
             if (!selectedRoute || !selectedBound || !selectedProvider) {
-                alert("Please select a route from the list.");
+                showError("Please select a route from the list.");
                 return;
             }
 
-            // Clear previous markers and polyline
             busRouteMarkers.forEach(marker => marker.setMap(null));
             busRouteMarkers = [];
             if (routePolyline) routePolyline.setMap(null);
@@ -397,70 +476,85 @@
             try {
                 const stopsForRoute = await fetchRouteStops(selectedProvider, selectedRoute, selectedBound);
                 if (!stopsForRoute || stopsForRoute.length === 0) {
-                    alert(`No stops found for route ${selectedRoute} (${selectedProvider.toUpperCase()}).`);
+                    showError(`No stops found for route ${selectedRoute} (${selectedProvider.toUpperCase()}).`);
                     return;
                 }
 
-                // Stops are already sorted by seq in fetchRouteStops
-                const stopPromises = stopsForRoute.map(item => 
-                    fetchStopDetails(selectedProvider, item.stop).catch(err => null)
-                );
-                const stopsDetails = await Promise.all(stopPromises);
-                const validStops = stopsDetails.filter(stop => stop);
                 const pathCoordinates = [];
+                const bounds = new google.maps.LatLngBounds();
 
-                validStops.forEach((stop) => {
+                for (const item of stopsForRoute) {
+                    const stop = await fetchStopDetails(selectedProvider, item.stop).catch(() => null);
+                    if (!stop) continue;
+
                     const coords = { 
                         lat: parseFloat(stop.lat || stop.latitude), 
                         lng: parseFloat(stop.long || stop.longitude) 
                     };
                     if (isNaN(coords.lat) || isNaN(coords.lng)) {
                         console.warn(`Invalid coordinates for stop ${stop.name_en || stop.stop_name_en}:`, coords);
-                        return;
+                        continue;
                     }
                     pathCoordinates.push(coords);
+                    bounds.extend(coords);
 
                     const marker = new google.maps.Marker({
                         position: coords,
                         map: map,
                         title: stop.name_en || stop.stop_name_en
                     });
+                    marker.stopDetails = stop; // Cache stop details
 
                     const infoWindow = new google.maps.InfoWindow({
                         content: `<strong>${stop.name_en || stop.stop_name_en}</strong><br/>Loading ETA...`
                     });
 
-                    marker.addListener('click', () => {
+                    marker.addListener('click', async () => {
                         if (currentInfoWindow) currentInfoWindow.close();
                         infoWindow.open(map, marker);
                         currentInfoWindow = infoWindow;
 
-                        fetchETA(stop.stop || stop.stop_id, selectedProvider).then(etaData => {
-                            if (etaData && etaData.data) {
-                                const now = new Date();
-                                const etaInfo = etaData.data
-                                    .filter(bus => bus.route === selectedRoute)
-                                    .map(bus => {
-                                        const arriveTime = new Date(bus.eta || bus.eta_time);
-                                        const timeDiff = Math.round((arriveTime - now) / 60000);
-                                        let displayTime = timeDiff >= 0 && timeDiff <= 2 ? "Arrived" : timeDiff < -2 ? "Not Available" : `${timeDiff} mins`;
-                                        return `${bus.route} (${displayTime})`;
-                                    })
-                                    .join('<br/>');
-                                infoWindow.setContent(`<strong>${stop.name_en || stop.stop_name_en}</strong><br/>${etaInfo || "No ETA available."}`);
-                            }
-                        });
+                        const etaData = await fetchETA(stop.stop || stop.stop_id, selectedProvider);
+                        if (!etaData || !etaData.data || etaData.data.length === 0) {
+                            infoWindow.setContent(`<strong>${stop.name_en || stop.stop_name_en}</strong><br/>No ETA available.`);
+                            return;
+                        }
+
+                        const now = new Date();
+                        const etaInfo = etaData.data
+                            .filter(bus => bus.route === selectedRoute)
+                            .map(bus => {
+                                const etaField = bus.eta || bus.eta_time;
+                                const arriveTime = etaField ? new Date(etaField) : null;
+                                let displayTime;
+
+                                if (!arriveTime || isNaN(arriveTime.getTime())) {
+                                    displayTime = "Not Available";
+                                } else {
+                                    const timeDiff = Math.round((arriveTime - now) / 60000);
+                                    if (timeDiff >= -2 && timeDiff <= 0) {
+                                        displayTime = "Arrived";
+                                    } else if (timeDiff < -2) {
+                                        displayTime = "Not Available";
+                                    } else {
+                                        displayTime = `${timeDiff} mins`;
+                                    }
+                                }
+                                return `${bus.route} (${displayTime})`;
+                            })
+                            .join('<br/>');
+
+                        infoWindow.setContent(`<strong>${stop.name_en || stop.stop_name_en}</strong><br/>${etaInfo || "No ETA available."}`);
                     });
 
                     busRouteMarkers.push(marker);
-                });
+                }
 
                 if (pathCoordinates.length < 2) {
-                    alert("Not enough valid stops to draw a route.");
+                    showError("Not enough valid stops to draw a route.");
                     return;
                 }
 
-                // Use stop coordinates directly, sorted by seq
                 const sampledPath = samplePath(pathCoordinates, 100);
                 const pathString = sampledPath.map(coord => `${coord.lat},${coord.lng}`).join('|');
 
@@ -475,43 +569,34 @@
                             lat: point.location.latitude,
                             lng: point.location.longitude
                         }));
-                        console.log("Roads API Success:", snappedCoords);
-                    } else {
-                        console.warn("Roads API returned no snapped points, using stop coordinates.");
                     }
 
                     routePolyline = new google.maps.Polyline({
                         path: snappedCoords,
                         geodesic: true,
-                        strokeColor: '#0000FF',
+                        strokeColor: '#007bff',
                         strokeOpacity: 1.0,
                         strokeWeight: 4
                     });
                     routePolyline.setMap(map);
-
-                    const bounds = new google.maps.LatLngBounds();
-                    snappedCoords.forEach(coord => bounds.extend(coord));
                     map.fitBounds(bounds);
                 } catch (err) {
                     console.error("Roads API error:", err);
-                    alert("Roads API failed. Drawing unsnapped stop path.");
+                    showError("Roads API failed. Drawing unsnapped stop path.");
 
                     routePolyline = new google.maps.Polyline({
                         path: pathCoordinates,
                         geodesic: true,
-                        strokeColor: '#0000FF',
+                        strokeColor: '#007bff',
                         strokeOpacity: 1.0,
                         strokeWeight: 4
                     });
                     routePolyline.setMap(map);
-
-                    const bounds = new google.maps.LatLngBounds();
-                    pathCoordinates.forEach(coord => bounds.extend(coord));
                     map.fitBounds(bounds);
                 }
             } catch (err) {
                 console.error("Error displaying route:", err);
-                alert("Failed to load route details. Please try again.");
+                showError("Failed to load route details. Please try again.");
             }
         });
 
