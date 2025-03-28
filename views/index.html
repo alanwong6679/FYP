@@ -240,7 +240,23 @@
                 console.error('Initialization failed:', error);
             }
         }
-    
+        function findNearestMTRStation(busStop, mtrStations) {
+            let nearestStation = null;
+            let minDistance = Infinity;
+        
+            mtrStations.forEach(mtr => {
+                const distance = haversineDistance(
+                    parseFloat(busStop.lat), parseFloat(busStop.long),
+                    mtr.lat, mtr.long
+                );
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestStation = mtr;
+                }
+            });
+        
+            return { station: nearestStation, distance: minDistance };
+        }
         // Rest of your functions remain unchanged (getUniqueMTRStations, haversineDistance, etc.)
     
         window.onload = function() {
@@ -570,11 +586,16 @@
 
             if (currentType === 'MTR' && destinationType === 'MTR') {
                 window.location.href = `/general_schedule.html?currentStation=${currentId}&destinationStation=${destinationId}`;
-            }  else if (currentType === 'Bus' && destinationType === 'Bus') {
+            } else if (currentType === 'Bus' && destinationType === 'MTR') {
                 localStorage.setItem('allRoutes', JSON.stringify(allRoutes));
                 localStorage.setItem('allStops', JSON.stringify(allStops));
                 localStorage.setItem('routeStopsMap', JSON.stringify(routeStopsMap));
-                window.location.href = `/general_schedule.html?startBusStop=${currentId}&endBusStop=${destinationId}`;
+                window.location.href = `/general_schedule.html?startBusStop=${currentId}&destinationStation=${destinationId}`;
+            } else if (currentType === 'MTR' && destinationType === 'Bus') {
+                localStorage.setItem('allRoutes', JSON.stringify(allRoutes));
+                localStorage.setItem('allStops', JSON.stringify(allStops));
+                localStorage.setItem('routeStopsMap', JSON.stringify(routeStopsMap));
+                window.location.href = `/general_schedule.html?currentStation=${currentId}&endBusStop=${destinationId}`;
             }
        
         });

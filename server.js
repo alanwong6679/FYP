@@ -10,7 +10,7 @@ app.use(express.urlencoded({ extended: true }));
 app.engine('html', require('ejs').renderFile);
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 1000;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -19,6 +19,7 @@ app.use(express.static('views'));
 // Import coordinates
 const { regionCoordinates } = require('./views/hkostation.js');
 const { placeCoordinates } = require('./views/directloca.js');
+
 const lines = {
     "AEL": { order: ["HOK", "KOW", "TSY", "AIR", "AWE"], first: "HOK", last: "AWE" },
     "TCL": { order: ["HOK", "KOW", "OLY", "NAC", "LAK", "TSY", "SUN", "TUC"], first: "HOK", last: "TUC" },
