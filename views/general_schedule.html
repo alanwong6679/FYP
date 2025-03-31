@@ -288,84 +288,84 @@ console.log("MTR Response:", mtrResponse);
             document.getElementById('schedule').innerHTML = output;
         }
         async function fetchBusToMTR(startBusStop, destinationStation, mtrStations) {
-            const startStop = allStops.find(s => s.stop === startBusStop);
-            if (!startStop) {
-                document.getElementById('schedule').innerHTML = '<p>Invalid starting bus stop.</p>';
-                return;
-            }
-        
-            const nearbyStartStops = findNearbyStops(startStop, 500);
-            const nearbyStartStopIds = nearbyStartStops.map(s => s.stop);
-            const busRoutes = findBusRoutesToStops(nearbyStartStopIds, allStops.map(s => s.stop));
-        
-            if (!busRoutes.length) {
-                document.getElementById('schedule').innerHTML = '<p>No bus routes found.</p>';
-                return;
-            }
-        
-            const routes = [];
-            for (const busRoute of busRoutes) {
-                const boardingStop = allStops.find(s => s.stop === busRoute.boardingStop);
-                const alightingStop = allStops.find(s => s.stop === busRoute.alightingStop);
-        
-                const stopIndexStart = busRoute.stops.findIndex(s => s.id === busRoute.boardingStop);
-                const stopIndexEnd = busRoute.stops.findIndex(s => s.id === busRoute.alightingStop);
-                const stopCount = stopIndexEnd >= stopIndexStart ? stopIndexEnd - stopIndexStart : 0;
-        
-                const busDetails = {
-                    busRoute,
-                    boardingStopName: boardingStop?.name_en || `Stop ${busRoute.boardingStop}`,
-                    alightingStopName: alightingStop?.name_en || `Stop ${busRoute.alightingStop}`,
-                    boardingDistance: busRoute.boardingDistance,
-                    stopCount
-                };
-        
-                let walkingDistanceToMTR = "unavailable";
-                let interchangeStation = null;
-                let schedules = null;
-        
-                if (alightingStop && alightingStop.lat && alightingStop.long && !isNaN(parseFloat(alightingStop.lat)) && !isNaN(parseFloat(alightingStop.long))) {
-                    const nearestMTR = findNearestMTRStation(alightingStop, mtrStations);
-                    if (nearestMTR.station && !isNaN(nearestMTR.distance)) {
-                        walkingDistanceToMTR = nearestMTR.distance;
-                        interchangeStation = nearestMTR.station.value;
-        
-                        // Fetch MTR schedule with full data for clickable details
-                        const mtrResponse = await fetch('/fetch_schedule', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ currentStation: interchangeStation, destinationStation })
-                        }).then(res => res.json()).catch(err => {
-                            console.error(`MTR fetch error: ${err}`);
-                            return { error: 'MTR schedule unavailable' };
-                        });
-        
-                        if (!mtrResponse.error) {
-                            busDetails.mtrRoute = mtrResponse.bestRoute;
-                            schedules = mtrResponse.schedules; // Store schedule data for display
-                        }
-                    }
-                }
-        
-                const busTime = stopCount * 2;
-                const walkingTime = (typeof walkingDistanceToMTR === 'number' ? walkingDistanceToMTR : 0) / 5000 * 60;
-                const mtrTime = schedules ? Object.keys(schedules).reduce((total, line) => {
-                    const lineStations = lines[line].length;
-                    return total + (lineStations * 2);
-                }, 0) + (busDetails.mtrRoute?.interchangeCount || 0) * 5 : 0;
-        
-                routes.push({
-                    ...busDetails,
-                    interchangeStation,
-                    walkingDistanceToMTR,
-                    schedules, // Pass schedules for detailed view
-                    estimatedTime: Math.round(busTime + walkingTime + mtrTime)
+    const startStop = allStops.find(s => s.stop === startBusStop);
+    if (!startStop) {
+        document.getElementById('schedule').innerHTML = '<p>Invalid starting bus stop.</p>';
+        return;
+    }
+
+    const nearbyStartStops = findNearbyStops(startStop, 500);
+    const nearbyStartStopIds = nearbyStartStops.map(s => s.stop);
+    const busRoutes = findBusRoutesToStops(nearbyStartStopIds, allStops.map(s => s.stop));
+
+    if (!busRoutes.length) {
+        document.getElementById('schedule').innerHTML = '<p>No bus routes found.</p>';
+        return;
+    }
+
+    const routes = [];
+    for (const busRoute of busRoutes) {
+        const boardingStop = allStops.find(s => s.stop === busRoute.boardingStop);
+        const alightingStop = allStops.find(s => s.stop === busRoute.alightingStop);
+
+        const stopIndexStart = busRoute.stops.findIndex(s => s.id === busRoute.boardingStop);
+        const stopIndexEnd = busRoute.stops.findIndex(s => s.id === busRoute.alightingStop);
+        const stopCount = stopIndexEnd >= stopIndexStart ? stopIndexEnd - stopIndexStart : 0;
+
+        const busDetails = {
+            busRoute,
+            boardingStopName: boardingStop?.name_en || `Stop ${busRoute.boardingStop}`,
+            alightingStopName: alightingStop?.name_en || `Stop ${busRoute.alightingStop}`,
+            boardingDistance: busRoute.boardingDistance,
+            stopCount
+        };
+
+        let walkingDistanceToMTR = "unavailable";
+        let interchangeStation = null;
+        let schedules = null;
+
+        if (alightingStop && alightingStop.lat && alightingStop.long && !isNaN(parseFloat(alightingStop.lat)) && !isNaN(parseFloat(alightingStop.long))) {
+            const nearestMTR = findNearestMTRStation(alightingStop, mtrStations);
+            if (nearestMTR.station && !isNaN(nearestMTR.distance)) {
+                walkingDistanceToMTR = nearestMTR.distance;
+                interchangeStation = nearestMTR.station.value;
+
+                // Fetch MTR schedule with full data for clickable details
+                const mtrResponse = await fetch('/fetch_schedule', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ currentStation: interchangeStation, destinationStation })
+                }).then(res => res.json()).catch(err => {
+                    console.error(`MTR fetch error: ${err}`);
+                    return { error: 'MTR schedule unavailable' };
                 });
+
+                if (!mtrResponse.error) {
+                    busDetails.mtrRoute = mtrResponse.bestRoute;
+                    schedules = mtrResponse.schedules; // Store schedule data for display
+                }
             }
-        
-            routes.sort((a, b) => a.estimatedTime - b.estimatedTime);
-            displayMixedRoutes(routes.slice(0, 3), 'Bus-to-MTR', startBusStop, destinationStation);
         }
+
+        const busTime = stopCount * 2;
+        const walkingTime = (typeof walkingDistanceToMTR === 'number' ? walkingDistanceToMTR : 0) / 5000 * 60;
+        const mtrTime = schedules ? Object.keys(schedules).reduce((total, line) => {
+            const lineStations = lines[line].length;
+            return total + (lineStations * 2);
+        }, 0) + (busDetails.mtrRoute?.interchangeCount || 0) * 5 : 0;
+
+        routes.push({
+            ...busDetails,
+            interchangeStation,
+            walkingDistanceToMTR,
+            schedules, // Pass schedules for detailed view
+            estimatedTime: Math.round(busTime + walkingTime + mtrTime)
+        });
+    }
+
+    routes.sort((a, b) => a.estimatedTime - b.estimatedTime);
+    displayMixedRoutes(routes.slice(0, 3), 'Bus-to-MTR', startBusStop, destinationStation);
+}
         // Update findNearbyStops to accept a custom distance
         function findNearbyStops(station, maxDistance = 1000) {
             return allStops.filter(s => 
@@ -435,34 +435,33 @@ console.log("MTR Response:", mtrResponse);
                 scheduleDiv.innerHTML = `<p>No ${type} routes found.</p>`;
                 return;
             }
-            
-
+        
             scheduleDiv.innerHTML = `<h3>${type} Routes</h3>` + routes.map((route, i) => {
                 const busRoute = route.busRoute;
                 const mtrRoute = route.mtrRoute;
-                const interchangeName = getStationFullName(route.interchangeStation);
-                const boardingBusStop = allStops.find(s => s.stop === busRoute.boardingStop)?.name_en || `Stop ${busRoute.boardingStop}`;
-                const alightingBusStop = allStops.find(s => s.stop === busRoute.alightingStop)?.name_en || `Stop ${busRoute.alightingStop}`;
-
+                const interchangeName = getStationFullName(route.interchangeStation || 'unknown');
+                const boardingBusStop = route.boardingStopName;
+                const alightingBusStop = route.alightingStopName;
+                const walkDistanceText = (typeof route.walkingDistanceToMTR === 'number' && !isNaN(route.walkingDistanceToMTR)) 
+                    ? `${Math.round(route.walkingDistanceToMTR)}m` 
+                    : 'unavailable';
+        
                 return `
                     <div class="route-option" id="route-summary-${i}" onclick="toggleRouteDetails('route-details-${i}', this)">
                         <strong>Route ${i + 1}</strong><br>
-                        ${type === 'Bus-to-MTR' ? 
-                            `Bus ${busRoute.route} (${busRoute.direction}): Walk ${Math.round(busRoute.boardingDistance)}m to ${boardingBusStop}, alight at ${alightingBusStop}<br>
-                             Walk ${Math.round(route.walkingDistance)}m to ${interchangeName}<br>
-                             MTR: ${mtrRoute.route.map(l => lineNames[l]).join(' → ')} to ${getStationFullName(end)}` :
-                            `MTR: ${mtrRoute.route.map(l => lineNames[l]).join(' → ')} to ${interchangeName}<br>
-                             Walk ${Math.round(route.walkingDistance)}m to ${boardingBusStop}<br>
-                             Bus ${busRoute.route} (${busRoute.direction}): Board at ${boardingBusStop}, alight at ${alightingBusStop} (${Math.round(busRoute.alightingDistance)}m to destination)`}
+                        Bus ${busRoute.route} (${busRoute.direction}): Walk ${Math.round(busRoute.boardingDistance)}m to ${boardingBusStop}, alight at ${alightingBusStop} (${route.stopCount} stops)<br>
+                        Walk ${walkDistanceText} to ${interchangeName}<br>
+                        ${mtrRoute ? `MTR: ${mtrRoute.route.map(l => lineNames[l]).join(' → ')} to ${getStationFullName(end)}` : 'MTR unavailable'}<br>
+                        Estimated Time: ${route.estimatedTime} mins
                     </div>
-                    <div class="route-details" id="route-details-${i}">
-                        <h4>${type === 'Bus-to-MTR' ? 'Bus' : 'MTR'} Segment</h4>
-                        ${type === 'Bus-to-MTR' ? `
-                            <ul class="stop-list">${busRoute.stops.map(s => `
-                                <li class="${s.id === busRoute.boardingStop ? 'boarding-stop' : s.id === busRoute.alightingStop ? 'alighting-stop' : ''}">
-                                    ${s.name}${s.id === busRoute.boardingStop ? `<span id="eta-${i}"></span>` : ''}
-                                </li>`).join('')}</ul>
-                            <p>Walk ${Math.round(route.walkingDistance)}m to ${interchangeName}</p>
+                    <div class="route-details" id="route-details-${i}" style="display: none;">
+                        <h4>Bus Segment</h4>
+                        <ul class="stop-list">${busRoute.stops.map(s => `
+                            <li class="${s.id === busRoute.boardingStop ? 'boarding-stop' : s.id === busRoute.alightingStop ? 'alighting-stop' : ''}">
+                                ${s.name}${s.id === busRoute.boardingStop ? `<span id="eta-${i}"></span>` : ''}
+                            </li>`).join('')}</ul>
+                        <p>Walk ${walkDistanceText} to ${interchangeName}</p>
+                        ${mtrRoute ? `
                             <h4>MTR Segment</h4>
                             ${mtrRoute.route.map(line => `
                                 <h5>${lineNames[line]}</h5>
@@ -471,32 +470,19 @@ console.log("MTR Response:", mtrResponse);
                                     ${route.schedules[line]?.up?.map(t => `<tr><td>${t.time}</td><td>${t.plat}</td><td>${getStationFullName(t.dest)}</td><td>${t.seq}</td><td>${t.valid}</td></tr>`).join('') || '<tr><td colspan="5">No UP trains</td></tr>'}
                                     ${route.schedules[line]?.down?.map(t => `<tr><td>${t.time}</td><td>${t.plat}</td><td>${getStationFullName(t.dest)}</td><td>${t.seq}</td><td>${t.valid}</td></tr>`).join('') || '<tr><td colspan="5">No DOWN trains</td></tr>'}
                                 </table>
-                            `).join('')}` : `
-                            ${mtrRoute.route.map(line => `
-                                <h5>${lineNames[line]}</h5>
-                                <table class="schedule-table">
-                                    <tr><th>Time</th><th>Platform</th><th>Destination</th><th>Sequence</th><th>Valid</th></tr>
-                                    ${route.schedules[line]?.up?.map(t => `<tr><td>${t.time}</td><td>${t.plat}</td><td>${getStationFullName(t.dest)}</td><td>${t.seq}</td><td>${t.valid}</td></tr>`).join('') || '<tr><td colspan="5">No UP trains</td></tr>'}
-                                    ${route.schedules[line]?.down?.map(t => `<tr><td>${t.time}</td><td>${t.plat}</td><td>${getStationFullName(t.dest)}</td><td>${t.seq}</td><td>${t.valid}</td></tr>`).join('') || '<tr><td colspan="5">No DOWN trains</td></tr>'}
-                                </table>
-                            `).join('')}
-                            <p>Walk ${Math.round(route.walkingDistance)}m to ${boardingBusStop}</p>
-                            <h4>Bus Segment</h4>
-                            <ul class="stop-list">${busRoute.stops.map(s => `
-                                <li class="${s.id === busRoute.boardingStop ? 'boarding-stop' : s.id === busRoute.alightingStop ? 'alighting-stop' : ''}">
-                                    ${s.name}${s.id === busRoute.boardingStop ? `<span id="eta-${i}"></span>` : ''}
-                                </li>`).join('')}</ul>`}
+                            `).join('')}` : '<p>MTR schedule unavailable</p>'}
                     </div>
                 `;
             }).join('');
-
-            // Fetch ETA for visible bus routes
+        
             routes.forEach((route, i) => {
-                if (document.getElementById(`route-details-${i}`).style.display === 'block') {
+                const details = document.getElementById(`route-details-${i}`);
+                if (details && details.style.display === 'block') {
                     fetchETA(route.busRoute.route, route.busRoute.direction, route.busRoute.boardingStop, `route-details-${i}`);
                 }
             });
         }
+           
     </script>
 </body>
 </html>
