@@ -1,0 +1,17 @@
+ /* Bottom bar for temperature */
+ .bottom-bar {
+    background-color: rgba(51, 51, 51, 0.8);
+    color: white;
+    padding: 10px;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    z-index: 1000;
+}
+#temperature {
+    font-size: 16px;
+    margin-left: 20px;
+}

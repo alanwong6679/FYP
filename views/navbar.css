@@ -1,0 +1,192 @@
+/* navbar.css (full updated version with consistent sizes) */
+.nav-bar {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 150px;
+  background-color: #333;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.navbar-icon-link {
+  text-decoration: none; /* No underline */
+  display: inline-block; /* Helps with alignment */
+  cursor: pointer; /* Shows it’s clickable */
+}
+
+.navbar-icon-link img {
+  vertical-align: middle; /* Aligns nicely with other navbar items */
+}
+.nav-title {
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+  padding: 10px 0;
+  text-decoration: none;
+}
+.navbar-title {
+  text-decoration: none; /* Removes the underline */
+  color: inherit; /* Matches the surrounding text color */
+}
+.nav-bar button {
+  background-color: #007bff;
+  padding: 10px 20px;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  border: none;
+  width: 100%;
+  text-align: center;
+  margin-top: 20px;
+}
+
+.nav-bar button.active {
+  background-color: #0056b3;
+}
+
+.nav-bar button:hover {
+  background-color: #0056b3;
+}
+
+/* RTHK button styling */
+.rthk-icon {
+  width: 40px;
+  height: 40px;
+  background-image: url('https://cdn-icons-png.flaticon.com/512/2571/2571101.png');
+  background-size: cover;
+  border-radius: 4px;
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  cursor: pointer;
+  z-index: 2000;
+}
+
+.rthk-icon:hover {
+  /* No background change */
+}
+
+/* Modal styling */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+  background-color: white;
+  margin: 15% auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%;
+  max-width: 600px;
+  border-radius: 8px;
+  overflow-y: auto;
+  max-height: 70vh;
+  position: relative;
+  padding-top: 40px;
+}
+
+.news-item {
+  margin-bottom: 10px;
+  padding: 10px;
+  border-bottom: 1px solid #ccc;
+}
+
+.close {
+  color: #aaa;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 1100;
+}
+
+.close:hover,
+.close:focus {
+  color: black;
+  text-decoration: none;
+}
+
+.language-switch {
+  position: absolute;
+  top: 10px;
+  right: 40px;
+  display: flex;
+  gap: 5px;
+}
+
+.language-switch button {
+  padding: 3px 6px;
+  font-size: 12px;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.language-switch button:hover {
+  background-color: #e0e0e0;
+}
+
+.source-reference {
+  margin-top: 20px;
+  font-size: 12px;
+  color: gray;
+  text-align: center;
+}
+
+/* Ensure the bar doesn't interfere with the input */
+dd .searchable-select {
+  margin-top: 0; /* Reset margin since layout is side-by-side */
+}
+
+/* Common styles for both Starting and Destination Station with fixed width */
+.starting-station, .destination-station {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 10px;
+  margin-right: 10px;
+  width: 120px; /* Consistent width */
+  box-sizing: border-box;
+  font-size: 13px;
+  font-weight: bold;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Specific style for Starting Station */
+.starting-station {
+  background-color: #3E78B3; /* Blue for Starting Station */
+}
+
+/* Specific style for Destination Station */
+.destination-station {
+  background-color: #B35092; /* Pink for Destination Station */
+}
+
+/* Ensure station-row overrides any inline styles */
+.station-row dt {
+  flex-grow: 0; /* Prevent stretching */
+}
+

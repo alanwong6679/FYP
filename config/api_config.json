@@ -1,0 +1,44 @@
+{
+    "apis": [
+      {
+        "name": "KMB Route List",
+        "url": "https://data.etabus.gov.hk/v1/transport/kmb/route/"
+      },
+      {
+        "name": "KMB Route Details",
+        "url": "https://data.etabus.gov.hk/v1/transport/kmb/route/{route}/{direction}/{service_type}"
+      },
+      {
+        "name": "KMB Stop List",
+        "url": "https://data.etabus.gov.hk/v1/transport/kmb/stop"
+      },
+      {
+        "name": "KMB Stop Details",
+        "url": "https://data.etabus.gov.hk/v1/transport/kmb/stop/{stop_id}"
+      },
+      {
+        "name": "KMB Route Stop List",
+        "url": "https://data.etabus.gov.hk/v1/transport/kmb/route-stop"
+      },
+      {
+        "name": "KMB Route Stop Details",
+        "url": "https://data.etabus.gov.hk/v1/transport/kmb/route-stop/{route}/{direction}/{service_type}"
+      },
+      {
+        "name": "KMB ETA by Stop and Route",
+        "url": "https://data.etabus.gov.hk/v1/transport/kmb/eta/{stop_id}/{route}/{service_type}"
+      },
+      {
+        "name": "KMB ETA by Stop",
+        "url": "https://data.etabus.gov.hk/v1/transport/kmb/stop-eta/{stop_id}"
+      },
+      {
+        "name": "KMB ETA by Route",
+        "url": "https://data.etabus.gov.hk/v1/transport/kmb/route-eta/{route}/{service_type}"
+      },
+      {
+        "name": "MTR Schedule",
+        "url": "https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php"
+      }
+    ]
+  }
