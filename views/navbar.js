@@ -12,11 +12,12 @@ title.textContent = 'Route Planner';
 navbar.appendChild(title);
     // Define the buttons with their properties, including icon URLs
     const buttons = [
-        { id: 'train-btn', text: 'Train', href: 'mtr.html', icon: src="mtr_button.png" },
-        { id: 'bus-btn', text: 'Bus', href: 'KMBbus.html', icon: src="kmb_button.png"},
-        { id: 'bus-btn', text: 'CityBus', href: 'citybus.html', icon: src="citybus_button.png"},
-        { id: 'tram-btn', text: 'Tram', href: 'tram_schedule.html', icon: src="tram_button.png" },
-        { id: 'mini-btn', text: 'Mini Bus', href: 'minibus_schedule.html', icon: src="minibus_button.png" }
+        { id: 'train-btn', text: 'Train', href: 'mtr.html', icon: 'mtr_button.png' },
+        { id: 'bus-btn', text: 'Bus', href: 'KMBbus.html', icon: 'kmb_button.png' },
+        { id: 'bus-btn', text: 'CityBus', href: 'citybus.html', icon: 'citybus_button.png' },
+        { id: 'tram-btn', text: 'Tram', href: 'tram_schedule.html', icon: 'tram_button.png' },
+        { id: 'mini-btn', text: 'Mini Bus', href: 'minibus_schedule.html', icon: 'minibus_button.png' },
+        { id: 'ferry-btn', text: 'Ferry', href: 'ferry.html', icon: 'ferry_button.png' },
     ];
     function createNavbar() {
         // Create the nav-bar element

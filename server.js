@@ -4,13 +4,21 @@ const axios = require('axios');
 const bodyParser = require('body-parser');
 require('dotenv').config();
 const path = require('path');
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    next();
+});
+var cors = require('cors');
 
+
+app.use(cors());
 app.set('view engine', 'html');
 app.use(express.urlencoded({ extended: true }));
 app.engine('html', require('ejs').renderFile);
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
-const PORT = process.env.PORT || 1000;
+const PORT = process.env.PORT || 5000;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -19,6 +27,7 @@ app.use(express.static('views'));
 // Import coordinates
 const { regionCoordinates } = require('./views/hkostation.js');
 const { placeCoordinates } = require('./views/directloca.js');
+
 
 const lines = {
     "AEL": { order: ["HOK", "KOW", "TSY", "AIR", "AWE"], first: "HOK", last: "AWE" },

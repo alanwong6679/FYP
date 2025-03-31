@@ -212,19 +212,41 @@ console.log("MTR Response:", mtrResponse);
         };
 
         const toggleRouteDetails = (id, el) => {
-            const d = document.getElementById(id);
-            d.style.display = d.style.display === 'none' ? 'block' : 'none';
-            if (d.style.display === 'block') fetchETA(el.getAttribute('data-route'), el.getAttribute('data-direction'), el.getAttribute('data-boarding-stop'), id);
+            const details = document.getElementById(id);
+            details.style.display = details.style.display === 'none' ? 'block' : 'none';
+            if (details.style.display === 'block' && window.currentRoutes) {
+                const routeIndex = parseInt(id.split('-')[2]);
+                const route = window.currentRoutes[routeIndex];
+                if (route.busRoute) { // Only for Bus-to-MTR
+                    fetchETA(route.busRoute.route, route.busRoute.direction, route.busRoute.boardingStop, id);
+                }
+            }
         };
-
-        const fetchETA = async (route, dir, stop, id) => {
-            const span = document.querySelector(`#${id} .boarding-stop span`);
-            if (!span) return;
+        
+        const fetchETA = async (route, dir, stop, detailsId) => {
+            const span = document.querySelector(`#${detailsId} .boarding-stop span`);
+            if (!span) {
+                console.error(`No span found for ETA in #${detailsId}`);
+                return;
+            }
+        
             try {
-                const { data } = await (await fetch(`https://rt.data.gov.hk/v2/transport/citybus/eta/CTB/${stop}/${route}`)).json();
+                // Use KMB API for Bus 55 (assuming it's a KMB route, not Citybus)
+                const response = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/eta/${stop}/${route}/1`);
+                const { data } = await response.json();
                 const eta = data.find(e => e.eta_seq === 1 && e.dir === (dir === 'outbound' ? 'O' : 'I')) || data.find(e => e.eta_seq === 1);
-                span.textContent = eta?.eta ? Math.round((new Date(eta.eta) - new Date(eta.data_timestamp)) / 60000) >= 0 ? ` (ETA: ${Math.round((new Date(eta.eta) - new Date(eta.data_timestamp)) / 60000)} min)` : ` (Due now)` : ` (No ETA)`;
-            } catch (e) { span.textContent = ` (ETA unavailable)`; console.error(`ETA error for ${route}-${stop}:`, e); }
+                
+                if (eta?.eta) {
+                    const mins = Math.round((new Date(eta.eta) - new Date()) / 60000);
+                    span.textContent = mins >= 0 ? ` (ETA: ${mins} min)` : ` (Due now)`;
+                } else {
+                    span.textContent = ` (No ETA data)`;
+                    console.warn(`No ETA found for route ${route}, stop ${stop}, dir ${dir}:`, data);
+                }
+            } catch (e) {
+                span.textContent = ` (ETA unavailable)`;
+                console.error(`ETA fetch error for ${route}-${stop}:`, e);
+            }
         };
 
         const getStationFullName = code => Object.values(lines).flat().find(s => s.value === code)?.text || code;
@@ -238,20 +260,27 @@ console.log("MTR Response:", mtrResponse);
         }
         async function fetchMTRToBus(currentStation, endBusStop, mtrStations) {
             const endStop = allStops.find(s => s.stop === endBusStop);
-            if (!endStop) {
+            if (!endStop || isNaN(parseFloat(endStop.lat)) || isNaN(parseFloat(endStop.long))) {
                 document.getElementById('schedule').innerHTML = '<p>Invalid ending bus stop.</p>';
                 return;
             }
         
             const nearestMTR = findNearestMTRStation(endStop, mtrStations);
-            const destinationMTRStation = nearestMTR.station.value;
+            if (!nearestMTR.station) {
+                document.getElementById('schedule').innerHTML = '<p>No nearby MTR station found.</p>';
+                return;
+            }
             const walkingDistance = nearestMTR.distance;
+            const destinationMTRStation = nearestMTR.station.value;
         
             const mtrResponse = await fetch('/fetch_schedule', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ currentStation, destinationStation: destinationMTRStation })
-            }).then(res => res.json());
+            }).then(res => res.json()).catch(err => {
+                console.error(`MTR fetch error: ${err}`);
+                return { error: 'MTR schedule unavailable' };
+            });
         
             if (mtrResponse.error) {
                 document.getElementById('schedule').innerHTML = `<p>Error fetching MTR schedule: ${mtrResponse.error}</p>`;
@@ -259,17 +288,28 @@ console.log("MTR Response:", mtrResponse);
             }
         
             const routeString = mtrResponse.bestRoute.route.map(line => lineNames[line]).join(' → ');
+            const mtrTime = mtrResponse.bestRoute.route.reduce((total, line) => {
+                const lineStations = lines[line].length;
+                return total + (lineStations * 2);
+            }, 0) + (mtrResponse.bestRoute.interchangeCount * 5);
+            const walkingTime = walkingDistance / 5000 * 60;
+            const estimatedTime = Math.round(mtrTime + walkingTime);
+        
             const routes = [{
                 type: 'MTR',
-                route: routeString,
+                mtrRoute: mtrResponse.bestRoute,
+                schedules: mtrResponse.schedules, // Pass schedules for clickable details
                 from: currentStation,
                 to: destinationMTRStation,
-                walkingDistance,
+                interchangeStation: destinationMTRStation, // For consistency with Bus-to-MTR
+                walkingDistanceToMTR: walkingDistance,
                 endStopName: endStop.name_en,
-                estimatedTime: destinationMTRStation === 'AIR' ? 37 : 15 // Approximate for Airport Express
+                estimatedTime
             }];
         
-          
+            // Use displayMixedRoutes for clickable schedules
+            displayMixedRoutes(routes, 'MTR-to-Bus', currentStation, endBusStop);
+        }
         
             // Sort by estimated time
             routes.sort((a, b) => a.estimatedTime - b.estimatedTime);
@@ -286,7 +326,7 @@ console.log("MTR Response:", mtrResponse);
                 `;
             });
             document.getElementById('schedule').innerHTML = output;
-        }
+        
         async function fetchBusToMTR(startBusStop, destinationStation, mtrStations) {
     const startStop = allStops.find(s => s.stop === startBusStop);
     if (!startStop) {
@@ -428,7 +468,6 @@ console.log("MTR Response:", mtrResponse);
             }
             return directRoutes;
         }
-
         function displayMixedRoutes(routes, type, start, end) {
             const scheduleDiv = document.getElementById('schedule');
             if (routes.length === 0) {
@@ -436,53 +475,102 @@ console.log("MTR Response:", mtrResponse);
                 return;
             }
         
+            window.currentRoutes = routes; // Temporary global for toggleRouteDetails
+        
             scheduleDiv.innerHTML = `<h3>${type} Routes</h3>` + routes.map((route, i) => {
-                const busRoute = route.busRoute;
                 const mtrRoute = route.mtrRoute;
                 const interchangeName = getStationFullName(route.interchangeStation || 'unknown');
-                const boardingBusStop = route.boardingStopName;
-                const alightingBusStop = route.alightingStopName;
                 const walkDistanceText = (typeof route.walkingDistanceToMTR === 'number' && !isNaN(route.walkingDistanceToMTR)) 
                     ? `${Math.round(route.walkingDistanceToMTR)}m` 
                     : 'unavailable';
         
-                return `
-                    <div class="route-option" id="route-summary-${i}" onclick="toggleRouteDetails('route-details-${i}', this)">
-                        <strong>Route ${i + 1}</strong><br>
-                        Bus ${busRoute.route} (${busRoute.direction}): Walk ${Math.round(busRoute.boardingDistance)}m to ${boardingBusStop}, alight at ${alightingBusStop} (${route.stopCount} stops)<br>
-                        Walk ${walkDistanceText} to ${interchangeName}<br>
-                        ${mtrRoute ? `MTR: ${mtrRoute.route.map(l => lineNames[l]).join(' → ')} to ${getStationFullName(end)}` : 'MTR unavailable'}<br>
-                        Estimated Time: ${route.estimatedTime} mins
-                    </div>
-                    <div class="route-details" id="route-details-${i}" style="display: none;">
-                        <h4>Bus Segment</h4>
-                        <ul class="stop-list">${busRoute.stops.map(s => `
-                            <li class="${s.id === busRoute.boardingStop ? 'boarding-stop' : s.id === busRoute.alightingStop ? 'alighting-stop' : ''}">
-                                ${s.name}${s.id === busRoute.boardingStop ? `<span id="eta-${i}"></span>` : ''}
-                            </li>`).join('')}</ul>
-                        <p>Walk ${walkDistanceText} to ${interchangeName}</p>
-                        ${mtrRoute ? `
+                if (type === 'Bus-to-MTR') {
+                    const busRoute = route.busRoute;
+                    const boardingBusStop = route.boardingStopName;
+                    const alightingBusStop = route.alightingStopName;
+                    return `
+                        <div class="route-option" id="route-summary-${i}" onclick="toggleRouteDetails('route-details-${i}', this)">
+                            <strong>Route ${i + 1}</strong><br>
+                            Bus ${busRoute.route} (${busRoute.direction}): Walk ${Math.round(busRoute.boardingDistance)}m to ${boardingBusStop}, alight at ${alightingBusStop} (${route.stopCount} stops)<br>
+                            Walk ${walkDistanceText} to ${interchangeName}<br>
+                            ${mtrRoute ? `MTR: ${mtrRoute.route.map(l => lineNames[l]).join(' → ')} to ${getStationFullName(end)}` : 'MTR unavailable'}<br>
+                            Estimated Time: ${route.estimatedTime} mins
+                        </div>
+                        <div class="route-details" id="route-details-${i}" style="display: none;">
+                            <h4>Bus Segment</h4>
+                            <ul class="stop-list">${busRoute.stops.map(s => `
+                                <li class="${s.id === busRoute.boardingStop ? 'boarding-stop' : s.id === busRoute.alightingStop ? 'alighting-stop' : ''}">
+                                    ${s.name}${s.id === busRoute.boardingStop ? `<span id="eta-${i}"></span>` : ''}
+                                </li>`).join('')}</ul>
+                            <p>Walk ${walkDistanceText} to ${interchangeName}</p>
+                            ${mtrRoute ? `
+                                <h4>MTR Segment</h4>
+                                ${mtrRoute.route.map(line => {
+                                    const direction = getDirection(route.interchangeStation, end, line, route.schedules);
+                                    const trains = route.schedules[line]?.[direction] || [];
+                                    const nextTrain = trains.find(t => new Date(t.time) > new Date()) || trains[0]; // Next or first available
+                                    return `
+                                        <h5>${lineNames[line]}</h5>
+                                        <table class="schedule-table">
+                                            <tr><th>Next Train (mins)</th><th>Platform</th><th>Destination</th><th>Sequence</th></tr>
+                                            ${nextTrain ? `
+                                                <tr><td>${calculateETAMins(nextTrain.time)}</td><td>${nextTrain.plat}</td><td>${getStationFullName(nextTrain.dest)}</td><td>${nextTrain.seq}</td></tr>
+                                            ` : '<tr><td colspan="4">No upcoming trains</td></tr>'}
+                                        </table>
+                                    `;
+                                }).join('')}` : '<p>MTR schedule unavailable</p>'}
+                        </div>
+                    `;
+                } else if (type === 'MTR-to-Bus') {
+                    return `
+                        <div class="route-option" id="route-summary-${i}" onclick="toggleRouteDetails('route-details-${i}', this)">
+                            <strong>Route ${i + 1}</strong><br>
+                            MTR: ${mtrRoute.route.map(l => lineNames[l]).join(' → ')}: From ${getStationFullName(route.from)} to ${getStationFullName(route.to)}<br>
+                            Then walk ${walkDistanceText} to ${route.endStopName} (Bus Stop)<br>
+                            Estimated Time: ${route.estimatedTime} mins
+                        </div>
+                        <div class="route-details" id="route-details-${i}" style="display: none;">
                             <h4>MTR Segment</h4>
-                            ${mtrRoute.route.map(line => `
-                                <h5>${lineNames[line]}</h5>
-                                <table class="schedule-table">
-                                    <tr><th>Time</th><th>Platform</th><th>Destination</th><th>Sequence</th><th>Valid</th></tr>
-                                    ${route.schedules[line]?.up?.map(t => `<tr><td>${t.time}</td><td>${t.plat}</td><td>${getStationFullName(t.dest)}</td><td>${t.seq}</td><td>${t.valid}</td></tr>`).join('') || '<tr><td colspan="5">No UP trains</td></tr>'}
-                                    ${route.schedules[line]?.down?.map(t => `<tr><td>${t.time}</td><td>${t.plat}</td><td>${getStationFullName(t.dest)}</td><td>${t.seq}</td><td>${t.valid}</td></tr>`).join('') || '<tr><td colspan="5">No DOWN trains</td></tr>'}
-                                </table>
-                            `).join('')}` : '<p>MTR schedule unavailable</p>'}
-                    </div>
-                `;
-            }).join('');
-        
-            routes.forEach((route, i) => {
-                const details = document.getElementById(`route-details-${i}`);
-                if (details && details.style.display === 'block') {
-                    fetchETA(route.busRoute.route, route.busRoute.direction, route.busRoute.boardingStop, `route-details-${i}`);
+                            ${mtrRoute.route.map(line => {
+                                const direction = getDirection(route.from, route.to, line, route.schedules);
+                                const trains = route.schedules[line]?.[direction] || [];
+                                const nextTrain = trains.find(t => new Date(t.time) > new Date()) || trains[0]; // Next or first available
+                                return `
+                                    <h5>${lineNames[line]}</h5>
+                                    <table class="schedule-table">
+                                        <tr><th>Next Train (mins)</th><th>Platform</th><th>Destination</th><th>Sequence</th></tr>
+                                        ${nextTrain ? `
+                                            <tr><td>${calculateETAMins(nextTrain.time)}</td><td>${nextTrain.plat}</td><td>${getStationFullName(nextTrain.dest)}</td><td>${nextTrain.seq}</td></tr>
+                                        ` : '<tr><td colspan="4">No upcoming trains</td></tr>'}
+                                    </table>
+                                `;
+                            }).join('')}
+                            <p>Then walk ${walkDistanceText} to ${route.endStopName} (Bus Stop)</p>
+                        </div>
+                    `;
                 }
-            });
+            }).join('');
         }
-           
+        
+        function calculateETAMins(trainTime) {
+            const now = new Date(); // March 31, 2025
+            const trainDate = new Date(trainTime);
+            const diffMs = trainDate - now;
+            const mins = Math.round(diffMs / 60000);
+            return mins >= 0 ? mins : 'Due';
+        }
+        
+        function getDirection(currentStation, destinationStation, line, schedules) {
+            const lineStations = lines[line];
+            const currentIndex = lineStations.findIndex(s => s.value === currentStation);
+            const destIndex = lineStations.findIndex(s => s.value === destinationStation);
+            return destIndex > currentIndex ? 'up' : 'down';
+        }
+        
+       
+        
+      
+
     </script>
 </body>
 </html>
