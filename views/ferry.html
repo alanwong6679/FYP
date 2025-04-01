@@ -112,6 +112,9 @@
             text-align: center;
             color: #777;
         }
+        .error {
+            color: #d9534f;
+        }
     </style>
 </head>
 <body>
@@ -144,12 +147,14 @@
         const eta = document.getElementById('eta');
         const fares = document.getElementById('fares');
 
+        // Fallback timetable data for Central ↔ Sok Kwu Wan (route_id: 1)
+        const fallbackTimetableCSV = `Time,Direction,Days\n07:20,Outbound,Mon-Sat\n08:35,Outbound,Mon-Sat\n10:20,Outbound,Mon-Sat\n06:45,Inbound,Mon-Sat\n08:00,Inbound,Mon-Sat\n09:35,Inbound,Mon-Sat`;
+
         // Ferry company data
         const ferryCompanies = [
             {
                 name: "Hong Kong and Kowloon Ferry (HKKF)",
                 apiBase: "https://www.hkkfeta.com/opendata",
-                
                 hasTimetable: true,
                 hasFares: true,
                 mockRoutes: [
@@ -159,30 +164,6 @@
                     { route_id: 4, route_name_en: "Peng Chau ↔ Hei Ling Chau", origin_en: "Peng Chau", destination_en: "Hei Ling Chau" }
                 ]
             },
-            {
-                name: "Sun Ferry Services Company Limited",
-                apiBase: "https://www.sunferry.com.hk",
-                hasTimetable: false,
-                hasFares: false,
-                mockRoutes: [
-                    { route_code: "CECC", route_name_en: "Central ↔ Cheung Chau", origin_en: "Central", destination_en: "Cheung Chau" },
-                    { route_code: "CCCE", route_name_en: "Cheung Chau ↔ Central", origin_en: "Cheung Chau", destination_en: "Central" },
-                    { route_code: "CEMW", route_name_en: "Central ↔ Mui Wo", origin_en: "Central", destination_en: "Mui Wo" },
-                    { route_code: "MWCE", route_name_en: "Mui Wo ↔ Central", origin_en: "Mui Wo", destination_en: "Central" },
-                    { route_code: "NPHH", route_name_en: "North Point ↔ Hung Hom", origin_en: "North Point", destination_en: "Hung Hom" },
-                    { route_code: "HHNP", route_name_en: "Hung Hom ↔ North Point", origin_en: "Hung Hom", destination_en: "North Point" },
-                    { route_code: "NPKC", route_name_en: "North Point ↔ Kowloon City", origin_en: "North Point", destination_en: "Kowloon City" },
-                    { route_code: "KCNP", route_name_en: "Kowloon City ↔ North Point", origin_en: "Kowloon City", destination_en: "North Point" },
-                    { route_code: "IIPECMUW", route_name_en: "Peng Chau ↔ Mui Wo", origin_en: "Peng Chau", destination_en: "Mui Wo" },
-                    { route_code: "IIMUWPEC", route_name_en: "Mui Wo ↔ Peng Chau", origin_en: "Mui Wo", destination_en: "Peng Chau" },
-                    { route_code: "IIMUWCMW", route_name_en: "Mui Wo ↔ Chi Ma Wan", origin_en: "Mui Wo", destination_en: "Chi Ma Wan" },
-                    { route_code: "IICMWMUW", route_name_en: "Chi Ma Wan ↔ Mui Wo", origin_en: "Chi Ma Wan", destination_en: "Mui Wo" },
-                    { route_code: "IICMWCHC", route_name_en: "Chi Ma Wan ↔ Cheung Chau", origin_en: "Chi Ma Wan", destination_en: "Cheung Chau" },
-                    { route_code: "IICHCCMW", route_name_en: "Cheung Chau ↔ Chi Ma Wan", origin_en: "Cheung Chau", destination_en: "Chi Ma Wan" },
-                    { route_code: "IICHCMUW", route_name_en: "Cheung Chau ↔ Mui Wo", origin_en: "Cheung Chau", destination_en: "Mui Wo" },
-                    { route_code: "IIMUWCHC", route_name_en: "Mui Wo ↔ Cheung Chau", origin_en: "Mui Wo", destination_en: "Cheung Chau" }
-                ]
-            }
         ];
 
         // Display company buttons
@@ -201,16 +182,21 @@
                 if (!isActive) routeList.classList.add('active');
             });
 
-            // Fetch or use mock routes
             let routes = company.mockRoutes;
             if (company.name === "Hong Kong and Kowloon Ferry (HKKF)") {
                 fetch(`${company.apiBase}/route`)
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) throw new Error(`Route fetch failed: ${response.status}`);
+                        return response.json();
+                    })
                     .then(data => {
                         routes = data.data;
                         displayRoutes(company, routes, routeList);
                     })
-                    .catch(() => displayRoutes(company, routes, routeList));
+                    .catch(error => {
+                        console.error('Error fetching routes:', error);
+                        displayRoutes(company, routes, routeList); // Use mock routes as fallback
+                    });
             } else {
                 displayRoutes(company, routes, routeList);
             }
@@ -244,62 +230,74 @@
             etaSection.style.display = 'block';
             eta.innerHTML = '<div class="loading">Loading ETA...</div>';
 
-            // Conditionally show timetable section
+            // Timetable section
             if (company.hasTimetable) {
                 timetableSection.style.display = 'block';
                 timetable.innerHTML = '<div class="loading">Loading timetable...</div>';
                 fetch(`${company.apiBase}/time_table/${route.route_id}/outbound`)
-                    .then(response => response.text())
+                    .then(response => {
+                        if (!response.ok) throw new Error(`Timetable fetch failed: ${response.status}`);
+                        return response.text();
+                    })
                     .then(csv => renderTimetable(csv, route.origin_en, route.destination_en))
-                    .catch(() => {
-                        timetable.innerHTML = '<p>Error fetching timetable.</p>';
+                    .catch(error => {
+                        console.error('Timetable fetch error:', error);
+                        if (route.route_id === 1) { // Fallback for Sok Kwu Wan
+                            renderTimetable(fallbackTimetableCSV, route.origin_en, route.destination_en);
+                            timetable.innerHTML += '<p class="error">Using cached data due to API failure.</p>';
+                        } else {
+                            timetable.innerHTML = '<p class="error">Error fetching timetable.</p>';
+                        }
                     });
             } else {
                 timetableSection.style.display = 'none';
             }
 
-            // Conditionally show fares section
+            // Fares section
             if (company.hasFares) {
                 faresSection.style.display = 'block';
                 fares.innerHTML = '<div class="loading">Loading fares...</div>';
                 fetch(`${company.apiBase}/fare_table/${route.route_id}`)
-                    .then(response => response.text())
+                    .then(response => {
+                        if (!response.ok) throw new Error(`Fares fetch failed: ${response.status}`);
+                        return response.text();
+                    })
                     .then(csv => renderFares(csv))
-                    .catch(() => {
-                        fares.innerHTML = '<p>Error fetching fares.</p>';
+                    .catch(error => {
+                        console.error('Fares fetch error:', error);
+                        fares.innerHTML = '<p class="error">Error fetching fares.</p>';
                     });
             } else {
                 faresSection.style.display = 'none';
             }
 
-            // Fetch ETA
+            // Fetch ETA with fallback
             if (company.name === "Hong Kong and Kowloon Ferry (HKKF)") {
                 fetch(`${company.apiBase}/eta/${route.route_id}/outbound`)
-                    .then(response => response.json())
-                    .then(data => renderETA(data.data, route.origin_en, route.destination_en))
-                    .catch(() => {
-                        eta.innerHTML = '<p>Error fetching ETA. Sample data: <span class="eta-highlight">08:30</span> to ' + route.destination_en + '</p>';
-                    });
-            } else if (company.name === "Sun Ferry Services Company Limited") {
-                fetch(`${company.apiBase}/eta/?route=${route.route_code}`)
                     .then(response => {
-                        if (!response.ok) throw new Error(`API error: ${response.status}`);
+                        if (!response.ok) throw new Error(`ETA fetch failed: ${response.status}`);
                         return response.json();
                     })
                     .then(data => renderETA(data.data, route.origin_en, route.destination_en))
                     .catch(error => {
-                        console.error('Error fetching Sun Ferry ETA:', error);
-                        eta.innerHTML = '<p>Real-time ETA unavailable. Sample data: <span class="eta-highlight">17:07</span> to ' + route.destination_en + '</p>';
+                        console.error('ETA fetch error:', error);
+                        if (route.route_id === 1) { // Fallback for Sok Kwu Wan
+                            renderFallbackETA(route.origin_en, route.destination_en);
+                        } else {
+                            eta.innerHTML = `<p class="error">Real-time ETA unavailable for ${route.destination_en}.</p>`;
+                        }
                     });
+            } else {
+                eta.innerHTML = '<p>Real-time ETA unavailable.</p>';
             }
         }
 
-        // Render timetable (HKKF only)
+        // Render timetable
         function renderTimetable(csv, origin, destination) {
             timetable.innerHTML = '';
             const rows = csv.split('\n').map(row => row.split(','));
             const headers = ['Time', 'Direction', 'Days'];
-            const body = rows.slice(1, 4);
+            const body = rows.slice(1).filter(row => row.length === 3); // Ensure valid rows
 
             const thead = document.createElement('thead');
             const trHead = document.createElement('tr');
@@ -325,21 +323,47 @@
             timetable.appendChild(tbody);
         }
 
-        // Render ETA (for both HKKF and Sun Ferry)
+        // Render ETA
         function renderETA(etaData, origin, destination) {
             const nextETA = etaData[0];
             let time, direction;
-            if (nextETA.ETA) { // HKKF
+            if (nextETA && nextETA.ETA) {
                 time = nextETA.ETA.split('T')[1].slice(0, 5);
                 direction = nextETA.direction === "outbound" ? `to ${destination}` : `from ${destination}`;
-            } else if (nextETA.eta) { // Sun Ferry
-                time = nextETA.eta.includes('T') ? nextETA.eta.split('T')[1].slice(0, 5) : nextETA.eta;
-                direction = nextETA.route_en.includes("to") || nextETA.route_en.includes("-") ? `to ${destination}` : `from ${destination}`;
+                eta.innerHTML = `Next Ferry: <span class="eta-highlight">${time}</span> ${direction}`;
+            } else {
+                renderFallbackETA(origin, destination);
             }
-            eta.innerHTML = `Next Ferry: <span class="eta-highlight">${time}</span> ${direction}`;
         }
 
-        // Render fares (HKKF only)
+        // Fallback ETA calculation
+        function renderFallbackETA(origin, destination) {
+            const now = new Date();
+            const hkTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Hong_Kong" }));
+            const hours = hkTime.getHours();
+            const minutes = hkTime.getMinutes();
+            const currentTime = hours * 60 + minutes;
+
+            // Simplified fallback timetable for Sok Kwu Wan (outbound only)
+            const outboundTimes = [
+                { time: "07:20", minutes: 7 * 60 + 20 },
+                { time: "08:35", minutes: 8 * 60 + 35 },
+                { time: "10:20", minutes: 10 * 60 + 20 },
+                { time: "11:50", minutes: 11 * 60 + 50 },
+                { time: "13:50", minutes: 13 * 60 + 50 },
+                { time: "15:20", minutes: 15 * 60 + 20 },
+                { time: "16:50", minutes: 16 * 60 + 50 },
+                { time: "18:45", minutes: 18 * 60 + 45 },
+                { time: "20:20", minutes: 20 * 60 + 20 },
+                { time: "21:50", minutes: 21 * 60 + 50 },
+                { time: "23:30", minutes: 23 * 60 + 30 }
+            ];
+
+            const nextFerry = outboundTimes.find(t => t.minutes > currentTime) || outboundTimes[0];
+            eta.innerHTML = `Next Ferry (estimated): <span class="eta-highlight">${nextFerry.time}</span> to ${destination} <p class="error">Real-time ETA unavailable, using estimate.</p>`;
+        }
+
+        // Render fares
         function renderFares(csv) {
             fares.innerHTML = '';
             const rows = csv.split('\n').map(row => row.split(','));
