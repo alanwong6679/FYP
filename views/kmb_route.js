@@ -1,4 +1,4 @@
-{
+var allKMBRoutes = {
     "type": "RouteList",
     "version": "1.0",
     "generated_timestamp": "2025-02-24T15:24:44+08:00",
