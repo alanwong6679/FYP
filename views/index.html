@@ -32,6 +32,7 @@
             max-width: 500px;
             margin-bottom: 60px;
             margin-left: 160px;
+            position: relative;
         }
         h1 {
             text-align: center;
@@ -121,6 +122,89 @@
         button:hover {
             background-color: #0056b3;
         }
+        .status-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 8px 12px;
+            font-size: 14px;
+            background-color: #28a745;
+        }
+        .status-button:hover {
+            background-color: #218838;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #333;
+        }
+        .status-row {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .status-row:last-child {
+            border-bottom: none;
+        }
+        .color-bar {
+            width: 8px;
+            height: 40px;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        .line-info {
+            flex-grow: 1;
+        }
+        .line-name {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .line-status {
+            font-size: 14px;
+            color: #666;
+        }
+        .update-time {
+            font-size: 14px;
+            color: #999;
+            margin-left: 20px;
+            white-space: nowrap;
+        }
+        /* MTR Line Colors */
+        .color-ael { background-color: #009688; } /* Teal */
+        .color-tcl { background-color: #ff9800; } /* Orange */
+        .color-tml { background-color: #8b4513; } /* Brown */
+        .color-tkl { background-color: #9c27b0; } /* Purple */
+        .color-eal { background-color: #03a9f4; } /* Light Blue */
+        .color-sil { background-color: #4caf50; } /* Green */
+        .color-twl { background-color: #f44336; } /* Red */
+        .color-isl { background-color: #2196f3; } /* Blue */
+        .color-ktl { background-color: #4caf50; } /* Green (similar to SIL) */
         .bottom-bar {
             background-color: rgba(51, 51, 51, 0.8);
             color: white;
@@ -184,6 +268,7 @@
 <body>
     <div class="container" id="main-content">
         <h1>General Planner</h1>
+        <button class="status-button" id="statusButton">Train Service Status</button>
         <form id="routeForm">
             <div class="place-container">
                 <div class="station-row">
@@ -217,6 +302,13 @@
         <div id="loading">Loading bus data...</div>
         <div id="route"></div>
     </div>
+    <div class="modal" id="statusModal">
+        <div class="modal-content">
+            <span class="close-button" id="closeModal">×</span>
+            <h2>Train Service Status</h2>
+            <div id="statusList"></div>
+        </div>
+    </div>
 
     <div class="bottom-bar">
         <div id="temperature">Fetching your location...</div>
@@ -226,6 +318,113 @@
     <script src="temperature.js"></script>
     <script src="citybusstop.js"></script>
     <script>
+        const trainLines = [
+            { fullName: "Airport Express Line (AEL)", lineId: "AEL", stationId: "HOK", colorClass: "color-ael" },
+            { fullName: "Tung Chung Line (TCL)", lineId: "TCL", stationId: "HOK", colorClass: "color-tcl" },
+            { fullName: "Tuen Ma Line (TML)", lineId: "TML", stationId: "WKS", colorClass: "color-tml" },
+            { fullName: "Tseung Kwan O Line (TKL)", lineId: "TKL", stationId: "NOP", colorClass: "color-tkl" },
+            { fullName: "East Rail Line (EAL)", lineId: "EAL", stationId: "LOW", colorClass: "color-eal" },
+            { fullName: "South Island Line (SIL)", lineId: "SIL", stationId: "ADM", colorClass: "color-sil" },
+            { fullName: "Tsuen Wan Line (TWL)", lineId: "TWL", stationId: "CEN", colorClass: "color-twl" },
+            { fullName: "Island Line (ISL)", lineId: "ISL", stationId: "KET", colorClass: "color-isl" },
+            { fullName: "Kwun Tong Line (KTL)", lineId: "KTL", stationId: "WHA", colorClass: "color-ktl" }
+        ];
+
+        async function fetchLineStatus(lineId, stationId) {
+            try {
+                const url = `https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=${lineId}&sta=${stationId}&lang=en`;
+                const response = await fetch(url);
+                const data = await response.json();
+                console.log('API Response:', data);
+
+                if (data.status === 1 && data.data && data.data[`${lineId}-${stationId}`]) {
+                    const schedule = data.data[`${lineId}-${stationId}`];
+                    console.log('Schedule:', schedule);
+                    const hasValidSchedule =
+                        (schedule.UP && schedule.UP.length > 0 && schedule.UP[0].valid === "Y") ||
+                        (schedule.DOWN && schedule.DOWN.length > 0 && schedule.DOWN[0].valid === "Y");
+                    console.log('Has Valid Schedule:', hasValidSchedule);
+                    return hasValidSchedule ? "1" : "0";
+                } else {
+                    console.log('Invalid API response or no data');
+                    return "0";
+                }
+            } catch (error) {
+                console.error('Fetch Error:', error);
+                return "0";
+            }
+        }
+
+        async function displayTrainStatus() {
+            const statusList = document.getElementById('statusList');
+            statusList.innerHTML = ''; // Clear previous content
+
+            for (const line of trainLines) {
+                const status = await fetchLineStatus(line.lineId, line.stationId);
+                console.log('Status for', line.fullName, ':', status);
+                const isNormal = status === "1";
+                console.log('Is Normal for', line.fullName, ':', isNormal);
+
+                // Get current date and time
+                const now = new Date();
+                const updateTime = `${now.getMonth() + 1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+                // Create status row
+                const statusRow = document.createElement('div');
+                statusRow.className = 'status-row';
+
+                // Color bar
+                const colorBar = document.createElement('div');
+                colorBar.className = `color-bar ${line.colorClass}`;
+
+                // Line info container
+                const lineInfo = document.createElement('div');
+                lineInfo.className = 'line-info';
+
+                // Line name
+                const lineName = document.createElement('div');
+                lineName.className = 'line-name';
+                lineName.textContent = line.fullName;
+
+                // Line status
+                const lineStatus = document.createElement('div');
+                lineStatus.className = 'line-status';
+                lineStatus.textContent = isNormal ? 'Normal Service' : 'Service Disruption';
+
+                // Update time
+                const updateTimeDiv = document.createElement('div');
+                updateTimeDiv.className = 'update-time';
+                updateTimeDiv.textContent = updateTime;
+
+                // Append elements
+                lineInfo.appendChild(lineName);
+                lineInfo.appendChild(lineStatus);
+                statusRow.appendChild(colorBar);
+                statusRow.appendChild(lineInfo);
+                statusRow.appendChild(updateTimeDiv);
+                statusList.appendChild(statusRow);
+            }
+        }
+
+        const statusButton = document.getElementById('statusButton');
+        const statusModal = document.getElementById('statusModal');
+        const closeModal = document.getElementById('closeModal');
+
+        statusButton.addEventListener('click', () => {
+            statusModal.style.display = 'flex';
+            displayTrainStatus();
+        });
+
+        closeModal.addEventListener('click', () => {
+            statusModal.style.display = 'none';
+        });
+
+        window.addEventListener('click', (event) => {
+            if (event.target === statusModal) {
+                statusModal.style.display = 'none';
+            }
+        });
+        // Your existing functions (unchanged)
         function initializeData() {
             const loadingDiv = document.getElementById('loading');
             loadingDiv.style.display = 'block';
@@ -240,6 +439,7 @@
                 console.error('Initialization failed:', error);
             }
         }
+
         function findNearestMTRStation(busStop, mtrStations) {
             let nearestStation = null;
             let minDistance = Infinity;
@@ -258,7 +458,11 @@
             return { station: nearestStation, distance: minDistance };
         }
         // Rest of your functions remain unchanged (getUniqueMTRStations, haversineDistance, etc.)
-    
+    </script>
+</body>
+</html>
+<script>
+
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
             const startBusStop = urlParams.get('startBusStop');
