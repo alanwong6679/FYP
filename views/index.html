@@ -320,15 +320,15 @@
     <script src="kmbusstop.js"></script>
     <script>
         const trainLines = [
-            { fullName: "Airport Express Line", lineId: "AEL", stationId: "HOK", colorClass: "color-ael" },
-            { fullName: "Tung Chung Line", lineId: "TCL", stationId: "HOK", colorClass: "color-tcl" },
-            { fullName: "Tuen Ma Line", lineId: "TML", stationId: "WKS", colorClass: "color-tml" },
-            { fullName: "Tseung Kwan O Line", lineId: "TKL", stationId: "NOP", colorClass: "color-tkl" },
-            { fullName: "East Rail Line", lineId: "EAL", stationId: "LOW", colorClass: "color-eal" },
-            { fullName: "South Island Line", lineId: "SIL", stationId: "ADM", colorClass: "color-sil" },
-            { fullName: "Tsuen Wan Line", lineId: "TWL", stationId: "CEN", colorClass: "color-twl" },
-            { fullName: "Island Line", lineId: "ISL", stationId: "KET", colorClass: "color-isl" },
-            { fullName: "Kwun Tong Line", lineId: "KTL", stationId: "WHA", colorClass: "color-ktl" }
+            { fullName: "Airport Express Line (AEL)", lineId: "AEL", stationId: "HOK", colorClass: "color-ael" },
+            { fullName: "Tung Chung Line (TCL)", lineId: "TCL", stationId: "HOK", colorClass: "color-tcl" },
+            { fullName: "Tuen Ma Line (TML)", lineId: "TML", stationId: "WKS", colorClass: "color-tml" },
+            { fullName: "Tseung Kwan O Line (TKL)", lineId: "TKL", stationId: "NOP", colorClass: "color-tkl" },
+            { fullName: "East Rail Line (EAL)", lineId: "EAL", stationId: "LOW", colorClass: "color-eal" },
+            { fullName: "South Island Line (SIL)", lineId: "SIL", stationId: "ADM", colorClass: "color-sil" },
+            { fullName: "Tsuen Wan Line (TWL)", lineId: "TWL", stationId: "CEN", colorClass: "color-twl" },
+            { fullName: "Island Line (ISL)", lineId: "ISL", stationId: "KET", colorClass: "color-isl" },
+            { fullName: "Kwun Tong Line (KTL)", lineId: "KTL", stationId: "WHA", colorClass: "color-ktl" }
         ];
 
         async function fetchLineStatus(lineId, stationId) {
@@ -684,18 +684,17 @@
                 }
             }
 
-         
-
             if (directRoutes.length > 0) {
                 routeDiv.innerHTML = `<h3>Direct ${company} Bus Routes</h3>` + renderDirectBusRoutes(directRoutes);
             } else {
-                routeDiv.innerHTML = `<p>No direct ${company} bus routes found between the selected stops.</p>`;
+                routeDiv.innerHTML = '<p>No direct bus routes found between the selected stops.</p>';
             }
         }
+
         function renderDirectBusRoutes(routes) {
             return routes.map((route, index) => {
-                const boardingStop = (route.company === 'KMB' ? kmbStops : citybusStops).find(s => s.stop === route.boardingStop);
-                const alightingStop = (route.company === 'KMB' ? kmbStops : citybusStops).find(s => s.stop === route.alightingStop);
+                const boardingStop = allStops.find(s => s.stop === route.boardingStop);
+                const alightingStop = allStops.find(s => s.stop === route.alightingStop);
                 const boardingName = boardingStop ? boardingStop.name_en : `Stop ${route.boardingStop}`;
                 const alightingName = alightingStop ? alightingStop.name_en : `Stop ${route.alightingStop}`;
                 const numStops = route.stops.findIndex(s => s.id === route.alightingStop) - 
@@ -725,6 +724,7 @@
                 return summary + details;
             }).join('');
         }
+
         function toggleRouteDetails(detailsId, summaryElement) {
             const detailsDiv = document.getElementById(detailsId);
             if (detailsDiv.style.display === 'none' || !detailsDiv.style.display) {
@@ -851,17 +851,16 @@
                 localStorage.setItem(`${destinationCompany.toLowerCase()}_routeStopsMap`, JSON.stringify(busData.routeStopsMap));
                 window.location.href = `/general_schedule.html?currentStation=${currentId}&endBusStop=${destinationId}&company=${destinationCompany}`;
             } else if (currentType === 'Bus' && destinationType === 'Bus') {
-                if (currentCompany !== destinationCompany) {
-                    routeDiv.innerHTML = '<p>Cross-company bus routes are not supported yet.</p>';
-                    return;
-                }
-                const busData = currentCompany === 'KMB' ? 
+                const startBusData = currentCompany === 'KMB' ? 
                     { routes: kmbRoutes, stops: kmbStops, routeStopsMap: kmbRouteStopsMap } : 
                     { routes: citybusRoutes, stops: citybusStops, routeStopsMap: citybusRouteStopsMap };
-                localStorage.setItem(`${currentCompany.toLowerCase()}_allRoutes`, JSON.stringify(busData.routes));
-                localStorage.setItem(`${currentCompany.toLowerCase()}_allStops`, JSON.stringify(busData.stops));
-                localStorage.setItem(`${currentCompany.toLowerCase()}_routeStopsMap`, JSON.stringify(busData.routeStopsMap));
-                findBusRoutes(currentId, destinationId, currentCompany);
+                const endBusData = destinationCompany === 'KMB' ? 
+                    { routes: kmbRoutes, stops: kmbStops, routeStopsMap: kmbRouteStopsMap } : 
+                    { routes: citybusRoutes, stops: citybusStops, routeStopsMap: citybusRouteStopsMap };
+                localStorage.setItem(`${currentCompany.toLowerCase()}_allRoutes`, JSON.stringify(startBusData.routes));
+                localStorage.setItem(`${currentCompany.toLowerCase()}_allStops`, JSON.stringify(startBusData.stops));
+                localStorage.setItem(`${currentCompany.toLowerCase()}_routeStopsMap`, JSON.stringify(startBusData.routeStopsMap));
+                findBusRoutes(currentId, destinationId); // Assuming this works with current company data
             }
         });
 
@@ -885,13 +884,6 @@
             makeSearchable('destinationStationInput', 'destinationStationOptions', allOptions);
             getTemperature();
         };
-
-        // Train status functions unchanged
-        async function fetchLineStatus(lineId, stationId) {/* unchanged */}
-        async function displayTrainStatus() {/* unchanged */}
-        statusButton.addEventListener('click', () => {/* unchanged */});
-        closeModal.addEventListener('click', () => {/* unchanged */});
-        window.addEventListener('click', (event) => {/* unchanged */});
     </script>
 </body>
 </html>
