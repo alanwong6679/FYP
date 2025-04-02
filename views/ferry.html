@@ -234,11 +234,16 @@
             if (company.hasTimetable) {
                 timetableSection.style.display = 'block';
                 timetable.innerHTML = '<div class="loading">Loading timetable...</div>';
-                fetch(`${company.apiBase}/time_table/${route.route_id}/outbound`)
-                    .then(response => {
-                        if (!response.ok) throw new Error(`Timetable fetch failed: ${response.status}`);
-                        return response.text();
-                    })
+                fetch(`${company.apiBase}/eta/${route.route_id}/outbound`)
+    .then(response => {
+        if (!response.ok) throw new Error(`ETA fetch failed: ${response.status}`);
+        return response.json();
+    })
+    .then(data => renderETA(data.data, route.origin_en, route.destination_en))
+    .catch(error => {
+        console.error('ETA fetch error:', error);
+        eta.innerHTML = '<p class="error">Real-time ETA unavailable.</p>';
+    })
                     .then(csv => renderTimetable(csv, route.origin_en, route.destination_en))
                     .catch(error => {
                         console.error('Timetable fetch error:', error);
@@ -291,14 +296,17 @@
                 eta.innerHTML = '<p>Real-time ETA unavailable.</p>';
             }
         }
-
-        // Render timetable
         function renderTimetable(csv, origin, destination) {
             timetable.innerHTML = '';
             const rows = csv.split('\n').map(row => row.split(','));
             const headers = ['Time', 'Direction', 'Days'];
-            const body = rows.slice(1).filter(row => row.length === 3); // Ensure valid rows
-
+            const body = rows.slice(1).map(row => row.slice(0, 3));
+        
+            if (body.length === 0 || body.every(row => row.length < 3)) {
+                timetable.innerHTML = '<p class="error">Timetable data unavailable.</p>';
+                return;
+            }
+        
             const thead = document.createElement('thead');
             const trHead = document.createElement('tr');
             headers.forEach(header => {
@@ -308,33 +316,45 @@
             });
             thead.appendChild(trHead);
             timetable.appendChild(thead);
-
+        
             const tbody = document.createElement('tbody');
             body.forEach(row => {
-                const tr = document.createElement('tr');
-                const direction = row[1].includes("To") ? row[1] : row[1] === "Outbound" ? `To ${destination}` : `From ${destination}`;
-                [row[0], direction, row[2]].forEach(cell => {
-                    const td = document.createElement('td');
-                    td.textContent = cell;
-                    tr.appendChild(td);
-                });
-                tbody.appendChild(tr);
+                if (row.length >= 3) {
+                    const tr = document.createElement('tr');
+                    const direction = row[1].includes("To") ? row[1] : row[1] === "Outbound" ? `To ${destination}` : `From ${destination}`;
+                    [row[0], direction, row[2]].forEach(cell => {
+                        const td = document.createElement('td');
+                        td.textContent = cell;
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                }
             });
             timetable.appendChild(tbody);
         }
-
-        // Render ETA
+        
         function renderETA(etaData, origin, destination) {
             const nextETA = etaData[0];
-            let time, direction;
             if (nextETA && nextETA.ETA) {
-                time = nextETA.ETA.split('T')[1].slice(0, 5);
-                direction = nextETA.direction === "outbound" ? `to ${destination}` : `from ${destination}`;
+                const time = nextETA.ETA.split('T')[1].slice(0, 5);
+                const direction = nextETA.direction === "outbound" ? `to ${destination}` : `from ${destination}`;
                 eta.innerHTML = `Next Ferry: <span class="eta-highlight">${time}</span> ${direction}`;
             } else {
-                renderFallbackETA(origin, destination);
+                eta.innerHTML = '<p>No upcoming ferries for this route.</p>';
             }
         }
+        
+        // In showRouteDetails, update the ETA fetch:
+        fetch(`${company.apiBase}/eta/${route.route_id}/outbound`)
+            .then(response => {
+                if (!response.ok) throw new Error(`ETA fetch failed: ${response.status}`);
+                return response.json();
+            })
+            .then(data => renderETA(data.data, route.origin_en, route.destination_en))
+            .catch(error => {
+                console.error('ETA fetch error:', error);
+                eta.innerHTML = '<p class="error">Real-time ETA unavailable.</p>';
+            });
 
         // Fallback ETA calculation
         function renderFallbackETA(origin, destination) {
