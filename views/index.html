@@ -700,18 +700,20 @@
                 const numStops = route.stops.findIndex(s => s.id === route.alightingStop) - 
                                 route.stops.findIndex(s => s.id === route.boardingStop);
                 const summary = `
-                    <div 
-                        class="route-option" 
-                        id="route-summary-${index}" 
-                        data-route="${route.route}" 
-                        data-direction="${route.direction}" 
-                        data-boarding-stop="${route.boardingStop}" 
-                        onclick="toggleRouteDetails('route-details-${index}', this)"
-                    >
-                        <strong>Route ${route.route} (${route.direction})</strong> - ${numStops} stops<br>
-                        Walk ${Math.round(route.boardingDistance)}m to ${boardingName}, alight at ${alightingName} (${Math.round(route.alightingDistance)}m)
-                    </div>
-                `;
+                    
+    <div 
+        class="route-option" 
+        id="route-summary-${index}" 
+        data-route="${route.route}" 
+        data-direction="${route.direction}" 
+        data-boarding-stop="${route.boardingStop}" 
+        data-company="${route.company}" 
+        onclick="toggleRouteDetails('route-details-${index}', this)"
+    >
+        <strong>Route ${route.route} (${route.direction})</strong> - ${numStops} stops<br>
+        Walk ${Math.round(route.boardingDistance)}m to ${boardingName}, alight at ${alightingName} (${Math.round(route.alightingDistance)}m)
+    </div>
+`;
                 let details = `<div class="route-details" id="route-details-${index}">`;
                 details += '<ul class="stop-list">';
                 route.stops.forEach(stop => {
@@ -732,35 +734,51 @@
                 const route = summaryElement.getAttribute('data-route');
                 const direction = summaryElement.getAttribute('data-direction');
                 const boardingStop = summaryElement.getAttribute('data-boarding-stop');
-                fetchETA(route, direction, boardingStop, detailsId);
+                const company = summaryElement.getAttribute('data-company');
+                fetchETA(route, direction, boardingStop, detailsId, company);
             } else {
                 detailsDiv.style.display = 'none';
             }
         }
 
-        async function fetchETA(route, direction, stopId, detailsId) {
-            const etaSpan = document.querySelector(`#${detailsId} .boarding-stop span`);
-            if (!etaSpan) return;
+        async function fetchETA(route, direction, stopId, detailsId, company) {
+    const etaSpan = document.querySelector(`#${detailsId} .boarding-stop span`);
+    if (!etaSpan) return;
 
-            try {
-                const response = await fetch(`https://rt.data.gov.hk/v2/transport/citybus/eta/CTB/${stopId}/${route}`);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                const data = await response.json();
-                const dirMapping = { "outbound": "O", "inbound": "I" };
-                const eta = data.data.find(e => e.eta_seq === 1 && e.dir === dirMapping[direction]) || 
-                            data.data.find(e => e.eta_seq === 1);
-                if (eta && eta.eta) {
-                    const minutesLeft = Math.round((new Date(eta.eta) - new Date(eta.data_timestamp)) / 60000);
-                    etaSpan.textContent = minutesLeft >= 0 ? ` (ETA: ${minutesLeft} min)` : ` (Due now)`;
-                } else {
-                    etaSpan.textContent = ` (No ETA)`;
-                }
-            } catch (error) {
-                etaSpan.textContent = ` (ETA unavailable)`;
-                console.error(`ETA fetch failed for ${route} at ${stopId}:`, error);
+    try {
+        const url = company === 'KMB'
+            ? `https://data.etabus.gov.hk/v1/transport/kmb/eta/${stopId}/${route}/1`
+            : `https://rt.data.gov.hk/v2/transport/citybus/eta/CTB/${stopId}/${route}`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        console.log(`${company} ETA Response for ${route} at ${stopId}:`, data);
+
+        let eta = null;
+        if (company === 'KMB') {
+            eta = data.data.find(e => e.seq === 1); // KMB uses 'seq'
+            if (eta && eta.eta) {
+                const minutesLeft = Math.round((new Date(eta.eta) - new Date(data.generated_timestamp)) / 60000);
+                etaSpan.textContent = minutesLeft >= 0 ? ` (ETA: ${minutesLeft} min)` : ` (Due now)`;
+            } else {
+                etaSpan.textContent = ` (No ETA data)`;
+            }
+        } else {
+            const dirMapping = { "outbound": "O", "inbound": "I" };
+            eta = data.data.find(e => e.eta_seq === 1 && e.dir === dirMapping[direction]) || 
+                  data.data.find(e => e.eta_seq === 1);
+            if (eta && eta.eta) {
+                const minutesLeft = Math.round((new Date(eta.eta) - new Date(eta.data_timestamp)) / 60000);
+                etaSpan.textContent = minutesLeft >= 0 ? ` (ETA: ${minutesLeft} min)` : ` (Due now)`;
+            } else {
+                etaSpan.textContent = ` (No ETA data)`;
             }
         }
-
+    } catch (error) {
+        etaSpan.textContent = ` (ETA unavailable)`;
+        console.error(`${company} ETA fetch failed for ${route} at ${stopId}:`, error);
+    }
+}
         function makeSearchable(inputId, optionsId, options) {
             const input = document.getElementById(inputId);
             const optionsContainer = document.getElementById(optionsId);

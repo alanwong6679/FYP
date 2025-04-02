@@ -211,44 +211,54 @@ console.log("MTR Response:", mtrResponse);
             `).join('') : '<p>No direct bus routes.</p>';
         };
 
-        const toggleRouteDetails = (id, el) => {
+        function toggleRouteDetails(id, el) {
             const details = document.getElementById(id);
             details.style.display = details.style.display === 'none' ? 'block' : 'none';
             if (details.style.display === 'block' && window.currentRoutes) {
                 const routeIndex = parseInt(id.split('-')[2]);
                 const route = window.currentRoutes[routeIndex];
-                if (route.busRoute) { // Only for Bus-to-MTR
-                    fetchETA(route.busRoute.route, route.busRoute.direction, route.busRoute.boardingStop, id);
+                if (route.busRoute) {
+                    const company = localStorage.getItem('company') || 'Citybus'; // Default to Citybus
+                    fetchETA(route.busRoute.route, route.busRoute.direction, route.busRoute.boardingStop, id, company);
                 }
             }
-        };
+        }
         
-        const fetchETA = async (route, dir, stop, detailsId) => {
-            const span = document.querySelector(`#${detailsId} .boarding-stop span`);
-            if (!span) {
-                console.error(`No span found for ETA in #${detailsId}`);
-                return;
-            }
-        
+        async function fetchETA(route, dir, stop, detailsId, company) {
+            const span = document.querySelector(`#${detailsId} .boarding-stop span`) || document.createElement('span');
             try {
-                // Use KMB API for Bus 55 (assuming it's a KMB route, not Citybus)
-                const response = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/eta/${stop}/${route}/1`);
+                const url = company === 'KMB'
+                    ? `https://data.etabus.gov.hk/v1/transport/kmb/eta/${stop}/${route}/1`
+                    : `https://rt.data.gov.hk/v2/transport/citybus/eta/CTB/${stop}/${route}`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const { data } = await response.json();
-                const eta = data.find(e => e.eta_seq === 1 && e.dir === (dir === 'outbound' ? 'O' : 'I')) || data.find(e => e.eta_seq === 1);
-                
-                if (eta?.eta) {
-                    const mins = Math.round((new Date(eta.eta) - new Date()) / 60000);
-                    span.textContent = mins >= 0 ? ` (ETA: ${mins} min)` : ` (Due now)`;
-                } else {
-                    span.textContent = ` (No ETA data)`;
-                    console.warn(`No ETA found for route ${route}, stop ${stop}, dir ${dir}:`, data);
+        
+                const dirMapping = { "outbound": "O", "inbound": "I" };
+                const direction = dirMapping[dir] || dir;
+                let eta = null;
+        
+                if (company === 'KMB') {
+                    eta = data.find(e => e.seq === 1 && e.dir === direction) || data.find(e => e.seq === 1);
+                    if (eta?.eta) {
+                        const mins = Math.round((new Date(eta.eta) - new Date()) / 60000);
+                        span.textContent = mins >= 0 ? ` (ETA: ${mins} min)` : ` (Due now)`;
+                    } else {
+                        span.textContent = ` (No ETA data)`;
+                    }
+                } else { // Citybus
+                    eta = data.find(e => e.eta_seq === 1 && e.dir === direction) || data.find(e => e.eta_seq === 1);
+                    if (eta?.eta) {
+                        const mins = Math.round((new Date(eta.eta) - new Date(eta.data_timestamp)) / 60000);
+                        span.textContent = mins >= 0 ? ` (ETA: ${mins} min)` : ` (Due now)`;
+                    } else {
+                        span.textContent = ` (No ETA data)`;
+                    }
                 }
             } catch (e) {
                 span.textContent = ` (ETA unavailable)`;
-                console.error(`ETA fetch error for ${route}-${stop}:`, e);
             }
-        };
-
+        }
         const getStationFullName = code => Object.values(lines).flat().find(s => s.value === code)?.text || code;
         function displayMTRWithWalking(mtrResponse, start, interchange, endStop, walkingDistance) {
             const scheduleDiv = document.getElementById('schedule');
@@ -333,7 +343,8 @@ console.log("MTR Response:", mtrResponse);
         document.getElementById('schedule').innerHTML = '<p>Invalid starting bus stop.</p>';
         return;
     }
-
+    const company = new URLSearchParams(window.location.search).get('company') || 'Citybus';
+    localStorage.setItem('company', company);
     const nearbyStartStops = findNearbyStops(startStop, 500);
     const nearbyStartStopIds = nearbyStartStops.map(s => s.stop);
     const busRoutes = findBusRoutesToStops(nearbyStartStopIds, allStops.map(s => s.stop));
