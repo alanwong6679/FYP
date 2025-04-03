@@ -1,6 +1,3 @@
-/***********************
- * POINT-TO-POINT PLANNER
- ***********************/
 let allLocations = [];
 let busRouteMarkers = []; // To hold markers for bus route stops
 let routePolyline; // To hold the polyline for the route

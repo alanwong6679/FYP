@@ -1,0 +1,195 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-image: url("/static/images/hk_ferry.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    flex-direction: column;
+    transition: color 0.3s ease;
+}
+
+:where([data-theme="dark"]) body {
+    color: #e0e0e0;
+    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("/static/images/hk_ferry.png"); /* Dim background */
+}
+
+.ferry-container {
+    margin-left: 170px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.company-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.company-button {
+    background-color: #007bff;
+    color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    text-align: center;
+    font-size: 1.2em;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+:where([data-theme="dark"]) .company-button {
+    background-color: #1e90ff;
+}
+
+.company-button:hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+}
+
+:where([data-theme="dark"]) .company-button:hover {
+    background-color: #4169e1;
+}
+
+.route-list {
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+    padding-left: 20px;
+    transition: background 0.3s ease;
+}
+
+:where([data-theme="dark"]) .route-list {
+    background: #2a2a2a;
+}
+
+.route-list.active {
+    display: flex;
+}
+
+.route-button {
+    background-color: #28a745;
+    color: #fff;
+    padding: 10px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background-color 0.3s;
+}
+
+:where([data-theme="dark"]) .route-button {
+    background-color: #2ecc71;
+}
+
+.route-button:hover {
+    background-color: #218838;
+}
+
+:where([data-theme="dark"]) .route-button:hover {
+    background-color: #27ae60;
+}
+
+.route-details {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out, background 0.3s ease;
+}
+
+:where([data-theme="dark"]) .route-details {
+    background-color: #333333;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+
+.route-details.active {
+    display: block;
+    opacity: 1;
+}
+
+.details-section {
+    margin-bottom: 20px;
+}
+
+.details-section h3 {
+    color: #333;
+    margin-bottom: 10px;
+    transition: color 0.3s ease;
+}
+
+:where([data-theme="dark"]) .details-section h3 {
+    color: #e0e0e0;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    transition: color 0.3s ease;
+}
+
+:where([data-theme="dark"]) table {
+    color: #e0e0e0;
+}
+
+th, td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    transition: border-color 0.3s ease;
+}
+
+:where([data-theme="dark"]) th,
+:where([data-theme="dark"]) td {
+    border-bottom: 1px solid #555555;
+}
+
+th {
+    background-color: #f5f5f5;
+    transition: background-color 0.3s ease;
+}
+
+:where([data-theme="dark"]) th {
+    background-color: #444444;
+}
+
+.eta-highlight {
+    font-weight: bold;
+    color: #007bff;
+    transition: color 0.3s ease;
+}
+
+:where([data-theme="dark"]) .eta-highlight {
+    color: #1e90ff;
+}
+
+.loading {
+    text-align: center;
+    color: #777;
+    transition: color 0.3s ease;
+}
+
+:where([data-theme="dark"]) .loading {
+    color: #aaaaaa;
+}
+
+.error {
+    color: #d9534f;
+    transition: color 0.3s ease;
+}
+
+:where([data-theme="dark"]) .error {
+    color: #ff9999;
+}

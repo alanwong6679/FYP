@@ -1,4 +1,3 @@
-/* navbar.css (full updated version with consistent sizes) */
 .nav-bar {
   position: fixed;
   top: 0;
@@ -10,17 +9,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  transition: background-color 0.3s ease;
 }
 
-.navbar-icon-link {
-  text-decoration: none; /* No underline */
-  display: inline-block; /* Helps with alignment */
-  cursor: pointer; /* Shows it’s clickable */
+:where([data-theme="dark"]) .nav-bar {
+  background-color: #1f1f1f;
 }
 
-.navbar-icon-link img {
-  vertical-align: middle; /* Aligns nicely with other navbar items */
-}
 .nav-title {
   color: #fff;
   font-size: 1.5rem;
@@ -28,11 +23,13 @@
   text-align: center;
   padding: 10px 0;
   text-decoration: none;
+  transition: color 0.3s ease;
 }
-.navbar-title {
-  text-decoration: none; /* Removes the underline */
-  color: inherit; /* Matches the surrounding text color */
+
+:where([data-theme="dark"]) .nav-title {
+  color: #e0e0e0;
 }
+
 .nav-bar button {
   background-color: #007bff;
   padding: 10px 20px;
@@ -47,12 +44,51 @@
   margin-top: 20px;
 }
 
+:where([data-theme="dark"]) .nav-bar button {
+  background-color: #1e90ff;
+}
+
 .nav-bar button.active {
   background-color: #0056b3;
 }
 
+:where([data-theme="dark"]) .nav-bar button.active {
+  background-color: #4169e1;
+}
+
 .nav-bar button:hover {
   background-color: #0056b3;
+}
+
+:where([data-theme="dark"]) .nav-bar button:hover {
+  background-color: #4169e1;
+}
+
+.dark-mode-toggle {
+  background-color: #f1c40f;
+  color: #333;
+  padding: 10px 20px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  width: 100%;
+  text-align: center;
+  margin-top: 20px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+:where([data-theme="dark"]) .dark-mode-toggle {
+  background-color: #f39c12;
+  color: #ffffff;
+}
+
+.dark-mode-toggle:hover {
+  background-color: #e0b50e;
+}
+
+:where([data-theme="dark"]) .dark-mode-toggle:hover {
+  background-color: #e67e22;
 }
 
 /* RTHK button styling */
@@ -69,9 +105,6 @@
   z-index: 2000;
 }
 
-.rthk-icon:hover {
-  /* No background change */
-}
 
 /* Modal styling */
 .modal {
@@ -86,6 +119,10 @@
   background-color: rgba(0,0,0,0.4);
 }
 
+:where([data-theme="dark"]) .modal {
+  background-color: rgba(0,0,0,0.6);
+}
+
 .modal-content {
   background-color: white;
   margin: 15% auto;
@@ -98,12 +135,24 @@
   max-height: 70vh;
   position: relative;
   padding-top: 40px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+:where([data-theme="dark"]) .modal-content {
+  background-color: #333333;
+  border-color: #555555;
+  color: #e0e0e0;
 }
 
 .news-item {
   margin-bottom: 10px;
   padding: 10px;
   border-bottom: 1px solid #ccc;
+  transition: border-color 0.3s ease;
+}
+
+:where([data-theme="dark"]) .news-item {
+  border-bottom: 1px solid #555555;
 }
 
 .close {
@@ -115,12 +164,21 @@
   font-weight: bold;
   cursor: pointer;
   z-index: 1100;
+  transition: color 0.3s ease;
+}
+
+:where([data-theme="dark"]) .close {
+  color: #cccccc;
 }
 
 .close:hover,
 .close:focus {
   color: black;
-  text-decoration: none;
+}
+
+:where([data-theme="dark"]) .close:hover,
+:where([data-theme="dark"]) .close:focus {
+  color: #ffffff;
 }
 
 .language-switch {
@@ -141,8 +199,18 @@
   transition: background-color 0.3s;
 }
 
+:where([data-theme="dark"]) .language-switch button {
+  background-color: #555555;
+  border-color: #666666;
+  color: #e0e0e0;
+}
+
 .language-switch button:hover {
   background-color: #e0e0e0;
+}
+
+:where([data-theme="dark"]) .language-switch button:hover {
+  background-color: #666666;
 }
 
 .source-reference {
@@ -150,43 +218,14 @@
   font-size: 12px;
   color: gray;
   text-align: center;
+  transition: color 0.3s ease;
 }
 
-/* Ensure the bar doesn't interfere with the input */
-dd .searchable-select {
-  margin-top: 0; /* Reset margin since layout is side-by-side */
+:where([data-theme="dark"]) .source-reference {
+  color: #aaaaaa;
 }
 
-/* Common styles for both Starting and Destination Station with fixed width */
-.starting-station, .destination-station {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-shrink: 0;
-  padding: 10px;
-  margin-right: 10px;
-  width: 120px; /* Consistent width */
-  box-sizing: border-box;
-  font-size: 13px;
-  font-weight: bold;
-  color: #fff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+/* Adjust body padding to avoid overlap */
+body {
+  padding-left: 170px; /* Width of navbar + padding */
 }
-
-/* Specific style for Starting Station */
-.starting-station {
-  background-color: #3E78B3; /* Blue for Starting Station */
-}
-
-/* Specific style for Destination Station */
-.destination-station {
-  background-color: #B35092; /* Pink for Destination Station */
-}
-
-/* Ensure station-row overrides any inline styles */
-.station-row dt {
-  flex-grow: 0; /* Prevent stretching */
-}
-

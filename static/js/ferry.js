@@ -1,3 +1,4 @@
+// ferry.js
 document.addEventListener('DOMContentLoaded', () => {
     const companyList = document.getElementById('companyList');
     const routeDetails = document.getElementById('routeDetails');
@@ -5,6 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const timetable = document.getElementById('timetable');
     const eta = document.getElementById('eta');
     const fares = document.getElementById('fares');
+
+    // Fallback timetable data for Central ↔ Sok Kwu Wan (HKKF, route_id: 1)
+    const fallbackTimetableCSV = `Time,Direction,Days\n07:20,Outbound,Mon-Sat\n08:35,Outbound,Mon-Sat\n10:20,Outbound,Mon-Sat\n06:45,Inbound,Mon-Sat\n08:00,Inbound,Mon-Sat\n09:35,Inbound,Mon-Sat`;
 
     // Ferry company data
     const ferryCompanies = [
@@ -58,22 +62,27 @@ document.addEventListener('DOMContentLoaded', () => {
         companyButton.addEventListener('click', () => {
             const isActive = routeList.classList.contains('active');
             document.querySelectorAll('.route-list').forEach(list => list.classList.remove('active'));
-            document.querySelector('.route-details')?.classList.remove('active');
+            routeDetails.classList.remove('active');
             if (!isActive) routeList.classList.add('active');
         });
 
-        // Fetch or use mock routes
         let routes = company.mockRoutes;
         if (company.name === "Hong Kong and Kowloon Ferry (HKKF)") {
             fetch(`${company.apiBase}/route`)
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) throw new Error(`Route fetch failed: ${response.status}`);
+                    return response.json();
+                })
                 .then(data => {
                     routes = data.data;
                     displayRoutes(company, routes, routeList);
                 })
-                .catch(() => displayRoutes(company, routes, routeList));
+                .catch(error => {
+                    console.error('Error fetching HKKF routes:', error);
+                    displayRoutes(company, routes, routeList); // Use mock routes as fallback
+                });
         } else {
-            displayRoutes(company, routes, routeList);
+            displayRoutes(company, routes, routeList); // Sun Ferry uses mock routes only
         }
 
         companyList.appendChild(companyButton);
@@ -97,58 +106,100 @@ document.addEventListener('DOMContentLoaded', () => {
         routeTitle.textContent = `${route.route_name_en} (${company.name})`;
         routeDetails.classList.add('active');
 
-        // ETA for all companies
+        const timetableSection = document.getElementById('timetable-section');
+        const etaSection = document.getElementById('eta-section');
+        const faresSection = document.getElementById('fares-section');
+
+        // ETA section (both companies)
+        etaSection.style.display = 'block';
+        eta.innerHTML = '<div class="loading">Loading ETA...</div>';
+
         if (company.name === "Hong Kong and Kowloon Ferry (HKKF)") {
             fetch(`${company.apiBase}/eta/${route.route_id}/outbound`)
-                .then(response => response.json())
-                .then(data => renderETA(data.data, route.origin_en, route.destination_en))
-                .catch(() => renderETA([{ session_time: "08:00:00", ETA: "2025-03-31T08:30:00+08:00", direction: "outbound" }], route.origin_en, route.destination_en));
+                .then(response => {
+                    if (!response.ok) throw new Error(`ETA fetch failed: ${response.status}`);
+                    return response.json();
+                })
+                .then(data => renderETA(data.data, route.origin_en, route.destination_en, company.name))
+                .catch(error => {
+                    console.error('HKKF ETA fetch error:', error);
+                    renderETA([{ session_time: "08:00:00", ETA: "2025-04-03T08:30:00+08:00", direction: "outbound" }], 
+                              route.origin_en, route.destination_en, company.name);
+                    eta.innerHTML += '<p class="error">Using fallback data due to API failure.</p>';
+                });
         } else if (company.name === "Sun Ferry Services Company Limited") {
             fetch(`${company.apiBase}/eta/?route=${route.route_code}`)
                 .then(response => {
-                    if (!response.ok) throw new Error(`API error: ${response.status}`);
+                    if (!response.ok) throw new Error(`Sun Ferry ETA fetch failed: ${response.status}`);
                     return response.json();
                 })
-                .then(data => renderETA(data.data, route.origin_en, route.destination_en))
+                .then(data => renderETA(data.data, route.origin_en, route.destination_en, company.name))
                 .catch(error => {
-                    console.error(error);
-                    // Use your sample response as fallback
-                    const mockData = [{
-                        route_en: "Central - Cheung Chau",
-                        depart_time: "16:15",
-                        eta: "17:07"
-                    }];
-                    renderETA(mockData, route.origin_en, route.destination_en);
+                    console.error('Sun Ferry ETA fetch error:', error);
+                    const mockData = [{ route_en: route.route_name_en, depart_time: "16:15", eta: "17:07" }];
+                    renderETA(mockData, route.origin_en, route.destination_en, company.name);
+                    eta.innerHTML += '<p class="error">Using fallback data due to API failure.</p>';
                 });
         }
 
-        // Timetable (HKKF only)
+        // Timetable section (HKKF only)
         if (company.hasTimetable) {
-            fetch(`${company.apiBase}/time_table/${route.route_id}/outbound`)
-                .then(response => response.text())
+            timetableSection.style.display = 'block';
+            timetable.innerHTML = '<div class="loading">Loading timetable...</div>';
+            fetch(`${company.apiBase}/time_table/${route.route_id}/outbound`) // Adjusted endpoint
+                .then(response => {
+                    if (!response.ok) throw new Error(`Timetable fetch failed: ${response.status}`);
+                    return response.text();
+                })
                 .then(csv => renderTimetable(csv, route.origin_en, route.destination_en))
-                .catch(() => renderTimetable(`Time,Direction,Days\n08:00,To ${route.destination_en},Mon-Sat\n08:30,From ${route.destination_en},Mon-Sat\n09:00,To ${route.destination_en},Mon-Sat`, route.origin_en, route.destination_en));
+                .catch(error => {
+                    console.error('HKKF timetable fetch error:', error);
+                    if (route.route_id === 1) {
+                        renderTimetable(fallbackTimetableCSV, route.origin_en, route.destination_en);
+                        timetable.innerHTML += '<p class="error">Using cached data due to API failure.</p>';
+                    } else {
+                        renderTimetable(`Time,Direction,Days\n08:00,To ${route.destination_en},Mon-Sat\n08:30,From ${route.destination_en},Mon-Sat\n09:00,To ${route.destination_en},Mon-Sat`, 
+                                        route.origin_en, route.destination_en);
+                        timetable.innerHTML += '<p class="error">Using fallback data due to API failure.</p>';
+                    }
+                });
         } else {
+            timetableSection.style.display = 'none';
             timetable.innerHTML = '<p>Not available for this operator.</p>';
         }
 
-        // Fares (HKKF only)
+        // Fares section (HKKF only)
         if (company.hasFares) {
+            faresSection.style.display = 'block';
+            fares.innerHTML = '<div class="loading">Loading fares...</div>';
             fetch(`${company.apiBase}/fare_table/${route.route_id}`)
-                .then(response => response.text())
+                .then(response => {
+                    if (!response.ok) throw new Error(`Fares fetch failed: ${response.status}`);
+                    return response.text();
+                })
                 .then(csv => renderFares(csv))
-                .catch(() => renderFares(`Day,Adult,Child\nMonday to Saturday,$20,$10\nSunday and Public Holidays,$25,$12`));
+                .catch(error => {
+                    console.error('HKKF fares fetch error:', error);
+                    renderFares(`Day,Adult,Child\nMonday to Saturday,$20,$10\nSunday and Public Holidays,$25,$12`);
+                    fares.innerHTML += '<p class="error">Using fallback data due to API failure.</p>';
+                });
         } else {
+            faresSection.style.display = 'none';
             fares.innerHTML = '<p>Not available for this operator.</p>';
         }
     }
 
-    // Render timetable (HKKF only)
+    // Render timetable
     function renderTimetable(csv, origin, destination) {
         timetable.innerHTML = '';
         const rows = csv.split('\n').map(row => row.split(','));
         const headers = ['Time', 'Direction', 'Days'];
-        const body = rows.slice(1, 4);
+        const body = rows.slice(1).map(row => row.slice(0, 3));
+
+        if (body.length === 0 || body.every(row => row.length < 3)) {
+            timetable.innerHTML = '<p class="error">Timetable data unavailable.</p>';
+            return;
+        }
 
         const thead = document.createElement('thead');
         const trHead = document.createElement('tr');
@@ -162,33 +213,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const tbody = document.createElement('tbody');
         body.forEach(row => {
-            const tr = document.createElement('tr');
-            const direction = row[1].includes("To") ? row[1] : row[1] === "Outbound" ? `To ${destination}` : `From ${destination}`;
-            [row[0], direction, row[2]].forEach(cell => {
-                const td = document.createElement('td');
-                td.textContent = cell;
-                tr.appendChild(td);
-            });
-            tbody.appendChild(tr);
+            if (row.length >= 3) {
+                const tr = document.createElement('tr');
+                const direction = row[1].includes("To") ? row[1] : row[1] === "Outbound" ? `To ${destination}` : `From ${destination}`;
+                [row[0], direction, row[2]].forEach(cell => {
+                    const td = document.createElement('td');
+                    td.textContent = cell;
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            }
         });
         timetable.appendChild(tbody);
     }
 
-    // Render ETA (for both HKKF and Sun Ferry)
-    function renderETA(etaData, origin, destination) {
+    // Render ETA (supports both HKKF and Sun Ferry)
+    function renderETA(etaData, origin, destination, companyName) {
         const nextETA = etaData[0];
         let time, direction;
-        if (nextETA.ETA) { // HKKF
-            time = nextETA.ETA.split('T')[1].slice(0, 5);
-            direction = nextETA.direction === "outbound" ? `to ${destination}` : `from ${destination}`;
-        } else if (nextETA.eta) { // Sun Ferry
-            time = nextETA.eta.split('T')?.[1]?.slice(0, 5) || nextETA.eta; // Handle both ISO and plain time
-            direction = nextETA.route_en.includes("to") || nextETA.route_en.includes("-") ? `to ${destination}` : `from ${destination}`;
+
+        if (!nextETA) {
+            eta.innerHTML = '<p>No upcoming ferries for this route.</p>';
+            return;
         }
+
+        if (companyName === "Hong Kong and Kowloon Ferry (HKKF)") {
+            time = nextETA.ETA ? nextETA.ETA.split('T')[1].slice(0, 5) : nextETA.session_time.slice(0, 5);
+            direction = nextETA.direction === "outbound" ? `to ${destination}` : `from ${destination}`;
+        } else if (companyName === "Sun Ferry Services Company Limited") {
+            time = nextETA.eta ? (nextETA.eta.split('T')?.[1]?.slice(0, 5) || nextETA.eta) : nextETA.depart_time;
+            direction = nextETA.route_en.includes("to") || nextETA.route_en.includes("↔") ? `to ${destination}` : `from ${destination}`;
+        }
+
         eta.innerHTML = `Next Ferry: <span class="eta-highlight">${time}</span> ${direction}`;
     }
 
-    // Render fares (HKKF only)
+    // Render fares
     function renderFares(csv) {
         fares.innerHTML = '';
         const rows = csv.split('\n').map(row => row.split(','));

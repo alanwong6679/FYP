@@ -1,0 +1,308 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 20px;
+    background: linear-gradient(135deg, #e0e7ff, #f4f4f9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    flex-direction: column;
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+:where([data-theme="dark"]) body {
+    background: linear-gradient(135deg, #2a2a2a, #1f1f1f);
+    color: #e0e0e0;
+}
+
+.container {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    width: 90%;
+    max-width: 600px;
+    text-align: center;
+    position: relative;
+    transition: transform 0.2s ease, background 0.3s ease, box-shadow 0.3s ease;
+}
+
+:where([data-theme="dark"]) .container {
+    background: #333333;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+
+.container:hover {
+    transform: translateY(-5px);
+}
+
+h1 {
+    font-size: 28px;
+    color: #333;
+    margin-bottom: 10px;
+    font-weight: 700;
+    transition: color 0.3s ease;
+}
+
+:where([data-theme="dark"]) h1 {
+    color: #ffffff;
+}
+
+h2 {
+    font-size: 20px;
+    color: #555;
+    margin-bottom: 20px;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+:where([data-theme="dark"]) h2 {
+    color: #bbbbbb;
+}
+
+.back-button {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    padding: 8px 12px;
+    background-color: #007bff;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+}
+
+:where([data-theme="dark"]) .back-button {
+    background-color: #1e90ff;
+}
+
+.back-button:hover {
+    background-color: #0056b3;
+}
+
+:where([data-theme="dark"]) .back-button:hover {
+    background-color: #4169e1;
+}
+
+#map {
+    height: 400px;
+    width: 100%;
+    margin-top: 20px;
+    border-radius: 10px;
+    border: 2px solid #e0e0e0;
+    transition: border-color 0.3s ease;
+}
+
+:where([data-theme="dark"]) #map {
+    border-color: #555555;
+}
+
+input[readonly] {
+    padding: 12px;
+    font-size: 16px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 15px;
+    background-color: #f8f8f8;
+    color: #333;
+    cursor: not-allowed;
+    text-align: center;
+    font-weight: 500;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+:where([data-theme="dark"]) input[readonly] {
+    background-color: #444444;
+    color: #e0e0e0;
+    border-color: #666666;
+}
+
+button {
+    padding: 12px 24px;
+    background-color: #28a745;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+:where([data-theme="dark"]) button {
+    background-color: #2ecc71;
+}
+
+button:hover {
+    background-color: #218838;
+    transform: scale(1.05);
+}
+
+:where([data-theme="dark"]) button:hover {
+    background-color: #27ae60;
+}
+
+button:active {
+    transform: scale(0.95);
+}
+
+.route-list {
+    margin-top: 20px;
+    max-height: 150px;
+    overflow-y: auto;
+    list-style: none;
+    padding: 0;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    transition: border-color 0.3s ease, background 0.3s ease;
+}
+
+:where([data-theme="dark"]) .route-list {
+    border-color: #666666;
+    background: #2a2a2a;
+}
+
+.route-list li {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.3s ease;
+}
+
+:where([data-theme="dark"]) .route-list li {
+    border-bottom: 1px solid #444444;
+    color: #e0e0e0;
+}
+
+.route-list li:last-child {
+    border-bottom: none;
+}
+
+.route-list li:hover {
+    background-color: #f0f0f0;
+}
+
+:where([data-theme="dark"]) .route-list li:hover {
+    background-color: #3a3a3a;
+}
+
+.route-info {
+    margin: 20px 0;
+    font-size: 18px;
+    color: #444;
+    font-weight: 500;
+    background: #e9f7ef;
+    padding: 10px;
+    border-radius: 8px;
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+:where([data-theme="dark"]) .route-info {
+    background: #1e4620;
+    color: #e0e0e0;
+}
+
+#keypad {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+    width: 240px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.keypad-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+}
+
+.number-row {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.zero-clear-row {
+    grid-template-columns: 1fr 2fr;
+}
+
+#keypad button {
+    padding: 12px;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    background-color: #e0e0e0;
+    color: #333;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease, color 0.3s ease;
+}
+
+:where([data-theme="dark"]) #keypad button {
+    background-color: #555555;
+    color: #e0e0e0;
+}
+
+#keypad button:hover {
+    background-color: #d0d0d0;
+    transform: scale(1.05);
+}
+
+:where([data-theme="dark"]) #keypad button:hover {
+    background-color: #666666;
+}
+
+#keypad button:active {
+    transform: scale(0.95);
+}
+
+#clear-btn {
+    background-color: #dc3545;
+    color: #ffffff;
+}
+
+:where([data-theme="dark"]) #clear-btn {
+    background-color: #e74c3c;
+}
+
+#clear-btn:hover {
+    background-color: #c82333;
+}
+
+:where([data-theme="dark"]) #clear-btn:hover {
+    background-color: #c0392b;
+}
+
+.loading-message {
+    color: #666;
+    font-size: 14px;
+    margin-top: 10px;
+    transition: color 0.3s ease;
+}
+
+:where([data-theme="dark"]) .loading-message {
+    color: #aaaaaa;
+}
+
+.error-message {
+    background-color: #ffcccc;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    color: #721c24;
+    font-weight: 500;
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+:where([data-theme="dark"]) .error-message {
+    background-color: #4a1c24;
+    color: #ff9999;
+}

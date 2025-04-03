@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transit Planner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/navbar.css">
+    <link rel="stylesheet" href="/static/css/transit.css">
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBBY8WRPKMG0sPNFkHAYNcCwkwTn4T5jGw&libraries=routes" defer></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Transit Planner</h1>
+        <div id="routeSection" class="section active">
+            <h2>Public Transport Lookup</h2>
+            <input id="input-display" readonly value="Enter Route Number" aria-label="Route Input">
+            <div id="loadingMessage" class="loading-message">Loading data...</div>
+            <div id="keypad" role="group" aria-label="Keypad for route entry">
+                <div class="keypad-row number-row">
+                    <button data-value="7" aria-label="Number 7">7</button>
+                    <button data-value="8" aria-label="Number 8">8</button>
+                    <button data-value="9" aria-label="Number 9">9</button>
+                </div>
+                <div class="keypad-row number-row">
+                    <button data-value="4" aria-label="Number 4">4</button>
+                    <button data-value="5" aria-label="Number 5">5</button>
+                    <button data-value="6" aria-label="Number 6">6</button>
+                </div>
+                <div class="keypad-row number-row">
+                    <button data-value="1" aria-label="Number 1">1</button>
+                    <button data-value="2" aria-label="Number 2">2</button>
+                    <button data-value="3" aria-label="Number 3">3</button>
+                </div>
+                <div class="keypad-row zero-clear-row">
+                    <button data-value="0" aria-label="Number 0">0</button>
+                    <button id="clear-btn" aria-label="Clear input">Clear</button>
+                </div>
+                <div class="keypad-row">
+                    <button data-value="A" aria-label="Letter A">A</button>
+                    <button data-value="B" aria-label="Letter B">B</button>
+                    <button data-value="C" aria-label="Letter C">C</button>
+                    <button data-value="D" aria-label="Letter D">D</button>
+                    <button data-value="E" aria-label="Letter E">E</button>
+                </div>
+                <div class="keypad-row">
+                    <button data-value="H" aria-label="Letter H">H</button>
+                    <button data-value="I" aria-label="Letter I">I</button>
+                    <button data-value="K" aria-label="Letter K">K</button>
+                    <button data-value="M" aria-label="Letter M">M</button>
+                    <button data-value="N" aria-label="Letter N">N</button>
+                </div>
+                <div class="keypad-row">
+                    <button data-value="P" aria-label="Letter P">P</button>
+                    <button data-value="R" aria-label="Letter R">R</button>
+                    <button data-value="S" aria-label="Letter S">S</button>
+                    <button data-value="T" aria-label="Letter T">T</button>
+                    <button data-value="W" aria-label="Letter W">W</button>
+                </div>
+                <div class="keypad-row" style="grid-template-columns: 1fr;">
+                    <button data-value="X" aria-label="Letter X">X</button>
+                </div>
+            </div>
+            <ul id="routeList" class="route-list" role="listbox" aria-label="Available Routes"></ul>
+            <p id="selectedRouteDisplay" class="route-info">Selected Route: None</p>
+            <button id="displayRoute" aria-label="Show selected route">Show Route</button>
+            <div id="etaContainer"></div>
+            <div id="map" role="region" aria-label="Route Map"></div>
+        </div>
+    </div>
+    <script src="/static/js/navbar.js"></script>
+    <script src="/static/js/transit.js"></script>
+</body>
+</html>

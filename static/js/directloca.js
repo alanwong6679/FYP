@@ -1,10 +1,3 @@
-
-
-
-
-
-
-
 const placeCoordinates = {
     "Kennedy Town": { lat: 22.2833, lon: 114.1314 },
     "Shek Tong Tsui": { lat: 22.2860, lon: 114.1330 },
