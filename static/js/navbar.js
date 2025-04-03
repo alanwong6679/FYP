@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Define the buttons with their properties
     const buttons = [
+        { id: 'home-btn', text: 'Home', href: 'home.html', icon: '/static/images/home.png' },
         { id: 'train-btn', text: 'Train', href: 'mtr.html', icon: '/static/images/mtr_button.png' },
         { id: 'transit_planner-btn', text: 'Search', href: 'transit_planner.html', icon: '/static/images/transit_planner.png' },
         { id: 'citybus-btn', text: 'CityBus', href: 'citybus.html', icon: '/static/images/citybus_button.png' },
@@ -90,4 +91,5 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize theme and add event listener
     initTheme();
     darkModeToggle.addEventListener('click', toggleDarkMode);
+    
 });

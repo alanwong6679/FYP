@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/navbar.css">
+    <link rel="stylesheet" href="/static/css/transit.css">
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBBY8WRPKMG0sPNFkHAYNcCwkwTn4T5jGw&libraries=routes" defer></script>
+</head>
+<body>
+    <div class="container">
+        <div class="filter-buttons">
+            <button id="favoriteRoutesBtn" aria-label="Show favorite routes">Favorite Routes</button>
+        </div>
+        <ul id="favoriteRouteList" class="route-list" role="listbox" aria-label="Routes and Stops"></ul>
+        <p id="selectedRouteDisplay" class="route-info">Selected Route: None</p>
+        <div id="map" role="region" aria-label="Route Map"></div>
+    </div>
+    <script src="/static/js/transit.js"></script>
+    <script src="/static/js/navbar.js"></script>
+</body>
+</html>
