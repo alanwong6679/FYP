@@ -7,262 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/navbar.css">
     <link rel="stylesheet" href="/static/css/temperature.css">
-    <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f9;
-            background-image: url("/static/images/index.png");
-            color: #333;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            flex-direction: column;
-            background-size: cover;
-            background-repeat: no-repeat;
-        }
-        .container {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 500px;
-            margin-bottom: 60px;
-            margin-left: 160px;
-            position: relative;
-        }
-        h1 {
-            text-align: center;
-            font-size: 2rem;
-            margin-bottom: 20px;
-            color: #007dc5;
-        }
-        form {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        .place-container {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            position: relative;
-        }
-        .station-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            width: 100%;
-        }
-        .station-row dt {
-            flex-shrink: 0;
-        }
-        .station-row dd {
-            flex: 1;
-            margin: 0;
-        }
-        .searchable-select {
-            position: relative;
-            width: 100%;
-        }
-        .searchable-select input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        .searchable-select .options {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            border: 1px solid #ccc;
-            background-color: #fff;
-            z-index: 1000;
-            max-height: 200px;
-            overflow-y: auto;
-            display: none;
-            border-radius: 4px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-        .searchable-select .options div {
-            padding: 10px;
-            cursor: pointer;
-        }
-        .searchable-select .options div:hover {
-            background-color: #f0f0f0;
-        }
-        .input-change {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            cursor: pointer;
-            padding: 5px;
-            z-index: 10;
-        }
-        .input-change img {
-            width: 24px;
-            height: 24px;
-        }
-        button {
-            padding: 10px;
-            border: none;
-            border-radius: 4px;
-            background-color: #007bff;
-            color: #fff;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        .status-button {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            padding: 8px 12px;
-            font-size: 14px;
-            background-color: #28a745;
-        }
-        .status-button:hover {
-            background-color: #218838;
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-        }
-        .modal-content {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            width: 80%;
-            max-width: 400px;
-            max-height: 80vh;
-            overflow-y: auto;
-            position: relative;
-        }
-        .close-button {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            font-size: 24px;
-            cursor: pointer;
-            color: #333;
-        }
-        .status-row {
-            display: flex;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
-        }
-        .status-row:last-child {
-            border-bottom: none;
-        }
-        .color-bar {
-            width: 8px;
-            height: 40px;
-            margin-right: 10px;
-            flex-shrink: 0;
-        }
-        .line-info {
-            flex-grow: 1;
-        }
-        .line-name {
-            font-weight: bold;
-            font-size: 16px;
-        }
-        .line-status {
-            font-size: 14px;
-            color: #666;
-        }
-        .update-time {
-            font-size: 14px;
-            color: #999;
-            margin-left: 20px;
-            white-space: nowrap;
-        }
-        .color-ael { background-color: #009688; }
-        .color-tcl { background-color: #ff9800; }
-        .color-tml { background-color: #8b4513; }
-        .color-tkl { background-color: #9c27b0; }
-        .color-eal { background-color: #03a9f4; }
-        .color-sil { background-color: #4caf50; }
-        .color-twl { background-color: #f44336; }
-        .color-isl { background-color: #2196f3; }
-        .color-ktl { background-color: #4caf50; }
-        .bottom-bar {
-            background-color: rgba(51, 51, 51, 0.8);
-            color: white;
-            padding: 10px;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            z-index: 1000;
-        }
-        #temperature {
-            font-size: 16px;
-            margin-left: 20px;
-        }
-        #loading {
-            text-align: center;
-            color: #666;
-            margin-top: 10px;
-        }
-        #route {
-            margin-top: 20px;
-        }
-        .route-option {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-            cursor: pointer;
-            color: #007bff;
-        }
-        .route-details {
-            display: none;
-            margin-left: 20px;
-            padding: 10px;
-        }
-        .stop-list {
-            list-style-type: none;
-            padding: 0;
-        }
-        .stop-list li {
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
-        }
-        .boarding-stop {
-            color: blue;
-            font-weight: bold;
-            animation: pulse 1.5s infinite;
-        }
-        .alighting-stop {
-            color: red;
-            font-weight: bold;
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-    </style>
+    <link rel="stylesheet" href="/static/css/route_planner.css">
 </head>
 <body>
     <div class="container" id="main-content">
@@ -274,7 +19,7 @@
                     <dl><dt class="starting-station">Starting Station</dt></dl>
                     <dd>
                         <div class="searchable-select" id="currentStationContainer">
-                            <input type="text" id="currentStationInput" placeholder="Type to search...">
+                            <input type="text" id="currentStationInput" placeholder="Type to search..." autocomplete="off">
                             <div class="options" id="currentStationOptions"></div>
                         </div>
                     </dd>
@@ -286,7 +31,7 @@
                     <dl class="condition-item"><dt class="destination-station">Destination Station</dt></dl>
                     <dd>
                         <div class="searchable-select" id="destinationStationContainer">
-                            <input type="text" id="destinationStationInput" placeholder="Type to search...">
+                            <input type="text" id="destinationStationInput" placeholder="Type to search..." autocomplete="off">
                             <div class="options" id="destinationStationOptions"></div>
                         </div>
                     </dd>
@@ -294,7 +39,7 @@
             </div>
             <button type="submit">Find Route</button>
         </form>
-        <div id="loading">Loading bus data...</div>
+        <div id="loading">Loading data...</div>
         <div id="route"></div>
     </div>
     <div class="modal" id="statusModal">
@@ -310,8 +55,6 @@
     <script src="/static/js/stations.js"></script>
     <script src="/static/js/navbar.js"></script>
     <script src="/static/js/temperature.js"></script>
-    <script src="/static/js/citybusstop.js"></script>
-    <script src="/static/js/kmbusstop.js"></script>
     <script>
         const trainLines = [
             { fullName: "Airport Express Line (AEL)", lineId: "AEL", stationId: "HOK", colorClass: "color-ael" },
@@ -324,27 +67,20 @@
             { fullName: "Island Line (ISL)", lineId: "ISL", stationId: "KET", colorClass: "color-isl" },
             { fullName: "Kwun Tong Line (KTL)", lineId: "KTL", stationId: "WHA", colorClass: "color-ktl" }
         ];
-        
 
         async function fetchLineStatus(lineId, stationId) {
             try {
                 const url = `https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=${lineId}&sta=${stationId}&lang=en`;
                 const response = await fetch(url);
                 const data = await response.json();
-                console.log('API Response:', data);
-
                 if (data.status === 1 && data.data && data.data[`${lineId}-${stationId}`]) {
                     const schedule = data.data[`${lineId}-${stationId}`];
-                    console.log('Schedule:', schedule);
                     const hasValidSchedule =
                         (schedule.UP && schedule.UP.length > 0 && schedule.UP[0].valid === "Y") ||
                         (schedule.DOWN && schedule.DOWN.length > 0 && schedule.DOWN[0].valid === "Y");
-                    console.log('Has Valid Schedule:', hasValidSchedule);
                     return hasValidSchedule ? "1" : "0";
-                } else {
-                    console.log('Invalid API response or no data');
-                    return "0";
                 }
+                return "0";
             } catch (error) {
                 console.error('Fetch Error:', error);
                 return "0";
@@ -353,14 +89,11 @@
 
         async function displayTrainStatus() {
             const statusList = document.getElementById('statusList');
-            statusList.innerHTML = ''; // Clear previous content
+            statusList.innerHTML = '';
 
             for (const line of trainLines) {
                 const status = await fetchLineStatus(line.lineId, line.stationId);
-                console.log('Status for', line.fullName, ':', status);
                 const isNormal = status === "1";
-                console.log('Is Normal for', line.fullName, ':', isNormal);
-
                 const now = new Date();
                 const updateTime = `${now.getMonth() + 1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
 
@@ -413,75 +146,68 @@
             }
         });
 
-        // Caching utility functions
-        function getCachedData(key) {
-            const cached = localStorage.getItem(key);
-            if (cached) {
-                const { data, timestamp } = JSON.parse(cached);
-                const age = (Date.now() - timestamp) / (1000 * 60 * 60); // Age in hours
-                if (age < 24) return data; // Cache valid for 24 hours
-            }
-            return null;
-        }
-
-        function setCachedData(key, data) {
-            localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
-        }
+        let citybusRoutes = [], citybusStops = [], citybusRouteStopsMap = {};
+        let kmbRoutes = [], kmbStops = [], kmbRouteStopsMap = {};
 
         async function initializeData() {
             const loadingDiv = document.getElementById('loading');
             loadingDiv.style.display = 'block';
             try {
-                await Promise.all([fetchCitybusData(), fetchKMBData()]);
+                const [routeResponse, stopResponse, routeStopResponse] = await Promise.all([
+                    fetch('/static/data/route_data.json'),
+                    fetch('/static/data/stop_data.json'),
+                    fetch('/static/data/route-stop_data.json')
+                ]);
+
+                const routeData = await routeResponse.json();
+                kmbRoutes = routeData.kmb_routes || [];
+                citybusRoutes = routeData.ctb_routes || [];
+
+                const stopData = await stopResponse.json();
+                kmbStops = Object.entries(stopData.kmb_stops || {}).map(([stop, details]) => ({
+                    stop,
+                    name_en: details.name_en,
+                    lat: details.lat,
+                    long: details.long
+                }));
+                citybusStops = Object.entries(stopData.ctb_stops || {}).map(([stop, details]) => ({
+                    stop,
+                    name_en: details.name_en,
+                    lat: details.lat,
+                    long: details.long
+                }));
+
+                const routeStopData = await routeStopResponse.json();
+                kmbRouteStopsMap = Object.fromEntries(
+                    Object.entries(routeStopData.kmb_route_stops || {}).map(([key, stops]) => [
+                        key,
+                        stops.map(stop => stop.stop_id)
+                    ])
+                );
+                citybusRouteStopsMap = Object.fromEntries(
+                    Object.entries(routeStopData.ctb_route_stops || {}).map(([key, stops]) => [
+                        key,
+                        stops.map(stop => stop.stop_id)
+                    ])
+                );
+
+                // Store all data in localStorage for general_schedule.html
+                localStorage.setItem('kmb_allRoutes', JSON.stringify(kmbRoutes));
+                localStorage.setItem('kmb_allStops', JSON.stringify(kmbStops));
+                localStorage.setItem('kmb_routeStopsMap', JSON.stringify(kmbRouteStopsMap));
+                localStorage.setItem('citybus_allRoutes', JSON.stringify(citybusRoutes));
+                localStorage.setItem('citybus_allStops', JSON.stringify(citybusStops));
+                localStorage.setItem('citybus_routeStopsMap', JSON.stringify(citybusRouteStopsMap));
+
                 if (citybusStops.length === 0 && kmbStops.length === 0) {
                     loadingDiv.textContent = 'No bus data available. Some features may not work.';
                 } else {
                     loadingDiv.style.display = 'none';
                 }
             } catch (error) {
-                loadingDiv.textContent = 'Error loading bus data. Check console for details.';
+                loadingDiv.textContent = 'Error loading data. Check console for details.';
                 console.error('Initialization failed:', error);
             }
-        }
-
-
-        
-
-
-
-
-        function findNearestMTRStation(busStop, mtrStations) {
-            let nearestStation = null;
-            let minDistance = Infinity;
-            mtrStations.forEach(mtr => {
-                const distance = haversineDistance(
-                    parseFloat(busStop.lat), parseFloat(busStop.long),
-                    mtr.lat, mtr.long
-                );
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    nearestStation = mtr;
-                }
-            });
-            return { station: nearestStation, distance: minDistance };
-        }
-
-        function getUniqueMTRStations() {
-            const stationSet = new Set();
-            const stations = [];
-            for (let line in lines) {
-                lines[line].forEach(station => {
-                    if (!stationSet.has(station.value)) {
-                        stationSet.add(station.value);
-                        stations.push({
-                            value: station.value,
-                            text: station.text,
-                            type: 'MTR'
-                        });
-                    }
-                });
-            }
-            return stations;
         }
 
         function haversineDistance(lat1, lon1, lat2, lon2) {
@@ -524,48 +250,50 @@
             const directRoutes = [];
 
             for (const route of routes) {
-                for (const direction of ['outbound', 'inbound']) {
-                    const key = `${route.route}-${direction}`;
-                    const stopsList = routeStopsMap[key] || [];
-                    const startMatches = stopsList.filter(id => startStopIds.includes(id));
-                    const endMatches = stopsList.filter(id => endStopIds.includes(id));
-                    if (startMatches.length > 0 && endMatches.length > 0) {
-                        let closestStartStop = null, minStartDistance = Infinity;
-                        for (const stopId of startMatches) {
+                const direction = route.bound === 'O' ? 'outbound' : 'inbound';
+                const key = `${route.route}-${route.bound}`;
+                const stopsList = routeStopsMap[key] || [];
+                const startMatches = stopsList.filter(id => startStopIds.includes(id));
+                const endMatches = stopsList.filter(id => endStopIds.includes(id));
+                if (startMatches.length > 0 && endMatches.length > 0) {
+                    let closestStartStop = null, minStartDistance = Infinity;
+                    for (const stopId of startMatches) {
+                        const stop = stops.find(s => s.stop === stopId);
+                        const distance = haversineDistance(startStop.lat, startStop.long, stop.lat, stop.long);
+                        if (distance < minStartDistance) {
+                            minStartDistance = distance;
+                            closestStartStop = stopId;
+                        }
+                    }
+                    const startIndex = stopsList.indexOf(closestStartStop);
+                    const possibleEndStops = endMatches.filter(id => stopsList.indexOf(id) > startIndex);
+                    if (possibleEndStops.length > 0) {
+                        let closestEndStop = null, minEndDistance = Infinity;
+                        for (const stopId of possibleEndStops) {
                             const stop = stops.find(s => s.stop === stopId);
-                            const distance = haversineDistance(startStop.lat, startStop.long, stop.lat, stop.long);
-                            if (distance < minStartDistance) {
-                                minStartDistance = distance;
-                                closestStartStop = stopId;
+                            const distance = haversineDistance(endStop.lat, endStop.long, stop.lat, stop.long);
+                            if (distance < minEndDistance) {
+                                minEndDistance = distance;
+                                closestEndStop = stopId;
                             }
                         }
-                        const startIndex = stopsList.indexOf(closestStartStop);
-                        const possibleEndStops = endMatches.filter(id => stopsList.indexOf(id) > startIndex);
-                        if (possibleEndStops.length > 0) {
-                            let closestEndStop = null, minEndDistance = Infinity;
-                            for (const stopId of possibleEndStops) {
-                                const stop = stops.find(s => s.stop === stopId);
-                                const distance = haversineDistance(endStop.lat, endStop.long, stop.lat, stop.long);
-                                if (distance < minEndDistance) {
-                                    minEndDistance = distance;
-                                    closestEndStop = stopId;
-                                }
-                            }
-                            const stopDetails = stopsList.map(id => {
-                                const stop = stops.find(s => s.stop === id);
-                                return { id, name: stop ? stop.name_en : `Stop ${id}` };
-                            });
-                            directRoutes.push({
-                                route: route.route,
-                                direction,
-                                stops: stopDetails,
-                                boardingStop: closestStartStop,
-                                alightingStop: closestEndStop,
-                                boardingDistance: minStartDistance,
-                                alightingDistance: minEndDistance,
-                                company: company
-                            });
-                        }
+                        const stopDetails = stopsList.map(id => {
+                            const stop = stops.find(s => s.stop === id);
+                            return { 
+                                id, 
+                                name: stop ? stop.name_en : `Stop ${id}` 
+                            };
+                        });
+                        directRoutes.push({
+                            route: route.route,
+                            direction,
+                            stops: stopDetails,
+                            boardingStop: closestStartStop,
+                            alightingStop: closestEndStop,
+                            boardingDistance: minStartDistance,
+                            alightingDistance: minEndDistance,
+                            company: company
+                        });
                     }
                 }
             }
@@ -579,12 +307,14 @@
 
         function renderDirectBusRoutes(routes) {
             return routes.map((route, index) => {
-                const boardingStop = allStops.find(s => s.stop === route.boardingStop);
-                const alightingStop = allStops.find(s => s.stop === route.alightingStop);
+                const stops = route.company === 'KMB' ? kmbStops : citybusStops;
+                const boardingStop = stops.find(s => s.stop === route.boardingStop);
+                const alightingStop = stops.find(s => s.stop === route.alightingStop);
                 const boardingName = boardingStop ? boardingStop.name_en : `Stop ${route.boardingStop}`;
                 const alightingName = alightingStop ? alightingStop.name_en : `Stop ${route.alightingStop}`;
                 const numStops = route.stops.findIndex(s => s.id === route.alightingStop) - 
                                 route.stops.findIndex(s => s.id === route.boardingStop);
+
                 const summary = `
                     <div 
                         class="route-option" 
@@ -602,28 +332,16 @@
                 let details = `<div class="route-details" id="route-details-${index}">`;
                 details += '<ul class="stop-list">';
                 route.stops.forEach(stop => {
+                    const stopInfo = stops.find(s => s.stop === stop.id);
+                    const stopName = stopInfo ? stopInfo.name_en : `Stop ${stop.id}`;
                     const className = stop.id === route.boardingStop ? 'boarding-stop' : 
                                     stop.id === route.alightingStop ? 'alighting-stop' : '';
                     const etaSpan = stop.id === route.boardingStop ? `<span id="eta-${index}"></span>` : '';
-                    details += `<li class="${className}">${stop.name}${etaSpan}</li>`;
+                    details += `<li class="${className}">${stopName}${etaSpan}</li>`;
                 });
                 details += '</ul></div>';
                 return summary + details;
             }).join('');
-        }
-
-        function toggleRouteDetails(detailsId, summaryElement) {
-            const detailsDiv = document.getElementById(detailsId);
-            if (detailsDiv.style.display === 'none' || !detailsDiv.style.display) {
-                detailsDiv.style.display = 'block';
-                const route = summaryElement.getAttribute('data-route');
-                const direction = summaryElement.getAttribute('data-direction');
-                const boardingStop = summaryElement.getAttribute('data-boarding-stop');
-                const company = summaryElement.getAttribute('data-company');
-                fetchETA(route, direction, boardingStop, detailsId, company);
-            } else {
-                detailsDiv.style.display = 'none';
-            }
         }
 
         async function fetchETA(route, direction, stopId, detailsId, company) {
@@ -637,7 +355,6 @@
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json();
-                console.log(`${company} ETA Response for ${route} at ${stopId}:`, data);
 
                 let eta = null;
                 if (company === 'KMB') {
@@ -663,6 +380,38 @@
                 etaSpan.textContent = ` (ETA unavailable)`;
                 console.error(`${company} ETA fetch failed for ${route} at ${stopId}:`, error);
             }
+        }
+
+        function toggleRouteDetails(detailsId, summaryElement) {
+            const detailsDiv = document.getElementById(detailsId);
+            if (detailsDiv.style.display === 'none' || !detailsDiv.style.display) {
+                detailsDiv.style.display = 'block';
+                const route = summaryElement.getAttribute('data-route');
+                const direction = summaryElement.getAttribute('data-direction');
+                const boardingStop = summaryElement.getAttribute('data-boarding-stop');
+                const company = summaryElement.getAttribute('data-company');
+                fetchETA(route, direction, boardingStop, detailsId, company);
+            } else {
+                detailsDiv.style.display = 'none';
+            }
+        }
+
+        function getUniqueMTRStations() {
+            const stationSet = new Set();
+            const stations = [];
+            for (let line in lines) {
+                lines[line].forEach(station => {
+                    if (!stationSet.has(station.value)) {
+                        stationSet.add(station.value);
+                        stations.push({
+                            value: station.value,
+                            text: station.text,
+                            type: 'MTR'
+                        });
+                    }
+                });
+            }
+            return stations;
         }
 
         function makeSearchable(inputId, optionsId, options) {
@@ -708,135 +457,53 @@
             const tempValue = currentInput.value;
             const tempDataValue = currentInput.dataset.value;
             const tempDataType = currentInput.dataset.type;
+            const tempDataCompany = currentInput.dataset.company;
 
             currentInput.value = destinationInput.value;
             currentInput.dataset.value = destinationInput.dataset.value || '';
             currentInput.dataset.type = destinationInput.dataset.type || '';
+            currentInput.dataset.company = destinationInput.dataset.company || '';
 
             destinationInput.value = tempValue;
             destinationInput.dataset.value = tempDataValue || '';
             destinationInput.dataset.type = tempDataType || '';
+            destinationInput.dataset.company = tempDataCompany || '';
         });
 
-        async function fetchCitybusData() {
-            const routesKey = 'citybus_routes';
-            const stopsKey = 'citybus_stops';
-            const routeStopsMapKey = 'citybus_routeStopsMap';
-        
-            const cachedRoutes = getCachedData(routesKey);
-            const cachedStops = getCachedData(stopsKey);
-            const cachedRouteStopsMap = getCachedData(routeStopsMapKey);
-        
-            if (cachedRoutes && cachedStops && cachedRouteStopsMap) {
-                citybusRoutes = cachedRoutes;
-                citybusStops = cachedStops;
-                citybusRouteStopsMap = cachedRouteStopsMap;
-                console.log('Citybus data loaded from cache');
-            } else {
-                if (typeof allCitybusRoutes === 'undefined' || typeof allCitybusStops === 'undefined' || typeof citybusRouteStopsMap === 'undefined') {
-                    console.error('Citybus static data not defined. Check citybusstop.js');
-                    citybusRoutes = [];
-                    citybusStops = [];
-                    citybusRouteStopsMap = {};
-                } else {
-                    citybusRoutes = allCitybusRoutes;  // Correct name
-                    citybusStops = allCitybusStops;
-                    citybusRouteStopsMap = citybusRouteStopsMap;
-                    setCachedData(routesKey, citybusRoutes);
-                    setCachedData(stopsKey, citybusStops);
-                    setCachedData(routeStopsMapKey, citybusRouteStopsMap);
-                    console.log('Citybus static data loaded and cached');
-                    console.log('Citybus Routes:', citybusRoutes);  // Debug
-                    console.log('Citybus Stops:', citybusStops);    // Debug
-                    console.log('Citybus RouteStopsMap:', citybusRouteStopsMap);  // Debug
-                }
-            }
-        }
-        
-        async function fetchKMBData() {
-            const routesKey = 'kmb_routes';
-            const stopsKey = 'kmb_stops';
-            const routeStopsMapKey = 'kmb_routeStopsMap';
-        
-            const cachedRoutes = getCachedData(routesKey);
-            const cachedStops = getCachedData(stopsKey);
-            const cachedRouteStopsMap = getCachedData(routeStopsMapKey);
-        
-            if (cachedRoutes && cachedStops && cachedRouteStopsMap) {
-                kmbRoutes = cachedRoutes;
-                kmbStops = cachedStops;
-                kmbRouteStopsMap = cachedRouteStopsMap;
-                console.log('KMB data loaded from cache');
-            } else {
-                if (typeof allKMBRoutes === 'undefined' || typeof allKMBStops === 'undefined' || typeof kmbrouteStopsMap === 'undefined') {
-                    console.error('KMB static data not defined. Check kmbusstop.js');
-                    kmbRoutes = [];
-                    kmbStops = [];
-                    kmbRouteStopsMap = {};
-                } else {
-                    kmbRoutes = allKMBRoutes;
-                    kmbStops = allKMBStops;
-                    kmbRouteStopsMap = kmbrouteStopsMap;
-                    setCachedData(routesKey, kmbRoutes);
-                    setCachedData(stopsKey, kmbStops);
-                    setCachedData(routeStopsMapKey, kmbRouteStopsMap);
-                    console.log('KMB static data loaded and cached');
-                    console.log('KMB Routes:', kmbRoutes);  // Debug
-                    console.log('KMB Stops:', kmbStops);    // Debug
-                    console.log('KMB RouteStopsMap:', kmbRouteStopsMap);  // Debug
-                }
-            }
-        }
         document.getElementById('routeForm').addEventListener('submit', function(e) {
             e.preventDefault();
-        
             const currentInput = document.getElementById('currentStationInput');
             const destinationInput = document.getElementById('destinationStationInput');
-            const currentType = currentInput.dataset.type; // 'MTR' or 'Bus'
-            const destinationType = destinationInput.dataset.type; // 'MTR' or 'Bus'
-            const currentId = currentInput.dataset.value; // Station or stop ID
-            const destinationId = destinationInput.dataset.value; // Station or stop ID
-            const currentCompany = currentInput.dataset.company; // 'Citybus', 'KMB', or undefined for MTR
-            const destinationCompany = destinationInput.dataset.company; // 'Citybus', 'KMB', or undefined for MTR
-        
+            const currentType = currentInput.dataset.type;
+            const destinationType = destinationInput.dataset.type;
+            const currentId = currentInput.dataset.value;
+            const destinationId = destinationInput.dataset.value;
+            const currentCompany = currentInput.dataset.company;
+            const destinationCompany = destinationInput.dataset.company;
+
+            const routeDiv = document.getElementById('route');
+            routeDiv.innerHTML = '';
+
             if (!currentId || !destinationId) {
                 alert("Please select both a starting and destination station.");
                 return;
             }
-        
-            let url = '/general_schedule.html?';
-            const busData = currentCompany === 'KMB' || destinationCompany === 'KMB' ? 
-                { routes: kmbRoutes, stops: kmbStops, routeStopsMap: kmbRouteStopsMap } : 
-                { routes: citybusRoutes, stops: citybusStops, routeStopsMap: citybusRouteStopsMap };
-            const company = currentCompany || destinationCompany || 'Citybus'; // Default to Citybus if no company
-        
+
             if (currentType === 'MTR' && destinationType === 'MTR') {
-                url += `currentStation=${currentId}&destinationStation=${destinationId}`;
-            } else if (currentType === 'Bus' && destinationType === 'Bus') {
-                if (currentCompany !== destinationCompany) {
-                    document.getElementById('route').innerHTML = '<p>Cross-company bus routes are not supported yet.</p>';
-                    return;
-                }
-                localStorage.setItem(`${company.toLowerCase()}_allRoutes`, JSON.stringify(busData.routes));
-                localStorage.setItem(`${company.toLowerCase()}_allStops`, JSON.stringify(busData.stops));
-                localStorage.setItem(`${company.toLowerCase()}_routeStopsMap`, JSON.stringify(busData.routeStopsMap));
-                url += `startBusStop=${currentId}&endBusStop=${destinationId}&company=${company}`;
+                window.location.href = `/general_schedule.html?currentStation=${currentId}&destinationStation=${destinationId}`;
             } else if (currentType === 'Bus' && destinationType === 'MTR') {
-                localStorage.setItem(`${company.toLowerCase()}_allRoutes`, JSON.stringify(busData.routes));
-                localStorage.setItem(`${company.toLowerCase()}_allStops`, JSON.stringify(busData.stops));
-                localStorage.setItem(`${company.toLowerCase()}_routeStopsMap`, JSON.stringify(busData.routeStopsMap));
-                url += `startBusStop=${currentId}&destinationStation=${destinationId}&company=${company}`;
+                window.location.href = `/general_schedule.html?startBusStop=${currentId}&destinationStation=${destinationId}&company=${currentCompany}`;
             } else if (currentType === 'MTR' && destinationType === 'Bus') {
-                localStorage.setItem(`${company.toLowerCase()}_allRoutes`, JSON.stringify(busData.routes));
-                localStorage.setItem(`${company.toLowerCase()}_allStops`, JSON.stringify(busData.stops));
-                localStorage.setItem(`${company.toLowerCase()}_routeStopsMap`, JSON.stringify(busData.routeStopsMap));
-                url += `currentStation=${currentId}&endBusStop=${destinationId}&company=${company}`;
+                window.location.href = `/general_schedule.html?currentStation=${currentId}&endBusStop=${destinationId}&company=${destinationCompany}`;
+            } else if (currentType === 'Bus' && destinationType === 'Bus') {
+                if (currentCompany === destinationCompany) {
+                    findBusRoutes(currentId, destinationId, currentCompany);
+                } else {
+                    // Bus-to-Bus different companies (e.g., CTB to KMB)
+                    window.location.href = `/general_schedule.html?startBusStop=${currentId}&endBusStop=${destinationId}`;
+                }
             }
-        
-            window.location.href = url;
         });
-
-
 
         window.onload = async function() {
             await initializeData();
