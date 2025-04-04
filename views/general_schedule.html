@@ -430,7 +430,7 @@ console.log("MTR Response:", mtrResponse);
     }
 
     routes.sort((a, b) => a.estimatedTime - b.estimatedTime);
-    displayMixedRoutes(routes.slice(0, 3), 'Bus-to-MTR', startBusStop, destinationStation);
+    displayMixedRoutes(routes.slice(0, 10), 'Bus-to-MTR', startBusStop, destinationStation);
 }
         // Update findNearbyStops to accept a custom distance
         function findNearbyStops(station, maxDistance = 1000) {
