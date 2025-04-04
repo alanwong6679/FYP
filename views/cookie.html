@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cookie Consent</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            background: #f4f4f4; 
+        }
+        #cookie-notice { 
+            background: #333; 
+            color: white; 
+            padding: 20px; 
+            border-radius: 5px; 
+            max-width: 500px; 
+            text-align: center; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
+        }
+        #cookie-notice p { 
+            margin: 0 0 15px 0; 
+        }
+        #accept-cookies { 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            padding: 8px 15px; 
+            border-radius: 3px; 
+            cursor: pointer; 
+        }
+        #accept-cookies:hover { 
+            background: #0056b3; 
+        }
+    </style>
+</head>
+<body>
+    <div id="cookie-notice">
+        <p>We use cookies to save your favorite routes and improve your experience. Accept to continue.</p>
+        <button id="accept-cookies">Accept</button>
+    </div>
+    <script>
+        document.getElementById('accept-cookies').addEventListener('click', async () => {
+            await fetch('/api/consent', { method: 'POST' });
+            window.location.href = '/'; // Redirect to index.html
+        });
+    </script>
+</body>
+</html>

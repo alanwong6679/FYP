@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 require('dotenv').config();
 const path = require('path');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
@@ -16,9 +17,10 @@ app.use(cors());
 app.set('view engine', 'html');
 app.use(express.urlencoded({ extended: true }));
 app.engine('html', require('ejs').renderFile);
-app.use('/static', express.static(path.join(__dirname, 'static'))); // Fixed to serve at /static
-app.use(express.static(path.join(__dirname, 'views'))); // Updated to full path for consistency
+app.use('/static', express.static(path.join(__dirname, 'static')));
+app.use(express.static(path.join(__dirname, 'views')));
 app.use(express.json());
+app.use(cookieParser());
 const PORT = process.env.PORT || 5000;
 
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -28,14 +30,13 @@ app.use(bodyParser.json());
 const { regionCoordinates } = require('./static/js/hkostation.js');
 const { placeCoordinates } = require('./static/js/directloca.js');
 
-
-
+// MTR Lines and Interchange Stations
 const lines = {
     "AEL": { order: ["HOK", "KOW", "TSY", "AIR", "AWE"], first: "HOK", last: "AWE" },
     "TCL": { order: ["HOK", "KOW", "OLY", "NAC", "LAK", "TSY", "SUN", "TUC"], first: "HOK", last: "TUC" },
     "TML": { order: ["WKS", "MOS", "HEO", "TSH", "SHM", "CIO", "STW", "CKT", "TAW", "HIK", "DIH", "KAT", "SUW", "TKW", "HOM", "HUH", "ETS", "AUS", "NAC", "MEF", "TWW", "KSR", "YUL", "LOP", "TIS", "SIH", "TUM"], first: "WKS", last: "TUM" },
     "TKL": { order: ["NOP", "QUB", "YAT", "TIK", "TKO", "LHP", "HAH", "POA"], first: "NOP", last: ["POA", "LOP"] },
-    "EAL": { order: ["LOW", "SHS", "FAN", "TAP", "TWO", "UNI", "FOT", "SHT", "KOT", "HUH"], first: "LOW", last: "HUH"},
+    "EAL": { order: ["LOW", "SHS", "FAN", "TAP", "TWO", "UNI", "FOT", "SHT", "KOT", "HUH"], first: "LOW", last: "HUH" },
     "SIL": { order: ["ADM", "OCP", "WCH", "LET", "SOH"], first: "ADM", last: "SOH" },
     "TWL": { order: ["CEN", "ADM", "TST", "JOR", "YMT", "MOK", "PRE", "SSP", "CSW", "LCK", "MEF", "LAK", "KWF", "KWH", "TWH", "TSW"], first: "CEN", last: "TSW" },
     "ISL": { order: ["KET", "HKU", "SYP", "SHW", "CEN", "ADM", "WAC", "CAB", "TIH", "FOH", "NOP", "QUB", "TAK", "SWH", "SKW", "HFC", "CHW"], first: "KET", last: "CHW" },
@@ -63,15 +64,30 @@ const interchangeStations = {
 
 const validInterchangeStations = Object.keys(interchangeStations).filter(station => interchangeStations[station].length > 1);
 
+// Generate unique user ID
+function generateUserId() {
+    return 'user_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+}
+
+// Middleware to set userId cookie only after consent
+app.use((req, res, next) => {
+    if (!req.cookies.userId && req.cookies.consented === 'true') {
+        const userId = generateUserId();
+        res.cookie('userId', userId, {
+            maxAge: 365 * 24 * 60 * 60 * 1000,
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'Strict'
+        });
+    }
+    next();
+});
+
 // Helper function to fetch schedule data
 const fetchScheduleData = async (line, station) => {
     try {
         const response = await axios.get(`https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php`, {
-            params: {
-                line: line,
-                sta: station,
-                lang: 'en'
-            }
+            params: { line, sta: station, lang: 'en' }
         });
         return { line, station, data: response.data };
     } catch (error) {
@@ -82,17 +98,14 @@ const fetchScheduleData = async (line, station) => {
 
 const processScheduleResponses = async (responses, schedules) => {
     const processedStations = new Set();
-
     responses.forEach(response => {
         const { line, station, data, error } = response;
         const stationKey = `${line}-${station}`;
-
         if (data && data.data && data.data[stationKey] && !processedStations.has(stationKey)) {
             processedStations.add(stationKey);
             schedules[line] = schedules[line] || { curr_time: '-', sys_time: '-', up: [], down: [] };
             schedules[line].curr_time = data.sys_time || '-';
             schedules[line].sys_time = data.curr_time || '-';
-
             const stationIndex = lines[line].order.indexOf(station);
             if (stationIndex > 0 && data.data[stationKey].UP) {
                 schedules[line].up = [...new Map((data.data[stationKey].UP || []).map(item => [item.time, item])).values()].slice(0, 5);
@@ -117,10 +130,8 @@ const findRoutesDFS = (
 ) => {
     if (pathStations.includes(currentStation)) return;
     const newPathStations = [...pathStations, currentStation];
-
     if (visited.has(`${currentLine}-${currentStation}`)) return;
     visited.add(`${currentLine}-${currentStation}`);
-
     const currentLineStations = lines[currentLine].order;
 
     if (currentLineStations.includes(destinationStation)) {
@@ -139,7 +150,6 @@ const findRoutesDFS = (
 
     for (const interchange of validInterchangeStations) {
         if (!lines[currentLine].order.includes(interchange)) continue;
-
         for (const nextLine of interchangeStations[interchange]) {
             if (
                 nextLine !== currentLine && 
@@ -173,26 +183,18 @@ const calculateRoutesDFS = (currentStation, destinationStation) => {
 
 app.post('/fetch_schedule', async (req, res) => {
     const { currentStation, destinationStation } = req.body;
-
     if (!currentStation || !destinationStation) {
         console.error("Invalid station selection: Missing currentStation or destinationStation");
         return res.json({ error: "Please select both a current station and a destination station.", schedules: null });
     }
-
     try {
         console.log(`Fetching schedule for ${currentStation} to ${destinationStation}`);
         const validRoutes = calculateRoutesDFS(currentStation, destinationStation);
-
         if (!validRoutes.length) {
             console.error("No valid routes found");
             return res.json({ error: "No valid route found.", schedules: null });
         }
-
         const { schedules, bestRoute, alternativeRoutes } = await fetchAndProcessSchedules(currentStation, destinationStation);
-        console.log("Best Route:", bestRoute);
-        console.log("Alternative Routes:", alternativeRoutes);
-        console.log("Schedules:", schedules);
-
         return res.json({
             error: null,
             schedules,
@@ -211,7 +213,6 @@ function calculateStationsBetween(line, startStation, endStation) {
     const stations = lines[line].order;
     const startIndex = stations.indexOf(startStation);
     const endIndex = stations.indexOf(endStation);
-
     if (startIndex === -1 || endIndex === -1) return Infinity;
     return Math.abs(endIndex - startIndex);
 }
@@ -223,7 +224,6 @@ const calculateTravelTime = route => {
 
 const fetchAndProcessSchedules = async (currentStation, destinationStation) => {
     const validRoutes = calculateRoutesDFS(currentStation, destinationStation);
-
     let bestRoute = null;
     let alternativeRoutes = [];
 
@@ -252,44 +252,35 @@ const fetchAndProcessSchedules = async (currentStation, destinationStation) => {
 
     const initialResponses = await Promise.all(scheduleRequests);
     const schedules = await processScheduleResponses(initialResponses, {});
-
     return { schedules, bestRoute, alternativeRoutes };
 };
-// Import
+
+// Distance calculation function
 function getDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371; // Earth radius in km
+    const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
               Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
               Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c; // Distance in km
+    return R * c;
 }
 
-// Temperature endpoint: Find nearest station and location
+// Temperature endpoint
 app.post('/get-temperature', async (req, res) => {
     const { latitude, longitude } = req.body;
     console.log(`Received request with lat: ${latitude}, lon: ${longitude}`);
-
     try {
-        // Fetch temperature data from HKO API
         const response = await axios.get('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en', {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' }
         });
-        console.log('Weather API response:', response.data);
-
         const temperatureData = response.data.temperature.data;
         if (!temperatureData || temperatureData.length === 0) {
             throw new Error('No temperature data available from API');
         }
-
-        // Find nearest weather station (from regionCoordinates)
-        let nearestStation = temperatureData[0]; // Default to first station
+        let nearestStation = temperatureData[0];
         let minStationDistance = Infinity;
-
         for (const region of temperatureData) {
             const coords = regionCoordinates[region.place];
             if (coords) {
@@ -300,11 +291,8 @@ app.post('/get-temperature', async (req, res) => {
                 }
             }
         }
-
-        // Find nearest direct location (from placeCoordinates)
         let nearestLocation = null;
         let minLocationDistance = Infinity;
-
         for (const place in placeCoordinates) {
             const coords = placeCoordinates[place];
             const distance = getDistance(latitude, longitude, coords.lat, coords.lon);
@@ -313,25 +301,19 @@ app.post('/get-temperature', async (req, res) => {
                 nearestLocation = place;
             }
         }
-
-        // Prepare response
         const result = {
-            location: nearestLocation, // Nearest direct location
-            temperature: nearestStation.value, // Temperature from nearest station
+            location: nearestLocation,
+            temperature: nearestStation.value,
             unit: nearestStation.unit
         };
-        console.log('Sending response:', result);
         res.json(result);
     } catch (error) {
         console.error('Error fetching weather data:', error.message);
-        if (error.response) {
-            console.error('API response error:', error.response.data);
-        }
         res.status(500).json({ error: 'Failed to fetch weather data from API' });
     }
 });
 
-// Endpoint to get list of locations for user selection
+// Endpoint to get list of locations
 app.get('/get-locations', (req, res) => {
     const locations = Object.keys(placeCoordinates);
     res.json({ locations });
@@ -348,9 +330,84 @@ app.post('/get-coordinates', (req, res) => {
     }
 });
 
-//HTML
+// Transit Data Endpoints
+app.get('/api/routes', (req, res) => {
+    res.sendFile(path.join(__dirname, 'static', 'data', 'route_data.json'), (err) => {
+        if (err) res.status(500).json({ error: 'Failed to load route data' });
+    });
+});
+
+app.get('/api/stops', (req, res) => {
+    res.sendFile(path.join(__dirname, 'static', 'data', 'stop_data.json'), (err) => {
+        if (err) res.status(500).json({ error: 'Failed to load stop data' });
+    });
+});
+
+app.get('/api/route-stops', (req, res) => {
+    res.sendFile(path.join(__dirname, 'static', 'data', 'route-stop_data.json'), (err) => {
+        if (err) res.status(500).json({ error: 'Failed to load route-stop data' });
+    });
+});
+
+// Favorites Endpoints with Consent Check
+app.get('/api/favorites', (req, res) => {
+    const consented = req.cookies.consented === 'true';
+    const userId = req.cookies.userId;
+    if (!consented || !userId) {
+        return res.json([]);
+    }
+    const favorites = req.cookies[`favorites_${userId}`] || '[]';
+    res.json(JSON.parse(favorites));
+});
+
+app.post('/api/favorites', (req, res) => {
+    const consented = req.cookies.consented === 'true';
+    const userId = req.cookies.userId;
+    if (!consented || !userId) {
+        return res.status(403).json({ error: 'Consent required to save favorites' });
+    }
+    const favorites = req.body;
+    if (!Array.isArray(favorites)) {
+        return res.status(400).json({ error: 'Favorites must be an array' });
+    }
+    const favoritesString = JSON.stringify(favorites);
+    if (favoritesString.length > 4000) {
+        return res.status(400).json({ error: 'Favorites exceed cookie size limit' });
+    }
+    res.cookie(`favorites_${userId}`, favoritesString, {
+        maxAge: 365 * 24 * 60 * 60 * 1000,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'Strict'
+    });
+    res.json({ success: true });
+});
+
+// Consent Endpoint
+app.post('/api/consent', (req, res) => {
+    res.cookie('consented', 'true', {
+        maxAge: 365 * 24 * 60 * 60 * 1000,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'Strict'
+    });
+    const userId = req.cookies.userId || generateUserId();
+    res.cookie('userId', userId, {
+        maxAge: 365 * 24 * 60 * 60 * 1000,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'Strict'
+    });
+    res.json({ success: true });
+});
+
+// HTML Endpoint with Cookie Notice
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views', 'index.html'));
+    const consented = req.cookies.consented === 'true';
+    if (consented) {
+        res.sendFile(path.join(__dirname, 'views', 'index.html'));
+    } else {
+        res.sendFile(path.join(__dirname, 'views', 'cookie.html'));
+    }
 });
 
 // Start the server

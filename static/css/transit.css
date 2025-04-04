@@ -1,4 +1,4 @@
-/* transit.css (unchanged except for clarity) */
+/* transit.css */
 body {
     font-family: 'Roboto', sans-serif;
     margin: 0;
@@ -13,7 +13,7 @@ body {
 }
 
 :where([data-theme="dark"]) body {
-    background: linear-gradient(135deg, #2a2a2a, #1f1f1f);
+    background: #1a1a1a;
     color: #e0e0e0;
 }
 
@@ -338,27 +338,96 @@ button:active {
     color: #ffcc00;
 }
 
-#radiusSelect {
-    padding: 8px;
-    font-size: 16px;
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    background-color: #f8f8f8;
-    color: #333;
-    margin-left: 10px;
-    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+.filter-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 20px;
 }
 
-:where([data-theme="dark"]) #radiusSelect {
-    background-color: #444444;
-    color: #e0e0e0;
-    border-color: #666666;
+.filter-buttons button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+:where([data-theme="dark"]) .filter-buttons button {
+    background-color: #1e90ff;
+}
+
+.filter-buttons button:hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+}
+
+:where([data-theme="dark"]) .filter-buttons button:hover {
+    background-color: #4169e1;
+}
+
+.filter-buttons button:active {
+    transform: scale(0.95);
 }
 
 .filter-buttons button.active {
-    background-color: #0056b3; /* Darker blue when active */
+    background-color: #0056b3;
 }
 
 :where([data-theme="dark"]) .filter-buttons button.active {
     background-color: #4169e1;
+}
+
+.radius-options {
+    position: absolute;
+    background: #ffffff;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    z-index: 1000;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transition: background 0.3s ease;
+}
+
+:where([data-theme="dark"]) .radius-options {
+    background: #333333;
+    border-color: #666666;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.radius-btn {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    margin: 5px 0;
+    background-color: #28a745;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+:where([data-theme="dark"]) .radius-btn {
+    background-color: #2ecc71;
+}
+
+.radius-btn:hover {
+    background-color: #218838;
+    transform: scale(1.03);
+}
+
+:where([data-theme="dark"]) .radius-btn:hover {
+    background-color: #27ae60;
+}
+
+.radius-btn:active {
+    transform: scale(0.97);
 }

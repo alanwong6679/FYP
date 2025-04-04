@@ -1,11 +1,15 @@
+/* transit.js */
 const API_KEY = 'AIzaSyBBY8WRPKMG0sPNFkHAYNcCwkwTn4T5jGw';
 let map;
 let routeMarkers = [];
 let routePolyline;
 let userLocationMarker = null;
+let userLocationCircle = null; // New variable for the radius circle
 let kmbRouteList = null;
 let ctbRouteList = null;
 let minibusRouteList = null;
+let stopData = null;
+let routeStopData = null;
 let selectedRoute = null;
 let selectedBound = null;
 let selectedProvider = null;
@@ -13,9 +17,9 @@ let selectedRouteId = null;
 let currentInput = '';
 let currentInfoWindow = null;
 let debounceTimeout;
-const CACHE_EXPIRY = 24 * 60 * 60 * 1000;
-
-let favoriteRoutes = JSON.parse(localStorage.getItem('favoriteRoutes')) || [];
+let nearbyStops = [];
+let radiusOptionsVisible = false;
+let favoriteRoutes = [];
 
 function initMap() {
     map = new google.maps.Map(document.getElementById('map'), { zoom: 12 });
@@ -27,10 +31,19 @@ function initMap() {
                 userLocationMarker = new google.maps.Marker({
                     position: userLocation,
                     map: map,
-                    icon: {
-                        url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
-                    },
+                    icon: { url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png" },
                     title: "Your Location"
+                });
+                // Add initial circle with default radius (e.g., 200m)
+                userLocationCircle = new google.maps.Circle({
+                    strokeColor: '#007bff',
+                    strokeOpacity: 0.8,
+                    strokeWeight: 2,
+                    fillColor: '#007bff',
+                    fillOpacity: 0.2,
+                    map: map,
+                    center: userLocation,
+                    radius: 200 // Default radius in meters
                 });
             },
             () => {
@@ -42,13 +55,10 @@ function initMap() {
         console.warn("Geolocation not supported, using default center");
         map.setCenter({ lat: 22.3193, lng: 114.1694 });
     }
-    loadRouteData().then(() => {
-        if (document.getElementById("routeList")) {
-            displayAllRoutes();
-        }
-        if (document.getElementById("favoriteRouteList")) {
-            displayFavoriteRoutes();
-        }
+    loadRouteData().then(async () => {
+        await loadFavorites();
+        if (document.getElementById("routeList")) displayAllRoutes();
+        if (document.getElementById("favoriteRouteList")) displayFavoriteRoutes();
     });
 }
 
@@ -60,15 +70,16 @@ function showError(message) {
     setTimeout(() => errorDiv.remove(), 5000);
 }
 
-async function fetchWithRetry(url, retries = 5, backoff = 1000) {
+async function fetchWithRetry(url, options = {}, retries = 5, backoff = 1000) {
     for (let i = 0; i < retries; i++) {
         try {
             console.log(`Fetching ${url} (Attempt ${i + 1}/${retries})`);
-            const response = await fetch(url);
+            const response = await fetch(url, options);
             if (response.status === 429) {
-                console.warn(`Rate limit exceeded for ${url}, retrying after ${backoff * Math.pow(2, i)}ms`);
+                const delay = backoff * Math.pow(2, i) + Math.random() * 1000;
+                console.warn(`Rate limit exceeded for ${url}, retrying after ${delay}ms`);
                 showError("Rate limit exceeded. Retrying...");
-                await new Promise(resolve => setTimeout(resolve, backoff * Math.pow(2, i)));
+                await new Promise(resolve => setTimeout(resolve, delay));
                 continue;
             }
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status} - ${response.statusText}`);
@@ -76,7 +87,7 @@ async function fetchWithRetry(url, retries = 5, backoff = 1000) {
             console.log(`Successfully fetched ${url}:`, data);
             return data;
         } catch (err) {
-            console.error(`Error fetching ${url}:`, err);
+            console.error(`Error fetching ${url}:`, err.message);
             if (i === retries - 1) throw err;
             await new Promise(resolve => setTimeout(resolve, backoff * Math.pow(2, i)));
         }
@@ -85,157 +96,58 @@ async function fetchWithRetry(url, retries = 5, backoff = 1000) {
 
 async function loadRouteData() {
     const loadingMessage = document.getElementById('loadingMessage');
+    try {
+        const [routeResponse, stopResponse, routeStopResponse] = await Promise.all([
+            fetch('/api/routes'),
+            fetch('/api/stops'),
+            fetch('/api/route-stops')
+        ]);
 
-    function processKMBData(data) {
-        const uniqueRoutes = [];
-        const seen = new Set();
-        data.forEach(route => {
-            if (!route.route || !route.bound || !route.orig_en || !route.dest_en) {
-                console.warn("Invalid KMB route entry:", route);
-                return;
+        if (!routeResponse.ok) throw new Error(`Failed to fetch route data: ${routeResponse.statusText}`);
+        if (!stopResponse.ok) throw new Error(`Failed to fetch stop data: ${stopResponse.statusText}`);
+        if (!routeStopResponse.ok) throw new Error(`Failed to fetch route-stop data: ${routeStopResponse.statusText}`);
+
+        const routeData = await routeResponse.json();
+        stopData = await stopResponse.json();
+        routeStopData = await routeStopResponse.json();
+
+        kmbRouteList = routeData.kmb_routes || [];
+        ctbRouteList = routeData.ctb_routes || [];
+        minibusRouteList = routeData.minibus_routes || [];
+
+        console.log("KMB routes loaded:", kmbRouteList.length);
+        console.log("CTB routes loaded:", ctbRouteList.length);
+        console.log("Minibus routes loaded:", minibusRouteList.length);
+        console.log("KMB stops loaded:", Object.keys(stopData.kmb_stops).length);
+        console.log("CTB stops loaded:", Object.keys(stopData.ctb_stops).length);
+        console.log("Minibus stops loaded:", Object.keys(stopData.minibus_stops).length);
+        console.log("KMB route-stops loaded:", Object.keys(routeStopData.kmb_route_stops).length);
+        console.log("CTB route-stops loaded:", Object.keys(routeStopData.ctb_route_stops).length);
+        console.log("Minibus route-stops loaded:", Object.keys(routeStopData.minibus_route_stops).length);
+
+        if (kmbRouteList.length || ctbRouteList.length || minibusRouteList.length) {
+            if (loadingMessage) {
+                loadingMessage.textContent = "Route, stop, and route-stop data loaded successfully!";
+                setTimeout(() => loadingMessage.style.display = 'none', 2000);
             }
-            const key = `${route.route}-${route.bound}`;
-            if (!seen.has(key)) {
-                seen.add(key);
-                uniqueRoutes.push({ 
-                    route: route.route, 
-                    bound: route.bound, 
-                    orig_en: route.orig_en, 
-                    dest_en: route.dest_en, 
-                    provider: 'kmb' 
-                });
-            }
-        });
-        return uniqueRoutes;
-    }
-
-    function processCTBData(data) {
-        const uniqueRoutes = [];
-        const seen = new Set();
-        data.forEach(route => {
-            if (!route.route || !route.orig_en) {
-                console.warn("Invalid CTB route entry:", route);
-                return;
-            }
-            const direction = route.direction || 'outbound';
-            const dest_en = route.dest_en || route.dest_tc || 'Unknown Destination';
-            const key = `${route.route}-${direction}`;
-            if (!seen.has(key)) {
-                seen.add(key);
-                uniqueRoutes.push({ 
-                    route: route.route, 
-                    bound: direction === 'outbound' ? 'O' : 'I', 
-                    orig_en: route.orig_en, 
-                    dest_en: dest_en, 
-                    provider: 'ctb' 
-                });
-            }
-        });
-        return uniqueRoutes;
-    }
-
-    async function processMinibusData() {
-        const minibusRouteResponse = await fetchWithRetry("https://data.etagmb.gov.hk/route");
-        if (!minibusRouteResponse.data) throw new Error("Minibus route data is missing 'data' property");
-        const routesData = minibusRouteResponse.data.routes;
-        let minibusRoutes = [];
-        for (const region in routesData) {
-            if (Array.isArray(routesData[region])) {
-                minibusRoutes.push(...routesData[region].map(route => ({ route, region })));
-            }
+        } else if (loadingMessage) {
+            loadingMessage.textContent = "No route data loaded. Please try again.";
         }
-        const uniqueRoutes = [];
-        const seen = new Set();
-        for (const { route, region } of minibusRoutes) {
-            const routeUrl = `https://data.etagmb.gov.hk/route/${region}/${route}`;
-            try {
-                const routeResponse = await fetchWithRetry(routeUrl);
-                if (!routeResponse.data || !routeResponse.data[0]) continue;
-                const service = routeResponse.data[0];
-                service.directions.forEach(direction => {
-                    const key = `${route}-${direction.route_seq}`;
-                    if (!seen.has(key)) {
-                        seen.add(key);
-                        uniqueRoutes.push({
-                            route: route,
-                            bound: direction.route_seq,
-                            route_id: service.route_id,
-                            region: region,
-                            orig_en: direction.orig_en || 'Loading...',
-                            dest_en: direction.dest_en || 'Loading...',
-                            provider: 'minibus'
-                        });
-                    }
-                });
-            } catch (err) {
-                console.warn(`Failed to load details for minibus route ${route} in ${region}:`, err);
-            }
-        }
-        return uniqueRoutes;
+    } catch (err) {
+        console.error("Failed to load data:", err);
+        showError("Failed to load route, stop, or route-stop data from server.");
+        if (loadingMessage) loadingMessage.textContent = "Failed to load data.";
     }
+}
 
-    const cachedKMB = JSON.parse(localStorage.getItem('kmbRouteList'));
-    if (cachedKMB && (Date.now() - cachedKMB.timestamp < CACHE_EXPIRY)) {
-        kmbRouteList = cachedKMB.data;
-        console.log("KMB routes loaded from cache:", kmbRouteList.length);
-    } else {
-        try {
-            console.log("Fetching KMB routes...");
-            const kmbRouteResponse = await fetchWithRetry("https://data.etabus.gov.hk/v1/transport/kmb/route/");
-            if (!kmbRouteResponse.data) throw new Error("KMB route data is missing 'data' property");
-            kmbRouteList = processKMBData(kmbRouteResponse.data);
-            localStorage.setItem('kmbRouteList', JSON.stringify({ data: kmbRouteList, timestamp: Date.now() }));
-            console.log("KMB routes fetched and cached:", kmbRouteList.length);
-        } catch (err) {
-            console.error("Failed to load KMB routes:", err);
-            showError("Failed to load KMB routes. Using cached data if available.");
-            if (cachedKMB) kmbRouteList = cachedKMB.data;
-        }
-    }
-
-    const cachedCTB = JSON.parse(localStorage.getItem('ctbRouteList'));
-    if (cachedCTB && (Date.now() - cachedCTB.timestamp < CACHE_EXPIRY)) {
-        ctbRouteList = cachedCTB.data;
-        console.log("CTB routes loaded from cache:", ctbRouteList.length);
-    } else {
-        try {
-            console.log("Fetching CTB routes...");
-            const ctbRouteResponse = await fetchWithRetry("https://rt.data.gov.hk/v2/transport/citybus/route/CTB");
-            if (!ctbRouteResponse.data) throw new Error("CTB route data is missing 'data' property");
-            ctbRouteList = processCTBData(ctbRouteResponse.data);
-            localStorage.setItem('ctbRouteList', JSON.stringify({ data: ctbRouteList, timestamp: Date.now() }));
-            console.log("CTB routes fetched and cached:", ctbRouteList.length);
-        } catch (err) {
-            console.error("Failed to load CTB routes:", err);
-            showError("Failed to load CTB routes. Using cached data if available.");
-            if (cachedCTB) ctbRouteList = cachedCTB.data;
-        }
-    }
-
-    const cachedMinibus = JSON.parse(localStorage.getItem('minibusRouteList'));
-    if (cachedMinibus && (Date.now() - cachedMinibus.timestamp < CACHE_EXPIRY)) {
-        minibusRouteList = cachedMinibus.data;
-        console.log("Minibus routes loaded from cache:", minibusRouteList.length);
-    } else {
-        try {
-            console.log("Fetching Minibus routes...");
-            minibusRouteList = await processMinibusData();
-            localStorage.setItem('minibusRouteList', JSON.stringify({ data: minibusRouteList, timestamp: Date.now() }));
-            console.log("Minibus routes fetched and cached:", minibusRouteList.length);
-        } catch (err) {
-            console.error("Failed to load Minibus routes:", err);
-            showError("Failed to load Minibus routes. Using cached data if available.");
-            if (cachedMinibus) minibusRouteList = cachedMinibus.data;
-        }
-    }
-
-    if (kmbRouteList || ctbRouteList || minibusRouteList) {
-        if (loadingMessage) {
-            loadingMessage.textContent = "Route data loaded successfully!";
-            setTimeout(() => loadingMessage.style.display = 'none', 2000);
-        }
-    } else if (loadingMessage) {
-        loadingMessage.textContent = "No route data loaded. Please try again.";
+async function loadFavorites() {
+    try {
+        favoriteRoutes = await fetchWithRetry('/api/favorites');
+        console.log('Favorites loaded:', favoriteRoutes);
+    } catch (err) {
+        console.error('Failed to load favorites:', err);
+        showError('Could not load favorite routes. Please accept cookies to enable favorites.');
+        favoriteRoutes = [];
     }
 }
 
@@ -267,69 +179,68 @@ async function fetchRouteStops(provider, route, bound) {
     }
 }
 
-async function fetchStopDetails(provider, stopId, routeStopData = null) {
-    try {
-        if (provider === 'kmb') {
-            const data = await fetchWithRetry(`https://data.etabus.gov.hk/v1/transport/kmb/stop/${stopId}`);
-            return data.data;
-        } else if (provider === 'ctb') {
-            const data = await fetchWithRetry(`https://rt.data.gov.hk/v2/transport/citybus/stop/${stopId}`);
-            return data.data;
-        } else if (provider === 'minibus') {
-            const data = await fetchWithRetry(`https://data.etagmb.gov.hk/stop/${stopId}`);
-            if (data.data && data.data.coordinates && data.data.coordinates.wgs84) {
-                const stopName = routeStopData && (routeStopData.name_en || routeStopData.name_tc) 
-                    ? (routeStopData.name_en || routeStopData.name_tc)
-                    : (data.data.name_en || data.data.name_tc || 'Unknown Stop');
-                return {
-                    name_en: stopName,
-                    lat: parseFloat(data.data.coordinates.wgs84.latitude),
-                    long: parseFloat(data.data.coordinates.wgs84.longitude)
-                };
-            }
-            return null;
-        }
-    } catch (err) {
-        console.error(`Failed to fetch stop details for ${provider} stop ${stopId}:`, err);
-        return null;
+function getStopDetails(provider, stopId) {
+    if (!stopData) return null;
+    let stopDetails = null;
+    if (provider === 'kmb' && stopData.kmb_stops[stopId]) {
+        stopDetails = stopData.kmb_stops[stopId];
+    } else if (provider === 'ctb' && stopData.ctb_stops[stopId]) {
+        stopDetails = stopData.ctb_stops[stopId];
+    } else if (provider === 'minibus' && stopData.minibus_stops[stopId]) {
+        stopDetails = stopData.minibus_stops[stopId];
     }
+    if (stopDetails) {
+        return {
+            name_en: stopDetails.name_en,
+            lat: parseFloat(stopDetails.lat || stopDetails.latitude),
+            long: parseFloat(stopDetails.long || stopDetails.longitude)
+        };
+    }
+    return null;
 }
 
-async function fetchETA(stopId, provider) {
+async function fetchETA(stopId, provider, route, routeId, bound) {
+    console.log(`Fetching ETA: provider=${provider}, stopId=${stopId}, route=${route}, routeId=${routeId}, bound=${bound}`);
     try {
+        if (!stopId || !route) {
+            console.error(`Missing parameters: stopId=${stopId}, route=${route}`);
+            return { data: [] };
+        }
+        let url, data;
         if (provider === 'kmb') {
-            const data = await fetchWithRetry(`https://data.etabus.gov.hk/v1/transport/kmb/stop-eta/${stopId}`, 3);
+            url = `https://data.etabus.gov.hk/v1/transport/kmb/stop-eta/${stopId}`;
+            data = await fetchWithRetry(url, {}, 3);
+            console.log(`KMB ETA response for ${stopId}:`, data);
             if (!data || !data.data) return { data: [] };
-            const filteredData = data.data.filter(entry => entry.route === selectedRoute);
+            const filteredData = data.data.filter(entry => entry.route === route);
             return { data: filteredData };
         } else if (provider === 'ctb') {
-            const data = await fetchWithRetry(`https://rt.data.gov.hk/v2/transport/citybus/eta/CTB/${stopId}/${selectedRoute}`, 3);
+            url = `https://rt.data.gov.hk/v2/transport/citybus/eta/CTB/${stopId}/${route}`;
+            data = await fetchWithRetry(url, {}, 3);
+            console.log(`CTB ETA response for ${stopId}/${route}:`, data);
             return data;
         } else if (provider === 'minibus') {
-            const data = await fetchWithRetry(`https://data.etagmb.gov.hk/eta/stop/${stopId}`, 3);
-            if (!data.data || data.data.length === 0) {
-                return { data: [] };
-            }
+            url = `https://data.etagmb.gov.hk/eta/stop/${stopId}`;
+            data = await fetchWithRetry(url, {}, 3);
+            console.log(`Minibus ETA response for ${stopId}:`, data);
+            if (!data.data || data.data.length === 0) return { data: [] };
             const routeEntry = data.data.find(entry => 
                 entry.enabled && 
-                entry.route_id === selectedRouteId && 
-                entry.route_seq === parseInt(selectedBound)
+                entry.route_id === routeId && 
+                entry.route_seq === parseInt(bound)
             );
-            if (!routeEntry || !routeEntry.eta || routeEntry.eta.length === 0) {
-                return { data: [] };
-            }
-            const formattedData = {
+            if (!routeEntry || !routeEntry.eta || routeEntry.eta.length === 0) return { data: [] };
+            return {
                 data: routeEntry.eta.map(eta => ({
-                    route: selectedRoute,
+                    route: route,
                     eta: eta.timestamp,
                     diff: eta.diff,
                     remark_en: eta.remarks_en || ''
                 }))
             };
-            return formattedData;
         }
     } catch (err) {
-        console.error(`Error fetching ETA for ${provider} stop ${stopId}:`, err);
+        console.error(`Error fetching ETA for ${provider} stop ${stopId}:`, err.message, err.stack);
         return { data: [] };
     }
 }
@@ -351,8 +262,7 @@ function isFavorite(route) {
     );
 }
 
-function toggleFavorite(route) {
-    const routeKey = `${route.route}-${route.bound}-${route.provider}`;
+async function toggleFavorite(route) {
     if (isFavorite(route)) {
         favoriteRoutes = favoriteRoutes.filter(fav => 
             !(fav.route === route.route && fav.bound === route.bound && fav.provider === route.provider)
@@ -366,7 +276,17 @@ function toggleFavorite(route) {
             dest_en: route.dest_en
         });
     }
-    localStorage.setItem('favoriteRoutes', JSON.stringify(favoriteRoutes));
+    try {
+        await fetchWithRetry('/api/favorites', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(favoriteRoutes)
+        });
+        console.log('Favorites updated on server:', favoriteRoutes);
+    } catch (err) {
+        console.error('Failed to save favorites:', err);
+        showError('Could not save favorites. Please accept cookies to enable this feature.');
+    }
 }
 
 function displayAllRoutes() {
@@ -394,10 +314,11 @@ function displayRoutes(routes) {
         starBtn.textContent = isFavorite(route) ? '★' : '☆';
         starBtn.className = 'star-btn';
         starBtn.setAttribute('aria-label', `Toggle favorite for ${routeText}`);
-        starBtn.addEventListener('click', (e) => {
+        starBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
-            toggleFavorite(route);
+            await toggleFavorite(route);
             starBtn.textContent = isFavorite(route) ? '★' : '☆';
+            displayFavoriteRoutes();
         });
 
         li.textContent = routeText;
@@ -425,9 +346,9 @@ function displayFavoriteRoutes() {
         starBtn.textContent = '★';
         starBtn.className = 'star-btn';
         starBtn.setAttribute('aria-label', `Remove favorite for ${routeText}`);
-        starBtn.addEventListener('click', (e) => {
+        starBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
-            toggleFavorite(route);
+            await toggleFavorite(route);
             displayFavoriteRoutes();
         });
 
@@ -444,7 +365,6 @@ function selectRoute(route) {
     selectedBound = route.bound;
     selectedProvider = route.provider;
     selectedRouteId = route.route_id || null;
-    const selectedRouteDisplay = document.getElementById("selectedRouteDisplay");
     if (selectedRouteDisplay) {
         selectedRouteDisplay.textContent = `Selected Route: ${route.route} from ${route.orig_en} to ${route.dest_en} (${route.provider.toUpperCase()})`;
     }
@@ -454,6 +374,9 @@ function selectRoute(route) {
     if (routePolyline) routePolyline.setMap(null);
     if (currentInfoWindow) currentInfoWindow.close();
     currentInfoWindow = null;
+
+    // Hide the radius circle when selecting a route
+    if (userLocationCircle) userLocationCircle.setMap(null);
 
     fetchRouteStops(selectedProvider, selectedRoute, selectedBound).then(stopsForRoute => {
         if (!stopsForRoute || stopsForRoute.length === 0) {
@@ -468,24 +391,19 @@ function selectRoute(route) {
 }
 
 async function displayRouteOnMap(stopsForRoute) {
-    const stops = await Promise.all(
-        stopsForRoute.map(async (item, index) => {
-            const stop = await fetchStopDetails(selectedProvider, item.stop || item.stop_id, item);
-            if (!stop) return null;
-            const coords = { 
-                lat: parseFloat(stop.lat || stop.latitude || (stop.coordinates?.wgs84?.latitude)), 
-                lng: parseFloat(stop.long || stop.longitude || (stop.coordinates?.wgs84?.longitude)) 
-            };
-            if (isNaN(coords.lat) || isNaN(coords.lng)) return null;
-            return {
-                name: stop.name_en || stop.stop_name_en || stop.name_tc,
-                lat: coords.lat,
-                lng: coords.lng,
-                stopId: item.stop || item.stop_id,
-                index: index + 1
-            };
-        })
-    ).then(results => results.filter(s => s !== null));
+    const stops = stopsForRoute.map((item, index) => {
+        const stop = getStopDetails(selectedProvider, item.stop || item.stop_id);
+        if (!stop) return null;
+        const coords = { lat: stop.lat, lng: stop.long };
+        if (isNaN(coords.lat) || isNaN(coords.lng)) return null;
+        return {
+            name: stop.name_en,
+            lat: coords.lat,
+            lng: coords.lng,
+            stopId: item.stop || item.stop_id,
+            index: index + 1
+        };
+    }).filter(s => s !== null);
 
     if (stops.length < 2) {
         showError("Not enough valid stops to draw a route.");
@@ -509,7 +427,7 @@ async function displayRouteOnMap(stopsForRoute) {
             infoWindow.open(map, marker);
             currentInfoWindow = infoWindow;
 
-            const etaData = await fetchETA(stop.stopId, selectedProvider);
+            const etaData = await fetchETA(stop.stopId, selectedProvider, selectedRoute, selectedRouteId, selectedBound);
             const etaInfo = etaData.data.length
                 ? etaData.data.map(bus => {
                     const etaField = bus.eta;
@@ -568,18 +486,207 @@ async function displayRouteOnMap(stopsForRoute) {
     map.fitBounds(bounds);
 }
 
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371e3;
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+async function findNearbyStops(radius) {
+    if (!userLocationMarker) {
+        showError("User location not available");
+        return;
+    }
+    if (!stopData || !routeStopData) {
+        showError("Stop or route-stop data not loaded yet");
+        return;
+    }
+
+    const userPos = userLocationMarker.getPosition();
+    const userLat = userPos.lat();
+    const userLng = userPos.lng();
+
+    routeMarkers.forEach(marker => marker.setMap(null));
+    routeMarkers = [];
+    if (routePolyline) routePolyline.setMap(null);
+    if (currentInfoWindow) currentInfoWindow.close();
+
+    // Update or create the radius circle
+    if (userLocationCircle) {
+        userLocationCircle.setRadius(radius);
+        userLocationCircle.setCenter(userPos);
+        userLocationCircle.setMap(map);
+    } else {
+        userLocationCircle = new google.maps.Circle({
+            strokeColor: '#007bff',
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: '#007bff',
+            fillOpacity: 0.2,
+            map: map,
+            center: userPos,
+            radius: radius
+        });
+    }
+
+    nearbyStops = [];
+
+    for (const provider of ['kmb', 'ctb', 'minibus']) {
+        const stops = stopData[`${provider}_stops`];
+        const routeStops = routeStopData[`${provider}_route_stops`];
+        for (const stopId in stops) {
+            const stopDetails = getStopDetails(provider, stopId);
+            if (stopDetails) {
+                const stopLat = stopDetails.lat;
+                const stopLng = stopDetails.long;
+
+                if (isNaN(stopLat) || isNaN(stopLng)) continue;
+
+                const distance = calculateDistance(userLat, userLng, stopLat, stopLng);
+                if (distance <= radius) {
+                    const routes = [];
+                    for (const routeKey in routeStops) {
+                        const [route, bound] = routeKey.split('-');
+                        if (routeStops[routeKey].some(stop => stop.stop_id === stopId)) {
+                            routes.push({
+                                route,
+                                bound,
+                                route_id: provider === 'minibus' ? minibusRouteList.find(r => r.route === route && r.bound === bound)?.route_id : null
+                            });
+                        }
+                    }
+                    nearbyStops.push({
+                        ...stopDetails,
+                        stopId: stopId,
+                        provider: provider,
+                        routes: routes
+                    });
+                }
+            }
+        }
+    }
+
+    displayNearbyStops(nearbyStops);
+}
+
+function displayNearbyStops(stops) {
+    const bounds = new google.maps.LatLngBounds();
+    if (userLocationMarker) bounds.extend(userLocationMarker.getPosition());
+
+    routeMarkers = stops.map(stop => {
+        const position = { lat: stop.lat, lng: stop.long };
+        const marker = new google.maps.Marker({
+            position,
+            map: map,
+            title: stop.name_en || 'Unknown Stop'
+        });
+
+        bounds.extend(position);
+
+        const infoWindow = new google.maps.InfoWindow({
+            content: `<strong>${marker.getTitle()}</strong><br>Loading routes and ETA...`
+        });
+
+        marker.addListener('click', async () => {
+            if (currentInfoWindow) currentInfoWindow.close();
+            infoWindow.open(map, marker);
+            currentInfoWindow = infoWindow;
+
+            let content = `<strong>${marker.getTitle()}</strong><br>`;
+            for (const route of stop.routes) {
+                const etaData = await fetchETA(stop.stopId, stop.provider, route.route, route.route_id, route.bound);
+                const etaInfo = etaData.data.length
+                    ? etaData.data
+                        .filter(eta => eta.route === route.route)
+                        .map(bus => {
+                            const etaField = bus.eta;
+                            const arriveTime = etaField ? new Date(etaField) : null;
+                            let displayTime = bus.diff !== undefined ? `${bus.diff} mins` : 'Not Available';
+                            if (arriveTime && !isNaN(arriveTime.getTime())) {
+                                const timeDiff = Math.round((new Date() - arriveTime) / 60000);
+                                displayTime = timeDiff <= 0 ? `${-timeDiff} mins` : "Arrived";
+                            }
+                            return `${bus.route} (${displayTime})${bus.remark_en ? ' - ' + bus.remark_en : ''}`;
+                        }).join('<br>')
+                    : "No ETA available";
+                content += `<div>${route.route}: ${etaInfo}</div>`;
+            }
+            infoWindow.setContent(content);
+        });
+
+        return marker;
+    });
+
+    map.fitBounds(bounds);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const allRoutesBtn = document.getElementById('allRoutesBtn');
     const kmbRoutesBtn = document.getElementById('kmbRoutesBtn');
     const ctbRoutesBtn = document.getElementById('ctbRoutesBtn');
     const minibusRoutesBtn = document.getElementById('minibusRoutesBtn');
     const favoriteRoutesBtn = document.getElementById("favoriteRoutesBtn");
+    const nearbyBtn = document.getElementById('nearbyBtn');
 
     if (allRoutesBtn) allRoutesBtn.addEventListener('click', displayAllRoutes);
     if (kmbRoutesBtn) kmbRoutesBtn.addEventListener('click', () => displayRoutes(kmbRouteList || []));
     if (ctbRoutesBtn) ctbRoutesBtn.addEventListener('click', () => displayRoutes(ctbRouteList || []));
     if (minibusRoutesBtn) minibusRoutesBtn.addEventListener('click', () => displayRoutes(minibusRouteList || []));
     if (favoriteRoutesBtn) favoriteRoutesBtn.addEventListener('click', displayFavoriteRoutes);
+
+    if (nearbyBtn) {
+        nearbyBtn.addEventListener('click', () => {
+            if (radiusOptionsVisible) {
+                document.querySelector('.radius-options')?.remove();
+                radiusOptionsVisible = false;
+                nearbyBtn.classList.remove('active');
+                if (userLocationCircle) userLocationCircle.setMap(null); // Hide circle when closing options
+                return;
+            }
+
+            document.querySelector('.radius-options')?.remove();
+
+            const optionsDiv = document.createElement('div');
+            optionsDiv.className = 'radius-options';
+            optionsDiv.style.left = `${nearbyBtn.offsetLeft}px`;
+            optionsDiv.style.top = `${nearbyBtn.offsetTop + nearbyBtn.offsetHeight}px`;
+
+            [100, 200, 400].forEach(radius => {
+                const btn = document.createElement('button');
+                btn.textContent = `${radius}m`;
+                btn.className = 'radius-btn';
+                btn.addEventListener('click', () => {
+                    findNearbyStops(radius);
+                    optionsDiv.remove();
+                    radiusOptionsVisible = false;
+                    nearbyBtn.classList.remove('active');
+                });
+                optionsDiv.appendChild(btn);
+            });
+
+            nearbyBtn.parentElement.appendChild(optionsDiv);
+            radiusOptionsVisible = true;
+            nearbyBtn.classList.add('active');
+
+            document.addEventListener('click', function handler(e) {
+                if (!optionsDiv.contains(e.target) && e.target !== nearbyBtn) {
+                    optionsDiv.remove();
+                    radiusOptionsVisible = false;
+                    nearbyBtn.classList.remove('active');
+                    if (userLocationCircle) userLocationCircle.setMap(null); // Hide circle when clicking outside
+                    document.removeEventListener('click', handler);
+                }
+            }, { once: true });
+        });
+    }
 
     if (keypad) {
         keypad.querySelectorAll("button").forEach(button => {
