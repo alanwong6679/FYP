@@ -444,162 +444,11 @@
             }
         }
 
-        let citybusRoutes = [], citybusStops = [], citybusRouteStopsMap = {};
-        let kmbRoutes = [], kmbStops = [], kmbRouteStopsMap = {};
 
-        async function fetchCitybusData() {
-            const routesKey = 'citybus_routes';
-            const stopsKey = 'citybus_stops';
-            const routeStopsMapKey = 'citybus_routeStopsMap';
+        
 
-            const cachedRoutes = getCachedData(routesKey);
-            const cachedStops = getCachedData(stopsKey);
-            const cachedRouteStopsMap = getCachedData(routeStopsMapKey);
 
-            if (cachedRoutes && cachedStops && cachedRouteStopsMap) {
-                citybusRoutes = cachedRoutes;
-                citybusStops = cachedStops;
-                citybusRouteStopsMap = cachedRouteStopsMap;
-                console.log('Citybus data loaded from cache');
-                return;
-            }
 
-            try {
-                const routeResponse = await fetch('https://rt.data.gov.hk/v2/transport/citybus/route/CTB');
-                if (!routeResponse.ok) throw new Error(`Citybus route fetch failed: ${routeResponse.status}`);
-                citybusRoutes = (await routeResponse.json()).data || [];
-                console.log('Citybus routes fetched:', citybusRoutes.length);
-
-                const stopsMap = {};
-                const routePromises = citybusRoutes.map(async route => {
-                    for (const direction of ['outbound', 'inbound']) {
-                        try {
-                            const response = await fetch(`https://rt.data.gov.hk/v2/transport/citybus/route-stop/CTB/${route.route}/${direction}`);
-                            if (!response.ok) continue;
-                            const data = await response.json();
-                            if (data.data) {
-                                data.data.forEach(stop => {
-                                    const key = `${route.route}-${direction}`;
-                                    if (!citybusRouteStopsMap[key]) citybusRouteStopsMap[key] = [];
-                                    citybusRouteStopsMap[key].push(stop.stop);
-                                    stopsMap[stop.stop] = stop;
-                                });
-                            }
-                        } catch (error) {
-                            console.warn(`Error fetching Citybus stops for ${route.route} (${direction}):`, error);
-                        }
-                    }
-                });
-                await Promise.all(routePromises);
-                console.log('Citybus route stops fetched, unique stops:', Object.keys(stopsMap).length);
-
-                const rawStops = Object.values(stopsMap);
-                citybusStops = await Promise.all(rawStops.map(async stop => {
-                    try {
-                        const detailsResponse = await fetch(`https://rt.data.gov.hk/v2/transport/citybus/stop/${stop.stop}`);
-                        if (!detailsResponse.ok) {
-                            return { stop: stop.stop, name_en: `Stop ${stop.stop}`, lat: null, long: null };
-                        }
-                        const details = await detailsResponse.json();
-                        return {
-                            stop: stop.stop,
-                            name_en: details.data?.name_en || `Stop ${stop.stop}`,
-                            lat: details.data?.lat,
-                            long: details.data?.long
-                        };
-                    } catch (error) {
-                        console.warn(`Error fetching Citybus stop details for ${stop.stop}:`, error);
-                        return { stop: stop.stop, name_en: `Stop ${stop.stop}`, lat: null, long: null };
-                    }
-                }));
-                console.log('Citybus stops with details fetched:', citybusStops.length);
-
-                setCachedData(routesKey, citybusRoutes);
-                setCachedData(stopsKey, citybusStops);
-                setCachedData(routeStopsMapKey, citybusRouteStopsMap);
-            } catch (error) {
-                console.error('Error fetching Citybus data:', error);
-                citybusRoutes = [];
-                citybusStops = [];
-            }
-        }
-
-        async function fetchKMBData() {
-            const routesKey = 'kmb_routes';
-            const stopsKey = 'kmb_stops';
-            const routeStopsMapKey = 'kmb_routeStopsMap';
-
-            const cachedRoutes = getCachedData(routesKey);
-            const cachedStops = getCachedData(stopsKey);
-            const cachedRouteStopsMap = getCachedData(routeStopsMapKey);
-
-            if (cachedRoutes && cachedStops && cachedRouteStopsMap) {
-                kmbRoutes = cachedRoutes;
-                kmbStops = cachedStops;
-                kmbRouteStopsMap = cachedRouteStopsMap;
-                console.log('KMB data loaded from cache');
-                return;
-            }
-
-            try {
-                const routeResponse = await fetch('https://data.etabus.gov.hk/v1/transport/kmb/route/');
-                if (!routeResponse.ok) throw new Error(`KMB route fetch failed: ${routeResponse.status}`);
-                kmbRoutes = (await routeResponse.json()).data || [];
-                console.log('KMB routes fetched:', kmbRoutes.length);
-
-                const stopsMap = {};
-                const routePromises = kmbRoutes.slice(0, 50).map(async route => {
-                    for (const direction of ['outbound', 'inbound']) {
-                        try {
-                            const response = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/route-stop/${route.route}/${direction}/1`);
-                            if (!response.ok) continue;
-                            const data = await response.json();
-                            if (data.data) {
-                                data.data.forEach(stop => {
-                                    const key = `${route.route}-${direction}`;
-                                    if (!kmbRouteStopsMap[key]) kmbRouteStopsMap[key] = [];
-                                    kmbRouteStopsMap[key].push(stop.stop);
-                                    stopsMap[stop.stop] = stop;
-                                });
-                            }
-                        } catch (error) {
-                            console.warn(`Error fetching KMB stops for ${route.route} (${direction}):`, error);
-                        }
-                    }
-                });
-                await Promise.all(routePromises);
-                console.log('KMB route stops fetched, unique stops:', Object.keys(stopsMap).length);
-
-                const rawStops = Object.values(stopsMap);
-                kmbStops = await Promise.all(rawStops.map(async stop => {
-                    try {
-                        const detailsResponse = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/stop/${stop.stop}`);
-                        if (!detailsResponse.ok) {
-                            return { stop: stop.stop, name_en: `Stop ${stop.stop}`, lat: null, long: null };
-                        }
-                        const details = await detailsResponse.json();
-                        return {
-                            stop: stop.stop,
-                            name_en: details.data?.name_en || `Stop ${stop.stop}`,
-                            lat: details.data?.lat,
-                            long: details.data?.long
-                        };
-                    } catch (error) {
-                        console.warn(`Error fetching KMB stop details for ${stop.stop}:`, error);
-                        return { stop: stop.stop, name_en: `Stop ${stop.stop}`, lat: null, long: null };
-                    }
-                }));
-                console.log('KMB stops with details fetched:', kmbStops.length);
-
-                setCachedData(routesKey, kmbRoutes);
-                setCachedData(stopsKey, kmbStops);
-                setCachedData(routeStopsMapKey, kmbRouteStopsMap);
-            } catch (error) {
-                console.error('Error fetching KMB data:', error);
-                kmbRoutes = [];
-                kmbStops = [];
-            }
-        }
 
         function findNearestMTRStation(busStop, mtrStations) {
             let nearestStation = null;
@@ -869,56 +718,125 @@
             destinationInput.dataset.type = tempDataType || '';
         });
 
+        async function fetchCitybusData() {
+            const routesKey = 'citybus_routes';
+            const stopsKey = 'citybus_stops';
+            const routeStopsMapKey = 'citybus_routeStopsMap';
+        
+            const cachedRoutes = getCachedData(routesKey);
+            const cachedStops = getCachedData(stopsKey);
+            const cachedRouteStopsMap = getCachedData(routeStopsMapKey);
+        
+            if (cachedRoutes && cachedStops && cachedRouteStopsMap) {
+                citybusRoutes = cachedRoutes;
+                citybusStops = cachedStops;
+                citybusRouteStopsMap = cachedRouteStopsMap;
+                console.log('Citybus data loaded from cache');
+            } else {
+                if (typeof allCitybusRoutes === 'undefined' || typeof allCitybusStops === 'undefined' || typeof citybusRouteStopsMap === 'undefined') {
+                    console.error('Citybus static data not defined. Check citybusstop.js');
+                    citybusRoutes = [];
+                    citybusStops = [];
+                    citybusRouteStopsMap = {};
+                } else {
+                    citybusRoutes = allCitybusRoutes;  // Correct name
+                    citybusStops = allCitybusStops;
+                    citybusRouteStopsMap = citybusRouteStopsMap;
+                    setCachedData(routesKey, citybusRoutes);
+                    setCachedData(stopsKey, citybusStops);
+                    setCachedData(routeStopsMapKey, citybusRouteStopsMap);
+                    console.log('Citybus static data loaded and cached');
+                    console.log('Citybus Routes:', citybusRoutes);  // Debug
+                    console.log('Citybus Stops:', citybusStops);    // Debug
+                    console.log('Citybus RouteStopsMap:', citybusRouteStopsMap);  // Debug
+                }
+            }
+        }
+        
+        async function fetchKMBData() {
+            const routesKey = 'kmb_routes';
+            const stopsKey = 'kmb_stops';
+            const routeStopsMapKey = 'kmb_routeStopsMap';
+        
+            const cachedRoutes = getCachedData(routesKey);
+            const cachedStops = getCachedData(stopsKey);
+            const cachedRouteStopsMap = getCachedData(routeStopsMapKey);
+        
+            if (cachedRoutes && cachedStops && cachedRouteStopsMap) {
+                kmbRoutes = cachedRoutes;
+                kmbStops = cachedStops;
+                kmbRouteStopsMap = cachedRouteStopsMap;
+                console.log('KMB data loaded from cache');
+            } else {
+                if (typeof allKMBRoutes === 'undefined' || typeof allKMBStops === 'undefined' || typeof kmbrouteStopsMap === 'undefined') {
+                    console.error('KMB static data not defined. Check kmbusstop.js');
+                    kmbRoutes = [];
+                    kmbStops = [];
+                    kmbRouteStopsMap = {};
+                } else {
+                    kmbRoutes = allKMBRoutes;
+                    kmbStops = allKMBStops;
+                    kmbRouteStopsMap = kmbrouteStopsMap;
+                    setCachedData(routesKey, kmbRoutes);
+                    setCachedData(stopsKey, kmbStops);
+                    setCachedData(routeStopsMapKey, kmbRouteStopsMap);
+                    console.log('KMB static data loaded and cached');
+                    console.log('KMB Routes:', kmbRoutes);  // Debug
+                    console.log('KMB Stops:', kmbStops);    // Debug
+                    console.log('KMB RouteStopsMap:', kmbRouteStopsMap);  // Debug
+                }
+            }
+        }
         document.getElementById('routeForm').addEventListener('submit', function(e) {
             e.preventDefault();
+        
             const currentInput = document.getElementById('currentStationInput');
             const destinationInput = document.getElementById('destinationStationInput');
-            const currentType = currentInput.dataset.type;
-            const destinationType = destinationInput.dataset.type;
-            const currentId = currentInput.dataset.value;
-            const destinationId = destinationInput.dataset.value;
-            const currentCompany = currentInput.dataset.company;
-            const destinationCompany = destinationInput.dataset.company;
-
-            const routeDiv = document.getElementById('route');
-            routeDiv.innerHTML = '';
-
+            const currentType = currentInput.dataset.type; // 'MTR' or 'Bus'
+            const destinationType = destinationInput.dataset.type; // 'MTR' or 'Bus'
+            const currentId = currentInput.dataset.value; // Station or stop ID
+            const destinationId = destinationInput.dataset.value; // Station or stop ID
+            const currentCompany = currentInput.dataset.company; // 'Citybus', 'KMB', or undefined for MTR
+            const destinationCompany = destinationInput.dataset.company; // 'Citybus', 'KMB', or undefined for MTR
+        
             if (!currentId || !destinationId) {
                 alert("Please select both a starting and destination station.");
                 return;
             }
-
+        
+            let url = '/general_schedule.html?';
+            const busData = currentCompany === 'KMB' || destinationCompany === 'KMB' ? 
+                { routes: kmbRoutes, stops: kmbStops, routeStopsMap: kmbRouteStopsMap } : 
+                { routes: citybusRoutes, stops: citybusStops, routeStopsMap: citybusRouteStopsMap };
+            const company = currentCompany || destinationCompany || 'Citybus'; // Default to Citybus if no company
+        
             if (currentType === 'MTR' && destinationType === 'MTR') {
-                window.location.href = `/general_schedule.html?currentStation=${currentId}&destinationStation=${destinationId}`;
-            } else if (currentType === 'Bus' && destinationType === 'MTR') {
-                const busData = currentCompany === 'KMB' ? 
-                    { routes: kmbRoutes, stops: kmbStops, routeStopsMap: kmbRouteStopsMap } : 
-                    { routes: citybusRoutes, stops: citybusStops, routeStopsMap: citybusRouteStopsMap };
-                localStorage.setItem(`${currentCompany.toLowerCase()}_allRoutes`, JSON.stringify(busData.routes));
-                localStorage.setItem(`${currentCompany.toLowerCase()}_allStops`, JSON.stringify(busData.stops));
-                localStorage.setItem(`${currentCompany.toLowerCase()}_routeStopsMap`, JSON.stringify(busData.routeStopsMap));
-                window.location.href = `/general_schedule.html?startBusStop=${currentId}&destinationStation=${destinationId}&company=${currentCompany}`;
-            } else if (currentType === 'MTR' && destinationType === 'Bus') {
-                const busData = destinationCompany === 'KMB' ? 
-                    { routes: kmbRoutes, stops: kmbStops, routeStopsMap: kmbRouteStopsMap } : 
-                    { routes: citybusRoutes, stops: citybusStops, routeStopsMap: citybusRouteStopsMap };
-                localStorage.setItem(`${destinationCompany.toLowerCase()}_allRoutes`, JSON.stringify(busData.routes));
-                localStorage.setItem(`${destinationCompany.toLowerCase()}_allStops`, JSON.stringify(busData.stops));
-                localStorage.setItem(`${destinationCompany.toLowerCase()}_routeStopsMap`, JSON.stringify(busData.routeStopsMap));
-                window.location.href = `/general_schedule.html?currentStation=${currentId}&endBusStop=${destinationId}&company=${destinationCompany}`;
+                url += `currentStation=${currentId}&destinationStation=${destinationId}`;
             } else if (currentType === 'Bus' && destinationType === 'Bus') {
-                const startBusData = currentCompany === 'KMB' ? 
-                    { routes: kmbRoutes, stops: kmbStops, routeStopsMap: kmbRouteStopsMap } : 
-                    { routes: citybusRoutes, stops: citybusStops, routeStopsMap: citybusRouteStopsMap };
-                const endBusData = destinationCompany === 'KMB' ? 
-                    { routes: kmbRoutes, stops: kmbStops, routeStopsMap: kmbRouteStopsMap } : 
-                    { routes: citybusRoutes, stops: citybusStops, routeStopsMap: citybusRouteStopsMap };
-                localStorage.setItem(`${currentCompany.toLowerCase()}_allRoutes`, JSON.stringify(startBusData.routes));
-                localStorage.setItem(`${currentCompany.toLowerCase()}_allStops`, JSON.stringify(startBusData.stops));
-                localStorage.setItem(`${currentCompany.toLowerCase()}_routeStopsMap`, JSON.stringify(startBusData.routeStopsMap));
-                findBusRoutes(currentId, destinationId); // Assuming this works with current company data
+                if (currentCompany !== destinationCompany) {
+                    document.getElementById('route').innerHTML = '<p>Cross-company bus routes are not supported yet.</p>';
+                    return;
+                }
+                localStorage.setItem(`${company.toLowerCase()}_allRoutes`, JSON.stringify(busData.routes));
+                localStorage.setItem(`${company.toLowerCase()}_allStops`, JSON.stringify(busData.stops));
+                localStorage.setItem(`${company.toLowerCase()}_routeStopsMap`, JSON.stringify(busData.routeStopsMap));
+                url += `startBusStop=${currentId}&endBusStop=${destinationId}&company=${company}`;
+            } else if (currentType === 'Bus' && destinationType === 'MTR') {
+                localStorage.setItem(`${company.toLowerCase()}_allRoutes`, JSON.stringify(busData.routes));
+                localStorage.setItem(`${company.toLowerCase()}_allStops`, JSON.stringify(busData.stops));
+                localStorage.setItem(`${company.toLowerCase()}_routeStopsMap`, JSON.stringify(busData.routeStopsMap));
+                url += `startBusStop=${currentId}&destinationStation=${destinationId}&company=${company}`;
+            } else if (currentType === 'MTR' && destinationType === 'Bus') {
+                localStorage.setItem(`${company.toLowerCase()}_allRoutes`, JSON.stringify(busData.routes));
+                localStorage.setItem(`${company.toLowerCase()}_allStops`, JSON.stringify(busData.stops));
+                localStorage.setItem(`${company.toLowerCase()}_routeStopsMap`, JSON.stringify(busData.routeStopsMap));
+                url += `currentStation=${currentId}&endBusStop=${destinationId}&company=${company}`;
             }
+        
+            window.location.href = url;
         });
+
+
 
         window.onload = async function() {
             await initializeData();

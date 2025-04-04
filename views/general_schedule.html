@@ -207,13 +207,13 @@
             "ISL": "Island Line <span style='display:inline-block;width:20px;height:10px;background:#007DC5;border-radius:5px'></span>",
             "KTL": "Kwun Tong Line <span style='display:inline-block;width:20px;height:10px;background:#00AB4E;border-radius:5px'></span>"
         };
-        let allRoutes = JSON.parse(localStorage.getItem('allRoutes')) || [], 
-            allStops = JSON.parse(localStorage.getItem('allStops')) || [], 
-            routeStopsMap = JSON.parse(localStorage.getItem('routeStopsMap')) || [], 
-            originalContent = '',
-            currentRoutes = [],
-            sortByTimeAsc = true,
-            sortByWalkAsc = true;
+        let allRoutes = [],
+    allStops = [],
+    routeStopsMap = {},
+    originalContent = '',
+    currentRoutes = [],
+    sortByTimeAsc = true,
+    sortByWalkAsc = true;
 
         function haversineDistance(lat1, lon1, lat2, lon2) {
             const R = 6371000;
@@ -254,19 +254,37 @@
                 });
             }
             return stations;
-        }
-
-        window.onload = () => {
+        }window.onload = () => {
             const params = new URLSearchParams(window.location.search);
-            const [cs, ds, sbs, ebs] = [params.get('currentStation'), params.get('destinationStation'), params.get('startBusStop'), params.get('endBusStop')];
+            const cs = params.get('currentStation');
+            const ds = params.get('destinationStation');
+            const sbs = params.get('startBusStop');
+            const ebs = params.get('endBusStop');
+            const company = params.get('company')?.toLowerCase() || 'citybus'; // Default to 'citybus'
+        
+            // Load company-specific bus data from localStorage
+            allRoutes = JSON.parse(localStorage.getItem(`${company}_allRoutes`)) || [];
+            allStops = JSON.parse(localStorage.getItem(`${company}_allStops`)) || [];
+            routeStopsMap = JSON.parse(localStorage.getItem(`${company}_routeStopsMap`)) || {};
+        
+            console.log('Company:', company);
+            console.log('All Routes:', allRoutes);
+            console.log('All Stops:', allStops.map(s => s.stop)); // Log stop IDs for debugging
+            console.log('Route Stops Map:', routeStopsMap);
+        
             const mtrStations = getUniqueMTRStations();
-
-            if (cs && ds) fetchSchedule(cs, ds);
-            else if (sbs && ebs) fetchBusRoutes(sbs, ebs);
-            else if (sbs && ds) fetchBusToMTR(sbs, ds, mtrStations);
-            else if (cs && ebs) fetchMTRToBus(cs, ebs, mtrStations);
+        
+            if (!allRoutes.length || !allStops.length) {
+                document.getElementById('schedule').innerHTML = '<div class="error">Bus data not loaded. Please try again.</div>';
+                return;
+            }
+        
+            if (cs && ds) fetchSchedule(cs, ds); // MTR-to-MTR
+            else if (sbs && ebs) fetchBusRoutes(sbs, ebs); // Bus-to-Bus
+            else if (sbs && ds) fetchBusToMTR(sbs, ds, mtrStations); // Bus-to-MTR
+            else if (cs && ebs) fetchMTRToBus(cs, ebs, mtrStations); // MTR-to-Bus
             else document.getElementById('schedule').innerHTML = '<div class="error">Invalid parameters.</div>';
-
+        
             document.querySelector('.news-icon').onclick = fetchNewsContent;
             document.getElementById('btnChinese').onclick = () => document.getElementById('newsContent').innerHTML = originalContent || 'No news.';
             setupSortButtons();
