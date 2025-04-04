@@ -290,55 +290,78 @@ console.log("MTR Response:", mtrResponse);
                 return;
             }
         
-            const nearestMTR = findNearestMTRStation(endStop, mtrStations);
-            if (!nearestMTR.station) {
-                document.getElementById('schedule').innerHTML = '<p>No nearby MTR station found.</p>';
-                return;
+            // Find up to 3 nearest MTR stations to the end bus stop
+            const nearbyMTRs = mtrStations
+                .map(station => ({
+                    station,
+                    distance: haversineDistance(
+                        parseFloat(endStop.lat), parseFloat(endStop.long),
+                        parseFloat(station.lat), parseFloat(station.long)
+                    )
+                }))
+                .filter(m => !isNaN(m.distance))
+                .sort((a, b) => a.distance - b.distance)
+                .slice(0, 3); // Top 3 nearest MTR stations
+        
+            const routes = [];
+            for (const { station, distance } of nearbyMTRs) {
+                const destinationMTRStation = station.value;
+                const walkingDistance = distance;
+        
+                const mtrResponse = await fetch('/fetch_schedule', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ currentStation, destinationStation: destinationMTRStation })
+                }).then(res => res.json()).catch(err => {
+                    console.error(`MTR fetch error: ${err}`);
+                    return { error: 'MTR schedule unavailable' };
+                });
+        
+                if (!mtrResponse.error) {
+                    // Add the best route
+                    const bestRouteTime = mtrResponse.bestRoute.route.reduce((total, line) => {
+                        const lineStations = lines[line].length;
+                        return total + (lineStations * 2);
+                    }, 0) + (mtrResponse.bestRoute.interchangeCount * 5);
+                    const walkingTime = walkingDistance / 5000 * 60;
+                    routes.push({
+                        type: 'MTR',
+                        mtrRoute: mtrResponse.bestRoute,
+                        schedules: mtrResponse.schedules,
+                        from: currentStation,
+                        to: destinationMTRStation,
+                        interchangeStation: destinationMTRStation,
+                        walkingDistanceToMTR: walkingDistance,
+                        endStopName: endStop.name_en,
+                        estimatedTime: Math.round(bestRouteTime + walkingTime)
+                    });
+        
+                    // Add alternative routes if available
+                    if (mtrResponse.alternativeRoutes && mtrResponse.alternativeRoutes.length > 0) {
+                        mtrResponse.alternativeRoutes.forEach(altRoute => {
+                            const altRouteTime = altRoute.route.reduce((total, line) => {
+                                const lineStations = lines[line].length;
+                                return total + (lineStations * 2);
+                            }, 0) + (altRoute.interchangeCount * 5);
+                            routes.push({
+                                type: 'MTR',
+                                mtrRoute: altRoute,
+                                schedules: mtrResponse.schedules,
+                                from: currentStation,
+                                to: destinationMTRStation,
+                                interchangeStation: destinationMTRStation,
+                                walkingDistanceToMTR: walkingDistance,
+                                endStopName: endStop.name_en,
+                                estimatedTime: Math.round(altRouteTime + walkingTime)
+                            });
+                        });
+                    }
+                }
             }
-            const walkingDistance = nearestMTR.distance;
-            const destinationMTRStation = nearestMTR.station.value;
         
-            const mtrResponse = await fetch('/fetch_schedule', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ currentStation, destinationStation: destinationMTRStation })
-            }).then(res => res.json()).catch(err => {
-                console.error(`MTR fetch error: ${err}`);
-                return { error: 'MTR schedule unavailable' };
-            });
-        
-            if (mtrResponse.error) {
-                document.getElementById('schedule').innerHTML = `<p>Error fetching MTR schedule: ${mtrResponse.error}</p>`;
-                return;
-            }
-        
-            const routeString = mtrResponse.bestRoute.route.map(line => lineNames[line]).join(' → ');
-            const mtrTime = mtrResponse.bestRoute.route.reduce((total, line) => {
-                const lineStations = lines[line].length;
-                return total + (lineStations * 2);
-            }, 0) + (mtrResponse.bestRoute.interchangeCount * 5);
-            const walkingTime = walkingDistance / 5000 * 60;
-            const estimatedTime = Math.round(mtrTime + walkingTime);
-        
-            const routes = [{
-                type: 'MTR',
-                mtrRoute: mtrResponse.bestRoute,
-                schedules: mtrResponse.schedules, // Pass schedules for clickable details
-                from: currentStation,
-                to: destinationMTRStation,
-                interchangeStation: destinationMTRStation, // For consistency with Bus-to-MTR
-                walkingDistanceToMTR: walkingDistance,
-                endStopName: endStop.name_en,
-                estimatedTime
-            }];
-        
-            // Use displayMixedRoutes for clickable schedules
-            displayMixedRoutes(routes, 'MTR-to-Bus', currentStation, endBusStop);
-        }
-        
-            // Sort by estimated time
             routes.sort((a, b) => a.estimatedTime - b.estimatedTime);
-        
+            displayMixedRoutes(routes.slice(0, 10), 'MTR-to-Bus', currentStation, endBusStop); 
+        }
             let output = '<h3>Routes</h3>';
             routes.forEach((route, i) => {
                 output += `
