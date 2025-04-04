@@ -42,41 +42,34 @@
             "ISL": "Island Line <span style='display:inline-block;width:20px;height:10px;background:#007DC5;border-radius:5px'></span>",
             "KTL": "Kwun Tong Line <span style='display:inline-block;width:20px;height:10px;background:#00AB4E;border-radius:5px'></span>"
         };
-        let allRoutes = [...(JSON.parse(localStorage.getItem('kmb_allRoutes')) || []), ...(JSON.parse(localStorage.getItem('citybus_allRoutes')) || [])],
-            allStops = [...(JSON.parse(localStorage.getItem('kmb_allStops')) || []), ...(JSON.parse(localStorage.getItem('citybus_allStops')) || [])],
-            routeStopsMap = { ...JSON.parse(localStorage.getItem('kmb_routeStopsMap')) || {}, ...JSON.parse(localStorage.getItem('citybus_routeStopsMap')) || {} },
-            originalContent = '',
-            currentRoutes = [],
-            sortByTimeAsc = true,
-            sortByWalkAsc = true;
-
-        if (!allStops.length || !allStops.every(s => s.stop && s.name_en)) {
-            console.error('Invalid allStops data from localStorage:', allStops);
-            document.getElementById('schedule').innerHTML = '<div class="error">Bus stop data unavailable. Please try again from the route planner.</div>';
-        }
+        let allRoutes = [], allStops = [], routeStopsMap = {},
+            originalContent = '', currentRoutes = [],
+            sortByTimeAsc = true, sortByWalkAsc = true;
 
         function haversineDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371000;
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+            const R = 6371e3;
+            const φ1 = lat1 * Math.PI / 180;
+            const φ2 = lat2 * Math.PI / 180;
+            const Δφ = (lat2 - lat1) * Math.PI / 180;
+            const Δλ = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         }
 
         function findNearbyStops(station, radius = 1000) {
             return allStops.filter(s => 
                 s.lat && s.long && station.lat && station.long && 
-                haversineDistance(parseFloat(s.lat), parseFloat(s.long), parseFloat(station.lat), parseFloat(station.long)) <= radius
+                haversineDistance(parseFloat(s.lat), parseFloat(s.long), station.lat, station.long) <= radius
             );
         }
 
         function findNearestMTRStation(busStop, mtrStations) {
             if (!busStop || !busStop.lat || !busStop.long) return { station: null, distance: NaN };
-            let minDistance = Infinity;
-            let nearest = null;
+            let minDistance = Infinity, nearest = null;
             for (const station of mtrStations) {
                 if (!station.lat || !station.long) continue;
-                const distance = haversineDistance(parseFloat(busStop.lat), parseFloat(busStop.long), parseFloat(station.lat), parseFloat(station.long));
+                const distance = haversineDistance(parseFloat(busStop.lat), parseFloat(busStop.long), station.lat, station.long);
                 if (!isNaN(distance) && distance < minDistance) {
                     minDistance = distance;
                     nearest = station;
@@ -101,18 +94,35 @@
 
         window.onload = () => {
             const params = new URLSearchParams(window.location.search);
-            const [cs, ds, sbs, ebs] = [params.get('currentStation'), params.get('destinationStation'), params.get('startBusStop'), params.get('endBusStop')];
-            const mtrStations = getUniqueMTRStations();
+            const [cs, ds, sbs, ebs] = [params.get('currentStation'), params.get('destinationStation'), 
+                                        params.get('startBusStop'), params.get('endBusStop')];
+            const provider = params.get('company'); // URL uses 'company', but we'll map to 'provider'
+
+            allRoutes = [...(JSON.parse(localStorage.getItem('kmb_allRoutes') || '[]')), 
+                         ...(JSON.parse(localStorage.getItem('citybus_allRoutes') || '[]'))];
+            allStops = [...(JSON.parse(localStorage.getItem('kmb_allStops') || '[]')), 
+                        ...(JSON.parse(localStorage.getItem('citybus_allStops') || '[]'))];
+            routeStopsMap = {...JSON.parse(localStorage.getItem('kmb_routeStopsMap') || '{}'), 
+                             ...JSON.parse(localStorage.getItem('citybus_routeStopsMap') || '{}')};
+
+            console.log("All Routes:", allRoutes);
+            console.log("All Stops:", allStops);
+            console.log("Route Stops Map:", routeStopsMap);
+
+            if (!allStops.length) {
+                document.getElementById('schedule').innerHTML = '<div class="error">Bus data not loaded.</div>';
+                return;
+            }
 
             const startStop = sbs ? allStops.find(s => s.stop === sbs) : null;
             const endStop = ebs ? allStops.find(s => s.stop === ebs) : null;
-            const isCTBStart = startStop && allRoutes.some(r => r.company === 'Citybus' && routeStopsMap[`${r.route}-O`]?.includes(sbs));
-            const isKMBEnd = endStop && allRoutes.some(r => r.company === 'KMB' && routeStopsMap[`${r.route}-O`]?.includes(ebs));
+            const isCTBStart = startStop && JSON.parse(localStorage.getItem('citybus_allRoutes') || '[]').some(r => routeStopsMap[`${r.route}-O`]?.includes(sbs));
+            const isKMBEnd = endStop && JSON.parse(localStorage.getItem('kmb_allRoutes') || '[]').some(r => routeStopsMap[`${r.route}-O`]?.includes(ebs));
 
             if (cs && ds) fetchSchedule(cs, ds);
             else if (sbs && ebs && !isCTBStart && !isKMBEnd) fetchBusRoutes(sbs, ebs);
-            else if (sbs && ds) fetchBusToMTR(sbs, ds, mtrStations);
-            else if (cs && ebs) fetchMTRToBus(cs, ebs, mtrStations);
+            else if (sbs && ds) fetchBusToMTR(sbs, ds, getUniqueMTRStations());
+            else if (cs && ebs) fetchMTRToBus(cs, ebs, getUniqueMTRStations());
             else if (sbs && ebs && isCTBStart && isKMBEnd) fetchCTBToKMB(sbs, ebs);
             else document.getElementById('schedule').innerHTML = '<div class="error">Invalid parameters.</div>';
 
@@ -121,13 +131,15 @@
             setupSortButtons();
         };
 
-        const toggleModal = () => document.getElementById('newsModal').style.display = document.getElementById('newsModal').style.display === 'block' ? 'none' : 'block';
+        const toggleModal = () => document.getElementById('newsModal').style.display = 
+            document.getElementById('newsModal').style.display === 'block' ? 'none' : 'block';
 
         const fetchNewsContent = () => fetch('https://programme.rthk.hk/channel/radio/trafficnews/index.php')
             .then(r => r.text())
             .then(d => {
                 const doc = new DOMParser().parseFromString(d, 'text/html');
-                originalContent = Array.from(doc.querySelectorAll('ul.dec > li.inner')).map(i => `<div class="news-item">${i.textContent.trim()}</div>`).join('') || 'No news.';
+                originalContent = Array.from(doc.querySelectorAll('ul.dec > li.inner'))
+                    .map(i => `<div class="news-item">${i.textContent.trim()}</div>`).join('') || 'No news.';
                 document.getElementById('newsContent').innerHTML = originalContent;
                 toggleModal();
             })
@@ -135,7 +147,12 @@
 
         const fetchSchedule = async (cs, ds) => {
             try {
-                const { error, schedules, bestRoute, alternativeRoutes } = await (await fetch('/fetch_schedule', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ currentStation: cs, destinationStation: ds }) })).json();
+                const response = await fetch('/fetch_schedule', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ currentStation: cs, destinationStation: ds })
+                });
+                const { error, schedules, bestRoute, alternativeRoutes } = await response.json();
                 document.getElementById('schedule').innerHTML = error ? `<div class="error">${error}</div>` : '';
                 if (!error) displayRouteOptions(bestRoute, alternativeRoutes, schedules, cs, ds);
             } catch (e) {
@@ -145,8 +162,6 @@
         };
 
         const displayRouteOptions = (best, alts, schedules, cs, ds) => {
-            const opts = document.getElementById('route-options');
-            opts.innerHTML = '';
             currentRoutes = [[best, 'Best Route'], ...alts.map((r, i) => [r, `Alternative Route ${i + 1}`])].map(([r, n]) => ({
                 type: 'MTR',
                 route: r,
@@ -160,7 +175,7 @@
             displaySortedRoutes();
         };
 
-        function fetchBusRoutes(start, end) {
+        const fetchBusRoutes = (start, end) => {
             const [ss, es] = [allStops.find(s => s.stop === start), allStops.find(s => s.stop === end)];
             if (!ss || !es) return document.getElementById('schedule').innerHTML = '<p>Invalid bus stops.</p>';
             const [startStops, endStops] = [findNearbyStops(ss), findNearbyStops(es)];
@@ -193,31 +208,42 @@
                                 direction: d, 
                                 stops: stops.map(id => ({ id, name: allStops.find(s => s.stop === id)?.name_en || `Stop ${id}` })), 
                                 boardingStop: cs, 
-                                alightingStop: ce 
+                                alightingStop: ce,
+                                provider: r.provider // Use provider
                             },
                             boardingDistance: haversineDistance(parseFloat(ss.lat), parseFloat(ss.long), parseFloat(allStops.find(s => s.stop === cs).lat), parseFloat(allStops.find(s => s.stop === cs).long)),
                             alightingDistance: haversineDistance(parseFloat(es.lat), parseFloat(es.long), parseFloat(allStops.find(s => s.stop === ce).lat), parseFloat(allStops.find(s => s.stop === ce).long)),
                             estimatedTime: (stops.indexOf(ce) - stops.indexOf(cs)) * 2,
-                            walkingDistance: haversineDistance(parseFloat(ss.lat), parseFloat(ss.long), parseFloat(allStops.find(s => s.stop === cs).lat), parseFloat(allStops.find(s => s.stop === cs).long)) + haversineDistance(parseFloat(es.lat), parseFloat(es.long), parseFloat(allStops.find(s => s.stop === ce).lat), parseFloat(allStops.find(s => s.stop === ce).long))
+                            walkingDistance: haversineDistance(parseFloat(ss.lat), parseFloat(ss.long), parseFloat(allStops.find(s => s.stop === cs).lat), parseFloat(allStops.find(s => s.stop === cs).long)) + 
+                                            haversineDistance(parseFloat(es.lat), parseFloat(es.long), parseFloat(allStops.find(s => s.stop === ce).lat), parseFloat(allStops.find(s => s.stop === ce).long))
                         });
                     }
                 }
             }));
             currentRoutes = routes;
             displaySortedRoutes();
-        }
+        };
 
         async function fetchBusToMTR(startBusStop, destinationStation, mtrStations) {
             const startStop = allStops.find(s => s.stop === startBusStop);
+            console.log("Start Stop:", startStop);
             if (!startStop) {
                 document.getElementById('schedule').innerHTML = '<p>Invalid starting bus stop.</p>';
                 return;
             }
-            const company = new URLSearchParams(window.location.search).get('company') || 'Citybus';
-            localStorage.setItem('company', company);
+
+            const kmbStops = JSON.parse(localStorage.getItem('kmb_allStops') || '[]');
+            const citybusStops = JSON.parse(localStorage.getItem('citybus_allStops') || '[]');
+            const isKMB = kmbStops.some(s => s.stop === startBusStop);
+            const provider = isKMB ? 'kmb' : 'ctb'; // Match JSON's lowercase 'kmb' and 'ctb'
+            console.log("Detected Provider:", provider);
+
             const nearbyStartStops = findNearbyStops(startStop, 500);
             const nearbyStartStopIds = nearbyStartStops.map(s => s.stop);
-            const busRoutes = findBusRoutesToStops(nearbyStartStopIds, allStops.map(s => s.stop), company);
+            console.log("Nearby Start Stops:", nearbyStartStops);
+
+            const busRoutes = findBusRoutesToStops(nearbyStartStopIds, allStops.map(s => s.stop), provider);
+            console.log("Bus Routes:", busRoutes);
 
             if (!busRoutes.length) {
                 document.getElementById('schedule').innerHTML = '<p>No bus routes found.</p>';
@@ -228,9 +254,8 @@
             for (const busRoute of busRoutes) {
                 const boardingStop = allStops.find(s => s.stop === busRoute.boardingStop);
                 const alightingStop = allStops.find(s => s.stop === busRoute.alightingStop);
-                const stopIndexStart = busRoute.stops.findIndex(s => s.id === busRoute.boardingStop);
-                const stopIndexEnd = busRoute.stops.findIndex(s => s.id === busRoute.alightingStop);
-                const stopCount = stopIndexEnd >= stopIndexStart ? stopIndexEnd - stopIndexStart : 0;
+                const stopCount = busRoute.stops.findIndex(s => s.id === busRoute.alightingStop) - 
+                                 busRoute.stops.findIndex(s => s.id === busRoute.boardingStop);
 
                 const busDetails = {
                     busRoute,
@@ -243,7 +268,7 @@
                 const nearbyMTRs = mtrStations
                     .map(station => ({
                         station,
-                        distance: haversineDistance(parseFloat(alightingStop.lat), parseFloat(alightingStop.long), parseFloat(station.lat), parseFloat(station.long))
+                        distance: haversineDistance(parseFloat(alightingStop.lat), parseFloat(alightingStop.long), station.lat, station.long)
                     }))
                     .filter(m => !isNaN(m.distance))
                     .sort((a, b) => a.distance - b.distance)
@@ -257,13 +282,12 @@
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ currentStation: interchangeStation, destinationStation })
-                    }).then(res => res.json()).catch(err => ({ error: 'MTR schedule unavailable' }));
+                    }).then(res => res.json()).catch(() => ({ error: 'MTR schedule unavailable' }));
 
                     if (!mtrResponse.error) {
                         const busTime = stopCount * 2;
                         const walkingTime = walkingDistanceToMTR / 5000 * 60;
-                        const mtrTime = mtrResponse.bestRoute.route.reduce((total, line) => lines[line].length * 2, 0) + mtrResponse.bestRoute.interchangeCount * 5;
-
+                        const mtrTime = mtrResponse.bestRoute.route.reduce((t, l) => t + lines[l].length * 2, 0) + mtrResponse.bestRoute.interchangeCount * 5;
                         routes.push({
                             type: 'Bus-to-MTR',
                             ...busDetails,
@@ -282,7 +306,7 @@
 
         async function fetchMTRToBus(currentStation, endBusStop, mtrStations) {
             const endStop = allStops.find(s => s.stop === endBusStop);
-            if (!endStop || isNaN(parseFloat(endStop.lat)) || isNaN(parseFloat(endStop.long))) {
+            if (!endStop) {
                 document.getElementById('schedule').innerHTML = '<p>Invalid ending bus stop.</p>';
                 return;
             }
@@ -290,7 +314,7 @@
             const nearbyMTRs = mtrStations
                 .map(station => ({
                     station,
-                    distance: haversineDistance(parseFloat(endStop.lat), parseFloat(endStop.long), parseFloat(station.lat), parseFloat(station.long))
+                    distance: haversineDistance(parseFloat(endStop.lat), parseFloat(endStop.long), station.lat, station.long)
                 }))
                 .filter(m => !isNaN(m.distance))
                 .sort((a, b) => a.distance - b.distance)
@@ -305,10 +329,10 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ currentStation, destinationStation: destinationMTRStation })
-                }).then(res => res.json()).catch(err => ({ error: 'MTR schedule unavailable' }));
+                }).then(res => res.json()).catch(() => ({ error: 'MTR schedule unavailable' }));
 
                 if (!mtrResponse.error) {
-                    const mtrTime = mtrResponse.bestRoute.route.reduce((total, line) => lines[line].length * 2, 0) + mtrResponse.bestRoute.interchangeCount * 5;
+                    const mtrTime = mtrResponse.bestRoute.route.reduce((t, l) => t + lines[l].length * 2, 0) + mtrResponse.bestRoute.interchangeCount * 5;
                     const walkingTime = walkingDistance / 5000 * 60;
                     routes.push({
                         type: 'MTR-to-Bus',
@@ -316,21 +340,21 @@
                         schedules: mtrResponse.schedules,
                         from: currentStation,
                         to: destinationMTRStation,
-                        walkingDistance: walkingDistance,
+                        walkingDistance,
                         endStopName: endStop.name_en,
                         estimatedTime: Math.round(mtrTime + walkingTime)
                     });
 
-                    if (mtrResponse.alternativeRoutes && mtrResponse.alternativeRoutes.length > 0) {
+                    if (mtrResponse.alternativeRoutes?.length) {
                         mtrResponse.alternativeRoutes.forEach(altRoute => {
-                            const altMtrTime = altRoute.route.reduce((total, line) => lines[line].length * 2, 0) + altRoute.interchangeCount * 5;
+                            const altMtrTime = altRoute.route.reduce((t, l) => t + lines[l].length * 2, 0) + altRoute.interchangeCount * 5;
                             routes.push({
                                 type: 'MTR-to-Bus',
                                 mtrRoute: altRoute,
                                 schedules: mtrResponse.schedules,
                                 from: currentStation,
                                 to: destinationMTRStation,
-                                walkingDistance: walkingDistance,
+                                walkingDistance,
                                 endStopName: endStop.name_en,
                                 estimatedTime: Math.round(altMtrTime + walkingTime)
                             });
@@ -350,28 +374,31 @@
                 return;
             }
 
-            const ctbRoutes = allRoutes.filter(r => r.company === 'Citybus');
-            const kmbRoutes = allRoutes.filter(r => r.company === 'KMB');
+            const ctbRoutes = JSON.parse(localStorage.getItem('citybus_allRoutes') || '[]');
+            const kmbRoutes = JSON.parse(localStorage.getItem('kmb_allRoutes') || '[]');
+            const ctbStops = JSON.parse(localStorage.getItem('citybus_allStops') || '[]');
+            const kmbStops = JSON.parse(localStorage.getItem('kmb_allStops') || '[]');
+            const ctbRouteStopsMap = JSON.parse(localStorage.getItem('citybus_routeStopsMap') || '{}');
+            const kmbRouteStopsMap = JSON.parse(localStorage.getItem('kmb_routeStopsMap') || '{}');
 
             const nearbyStartStops = findNearbyStops(startStop, 500);
             const nearbyStartStopIds = nearbyStartStops.map(s => s.stop);
-            const ctbRouteOptions = findBusRoutesToStops(nearbyStartStopIds, allStops.map(s => s.stop), 'Citybus');
+            const ctbRouteOptions = findBusRoutesToStops(nearbyStartStopIds, ctbStops.map(s => s.stop), 'ctb', ctbRoutes, ctbStops, ctbRouteStopsMap);
 
             if (!ctbRouteOptions.length) {
-                document.getElementById('schedule').innerHTML = '<p>No Citybus routes found from starting stop.</p>';
+                document.getElementById('schedule').innerHTML = '<p>No Citybus routes found.</p>';
                 return;
             }
 
             const routes = [];
             for (const ctbRoute of ctbRouteOptions) {
-                const ctbAlightingStop = allStops.find(s => s.stop === ctbRoute.alightingStop);
+                const ctbAlightingStop = ctbStops.find(s => s.stop === ctbRoute.alightingStop);
                 const nearbyKMBStops = findNearbyStops(ctbAlightingStop, 500);
                 const nearbyKMBStopIds = nearbyKMBStops.map(s => s.stop);
-
-                const kmbRouteOptions = findBusRoutesToStops(nearbyKMBStopIds, [endBusStop], 'KMB');
+                const kmbRouteOptions = findBusRoutesToStops(nearbyKMBStopIds, [endBusStop], 'kmb', kmbRoutes, kmbStops, kmbRouteStopsMap);
 
                 for (const kmbRoute of kmbRouteOptions) {
-                    const kmbBoardingStop = allStops.find(s => s.stop === kmbRoute.boardingStop);
+                    const kmbBoardingStop = kmbStops.find(s => s.stop === kmbRoute.boardingStop);
                     const walkingDistance = haversineDistance(
                         parseFloat(ctbAlightingStop.lat), parseFloat(ctbAlightingStop.long),
                         parseFloat(kmbBoardingStop.lat), parseFloat(kmbBoardingStop.long)
@@ -388,71 +415,76 @@
 
                     routes.push({
                         type: 'CTB-to-KMB',
-                        ctbRoute: ctbRoute,
-                        kmbRoute: kmbRoute,
-                        ctbBoardingStopName: allStops.find(s => s.stop === ctbRoute.boardingStop)?.name_en || `Stop ${ctbRoute.boardingStop}`,
-                        ctbAlightingStopName: allStops.find(s => s.stop === ctbRoute.alightingStop)?.name_en || `Stop ${ctbRoute.alightingStop}`,
-                        kmbBoardingStopName: allStops.find(s => s.stop === kmbRoute.boardingStop)?.name_en || `Stop ${kmbRoute.boardingStop}`,
-                        kmbAlightingStopName: allStops.find(s => s.stop === kmbRoute.alightingStop)?.name_en || `Stop ${kmbRoute.alightingStop}`,
+                        ctbRoute,
+                        kmbRoute,
+                        ctbBoardingStopName: ctbStops.find(s => s.stop === ctbRoute.boardingStop)?.name_en || `Stop ${ctbRoute.boardingStop}`,
+                        ctbAlightingStopName: ctbStops.find(s => s.stop === ctbRoute.alightingStop)?.name_en || `Stop ${ctbRoute.alightingStop}`,
+                        kmbBoardingStopName: kmbStops.find(s => s.stop === kmbRoute.boardingStop)?.name_en || `Stop ${kmbRoute.boardingStop}`,
+                        kmbAlightingStopName: kmbStops.find(s => s.stop === kmbRoute.alightingStop)?.name_en || `Stop ${kmbRoute.alightingStop}`,
                         ctbBoardingDistance: ctbRoute.boardingDistance,
-                        walkingDistance: walkingDistance,
+                        walkingDistance,
                         kmbAlightingDistance: kmbRoute.alightingDistance,
                         estimatedTime: Math.round(ctbTime + walkingTime + kmbTime),
-                        ctbStopCount: ctbStopCount,
-                        kmbStopCount: kmbStopCount
+                        ctbStopCount,
+                        kmbStopCount
                     });
                 }
             }
 
-            if (routes.length === 0) {
-                document.getElementById('schedule').innerHTML = '<p>No transfer routes found from Citybus to KMB.</p>';
-                return;
-            }
-
-            currentRoutes = routes;
+            currentRoutes = routes.length ? routes : [];
+            if (!routes.length) document.getElementById('schedule').innerHTML = '<p>No transfer routes found.</p>';
             displaySortedRoutes();
         }
 
-        function findBusRoutesToStops(startBusStopIds, targetStopIds, company) {
+        function findBusRoutesToStops(startBusStopIds, targetStopIds, provider, routes = allRoutes, stops = allStops, routeMap = routeStopsMap) {
             const directRoutes = [];
-            const startStops = Array.isArray(startBusStopIds) ? startBusStopIds.map(id => allStops.find(s => s.stop === id)) : [allStops.find(s => s.stop === startBusStopIds)];
+            const startStops = Array.isArray(startBusStopIds) ? startBusStopIds.map(id => stops.find(s => s.stop === id)) : [stops.find(s => s.stop === startBusStopIds)];
             const startStopIdsArray = Array.isArray(startBusStopIds) ? startBusStopIds : [startBusStopIds];
-            const filteredRoutes = allRoutes.filter(r => r.company === company);
+            console.log("Start Stop IDs:", startStopIdsArray);
+            console.log("Target Stop IDs Sample:", targetStopIds.slice(0, 5)); // Sample for brevity
+            console.log("Provider:", provider);
+
+            const filteredRoutes = provider ? routes.filter(r => r.provider === provider) : routes;
+            console.log("Filtered Routes:", filteredRoutes);
 
             for (const route of filteredRoutes) {
                 for (const direction of ['outbound', 'inbound']) {
                     const key = `${route.route}-${direction === 'outbound' ? 'O' : 'I'}`;
-                    const stops = routeStopsMap[key] || [];
-                    const startMatches = stops.filter(id => startStopIdsArray.includes(id));
-                    const endMatches = stops.filter(id => targetStopIds.includes(id));
-                    if (startMatches.length > 0 && endMatches.length > 0) {
+                    const stopsList = routeMap[key] || [];
+                    console.log(`Route ${key} Stops:`, stopsList);
+                    const startMatches = stopsList.filter(id => startStopIdsArray.includes(id));
+                    const endMatches = stopsList.filter(id => targetStopIds.includes(id));
+                    console.log(`Start Matches for ${key}:`, startMatches);
+                    console.log(`End Matches for ${key}:`, endMatches);
+
+                    if (startMatches.length && endMatches.length) {
                         let closestStartStop = null, minStartDistance = Infinity;
                         const referenceStartStop = startStops[0];
                         for (const stopId of startMatches) {
-                            const stop = allStops.find(s => s.stop === stopId);
+                            const stop = stops.find(s => s.stop === stopId);
                             const distance = haversineDistance(parseFloat(referenceStartStop.lat), parseFloat(referenceStartStop.long), parseFloat(stop.lat), parseFloat(stop.long));
                             if (distance < minStartDistance) {
                                 minStartDistance = distance;
                                 closestStartStop = stopId;
                             }
                         }
-                        const startIndex = stops.indexOf(closestStartStop);
-                        const possibleEndStops = endMatches.filter(id => stops.indexOf(id) > startIndex);
-                        if (possibleEndStops.length > 0) {
+                        const startIndex = stopsList.indexOf(closestStartStop);
+                        const possibleEndStops = endMatches.filter(id => stopsList.indexOf(id) > startIndex);
+                        if (possibleEndStops.length) {
                             let closestEndStop = null, minEndDistance = Infinity;
-                            const referenceEndStop = allStops.find(s => s.stop === targetStopIds[0]);
+                            const referenceEndStop = stops.find(s => s.stop === targetStopIds[0]);
                             for (const stopId of possibleEndStops) {
-                                const stop = allStops.find(s => s.stop === stopId);
+                                const stop = stops.find(s => s.stop === stopId);
                                 const distance = haversineDistance(parseFloat(referenceEndStop.lat), parseFloat(referenceEndStop.long), parseFloat(stop.lat), parseFloat(stop.long));
                                 if (distance < minEndDistance) {
                                     minEndDistance = distance;
                                     closestEndStop = stopId;
                                 }
                             }
-                            const stopDetails = stops.map(id => {
-                                const stop = allStops.find(s => s.stop === id);
-                                return { id, name: stop ? stop.name_en : `Stop ${id}` };
-                            });
+                            const stopDetails = stopsList.map(id => ({
+                                id,
+                                name: stops.find(s => s.stop === id)?.name_en || `Stop ${id}`
+                            }));
                             directRoutes.push({
                                 route: route.route,
                                 direction,
@@ -461,7 +493,7 @@
                                 alightingStop: closestEndStop,
                                 boardingDistance: minStartDistance,
                                 alightingDistance: minEndDistance,
-                                company: company
+                                provider: route.provider
                             });
                         }
                     }
@@ -480,8 +512,7 @@
                 const arrivalTime = new Date(now.getTime() + route.estimatedTime * 60000);
                 const arrivalTimeStr = arrivalTime.toTimeString().slice(0, 5);
                 let html = '';
-
-                const getStopName = (stopId) => allStops.find(s => s.stop === stopId)?.name_en || `Stop ${stopId}`;
+                const getStopName = stopId => allStops.find(s => s.stop === stopId)?.name_en || `Stop ${stopId}`;
 
                 if (route.type === 'MTR') {
                     html = `
@@ -498,8 +529,7 @@
                                 <h4>UP Trains</h4><table class="schedule-table"><tr><th>Time</th><th>Platform</th><th>Destination</th><th>Sequence</th><th>Valid</th></tr>${route.schedules[line]?.up?.length ? route.schedules[line].up.map(t => `<tr><td>${t.time}</td><td>${t.plat}</td><td>${getStationFullName(t.dest)}</td><td>${t.seq}</td><td>${t.valid}</td></tr>`).join('') : '<tr><td colspan="5">No UP trains</td></tr>'}</table>
                                 <h4>DOWN Trains</h4><table class="schedule-table"><tr><th>Time</th><th>Platform</th><th>Destination</th><th>Sequence</th><th>Valid</th></tr>${route.schedules[line]?.down?.length ? route.schedules[line].down.map(t => `<tr><td>${t.time}</td><td>${t.plat}</td><td>${getStationFullName(t.dest)}</td><td>${t.seq}</td><td>${t.valid}</td></tr>`).join('') : '<tr><td colspan="5">No DOWN trains</td></tr>'}</table>
                             `).join('')}
-                        </div>
-                    `;
+                        </div>`;
                 } else if (route.type === 'Bus') {
                     html = `
                         <div class="route-option" id="route-summary-${i}" onclick="toggleRouteDetails('route-details-${i}', this)">
@@ -509,21 +539,20 @@
                             Walk ${Math.round(route.boardingDistance)}m to ${getStopName(route.busRoute.boardingStop)}, alight at ${getStopName(route.busRoute.alightingStop)} (${Math.round(route.alightingDistance)}m)
                         </div>
                         <div class="route-details" id="route-details-${i}">
-                            <ul class="stop-list">${route.busRoute.stops.map(s => `<li class="${s.id === route.busRoute.boardingStop ? 'boarding-stop' : s.id === route.busRoute.alightingStop ? 'alighting-stop' : ''}">${getStopName(s.id)}${s.id === route.busRoute.boardingStop ? `<span id="eta-${i}"></span>` : ''}</li>`).join('')}</ul>
-                        </div>
-                    `;
+                            <ul class="stop-list">${route.busRoute.stops.map(s => `<li class="${s.id === route.busRoute.boardingStop ? 'boarding-stop' : s.id === route.busRoute.alightingStop ? 'alighting-stop' : ''}">${s.name}${s.id === route.busRoute.boardingStop ? `<span id="eta-${i}"></span>` : ''}</li>`).join('')}</ul>
+                        </div>`;
                 } else if (route.type === 'Bus-to-MTR') {
                     html = `
                         <div class="route-option" id="route-summary-${i}" onclick="toggleRouteDetails('route-details-${i}', this)">
                             <strong>Route ${i + 1}</strong><br>
                             <div class="time-display">${currentTime} → ${arrivalTimeStr} <span class="eta">(${route.estimatedTime} mins)</span></div>
-                            Bus ${route.busRoute.route} (${route.busRoute.direction}): Walk ${Math.round(route.boardingDistance)}m to ${getStopName(route.busRoute.boardingStop)}, alight at ${getStopName(route.busRoute.alightingStop)} (${route.stopCount} stops)<br>
+                            Bus ${route.busRoute.route} (${route.busRoute.direction}): Walk ${Math.round(route.boardingDistance)}m to ${route.boardingStopName}, alight at ${route.alightingStopName} (${route.stopCount} stops)<br>
                             Walk ${Math.round(route.walkingDistance)}m to ${getStationFullName(route.interchangeStation)}<br>
                             MTR: ${route.mtrRoute.route.map(l => lineNames[l]).join(' → ')}
                         </div>
                         <div class="route-details" id="route-details-${i}">
                             <h4>Bus Segment</h4>
-                            <ul class="stop-list">${route.busRoute.stops.map(s => `<li class="${s.id === route.busRoute.boardingStop ? 'boarding-stop' : s.id === route.busRoute.alightingStop ? 'alighting-stop' : ''}">${getStopName(s.id)}${s.id === route.busRoute.boardingStop ? `<span id="eta-${i}"></span>` : ''}</li>`).join('')}</ul>
+                            <ul class="stop-list">${route.busRoute.stops.map(s => `<li class="${s.id === route.busRoute.boardingStop ? 'boarding-stop' : s.id === route.busRoute.alightingStop ? 'alighting-stop' : ''}">${s.name}${s.id === route.busRoute.boardingStop ? `<span id="eta-${i}"></span>` : ''}</li>`).join('')}</ul>
                             <p>Walk ${Math.round(route.walkingDistance)}m to ${getStationFullName(route.interchangeStation)}</p>
                             <h4>MTR Segment</h4>
                             ${route.mtrRoute.route.map(line => {
@@ -535,11 +564,9 @@
                                     <table class="schedule-table">
                                         <tr><th>Next Train (mins)</th><th>Platform</th><th>Destination</th><th>Sequence</th></tr>
                                         ${nextTrain ? `<tr><td>${calculateETAMins(nextTrain.time)}</td><td>${nextTrain.plat}</td><td>${getStationFullName(nextTrain.dest)}</td><td>${nextTrain.seq}</td></tr>` : '<tr><td colspan="4">No upcoming trains</td></tr>'}
-                                    </table>
-                                `;
+                                    </table>`;
                             }).join('')}
-                        </div>
-                    `;
+                        </div>`;
                 } else if (route.type === 'MTR-to-Bus') {
                     html = `
                         <div class="route-option" id="route-summary-${i}" onclick="toggleRouteDetails('route-details-${i}', this)">
@@ -559,12 +586,10 @@
                                     <table class="schedule-table">
                                         <tr><th>Next Train (mins)</th><th>Platform</th><th>Destination</th><th>Sequence</th></tr>
                                         ${nextTrain ? `<tr><td>${calculateETAMins(nextTrain.time)}</td><td>${nextTrain.plat}</td><td>${getStationFullName(nextTrain.dest)}</td><td>${nextTrain.seq}</td></tr>` : '<tr><td colspan="4">No upcoming trains</td></tr>'}
-                                    </table>
-                                `;
+                                    </table>`;
                             }).join('')}
                             <p>Then walk ${Math.round(route.walkingDistance)}m to ${route.endStopName} (Bus Stop)</p>
-                        </div>
-                    `;
+                        </div>`;
                 } else if (route.type === 'CTB-to-KMB') {
                     html = `
                         <div class="route-option" id="route-summary-${i}" onclick="toggleRouteDetails('route-details-${i}', this)">
@@ -576,12 +601,11 @@
                         </div>
                         <div class="route-details" id="route-details-${i}">
                             <h4>Citybus Segment</h4>
-                            <ul class="stop-list">${route.ctbRoute.stops.map(s => `<li class="${s.id === route.ctbRoute.boardingStop ? 'boarding-stop' : s.id === route.ctbRoute.alightingStop ? 'alighting-stop' : ''}">${getStopName(s.id)}${s.id === route.ctbRoute.boardingStop ? `<span id="eta-citybus-${i}"></span>` : ''}</li>`).join('')}</ul>
+                            <ul class="stop-list">${route.ctbRoute.stops.map(s => `<li class="${s.id === route.ctbRoute.boardingStop ? 'boarding-stop' : s.id === route.ctbRoute.alightingStop ? 'alighting-stop' : ''}">${s.name}${s.id === route.ctbRoute.boardingStop ? `<span id="eta-citybus-${i}"></span>` : ''}</li>`).join('')}</ul>
                             <p>Walk ${Math.round(route.walkingDistance)}m to ${route.kmbBoardingStopName}</p>
                             <h4>KMB Segment</h4>
-                            <ul class="stop-list">${route.kmbRoute.stops.map(s => `<li class="${s.id === route.kmbRoute.boardingStop ? 'boarding-stop' : s.id === route.kmbRoute.alightingStop ? 'alighting-stop' : ''}">${getStopName(s.id)}${s.id === route.kmbRoute.boardingStop ? `<span id="eta-kmb-${i}"></span>` : ''}</li>`).join('')}</ul>
-                        </div>
-                    `;
+                            <ul class="stop-list">${route.kmbRoute.stops.map(s => `<li class="${s.id === route.kmbRoute.boardingStop ? 'boarding-stop' : s.id === route.kmbRoute.alightingStop ? 'alighting-stop' : ''}">${s.name}${s.id === route.kmbRoute.boardingStop ? `<span id="eta-kmb-${i}"></span>` : ''}</li>`).join('')}</ul>
+                        </div>`;
                 }
                 opts.innerHTML += html;
             });
@@ -594,8 +618,9 @@
                 const routeIndex = parseInt(id.split('-')[2]);
                 const route = currentRoutes[routeIndex];
                 if (route.type === 'Bus' || route.type === 'Bus-to-MTR') {
-                    const company = localStorage.getItem('company') || 'Citybus';
-                    fetchETA(route.busRoute.route, route.busRoute.direction, route.busRoute.boardingStop, id, company, routeIndex);
+                    // Map 'kmb'/'ctb' to 'KMB'/'Citybus' for ETA API compatibility
+                    const etaProvider = route.busRoute.provider === 'kmb' ? 'KMB' : 'Citybus';
+                    fetchETA(route.busRoute.route, route.busRoute.direction, route.busRoute.boardingStop, id, etaProvider, routeIndex);
                 } else if (route.type === 'CTB-to-KMB') {
                     fetchETA(route.ctbRoute.route, route.ctbRoute.direction, route.ctbRoute.boardingStop, id, 'Citybus', routeIndex);
                     fetchETA(route.kmbRoute.route, route.kmbRoute.direction, route.kmbRoute.boardingStop, id, 'KMB', routeIndex);
@@ -603,30 +628,30 @@
             }
         }
 
-        async function fetchETA(route, dir, stop, detailsId, company, index) {
-            const span = document.querySelector(`#${detailsId} .boarding-stop span[id='eta-${company.toLowerCase()}-${index}']`) || 
+        async function fetchETA(route, dir, stop, detailsId, provider, index) {
+            const span = document.querySelector(`#${detailsId} .boarding-stop span[id='eta-${provider.toLowerCase()}-${index}']`) || 
                          document.querySelector(`#${detailsId} .boarding-stop span[id='eta-${index}']`);
             if (!span) return;
 
             try {
-                const url = company === 'KMB' ? `https://data.etabus.gov.hk/v1/transport/kmb/eta/${stop}/${route}/1` : 
+                const url = provider === 'KMB' ? `https://data.etabus.gov.hk/v1/transport/kmb/eta/${stop}/${route}/1` : 
                            `https://rt.data.gov.hk/v2/transport/citybus/eta/CTB/${stop}/${route}`;
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const { data } = await response.json();
                 const dirMapping = { "outbound": "O", "inbound": "I" };
                 const direction = dirMapping[dir] || dir;
-                let eta = company === 'KMB' ? data.find(e => e.seq === 1 && e.dir === direction) || data.find(e => e.seq === 1) :
+                let eta = provider === 'KMB' ? data.find(e => e.seq === 1 && e.dir === direction) || data.find(e => e.seq === 1) :
                           data.data.find(e => e.eta_seq === 1 && e.dir === direction) || data.data.find(e => e.eta_seq === 1);
                 if (eta?.eta) {
-                    const mins = Math.round((new Date(eta.eta) - new Date(company === 'KMB' ? eta.generated_timestamp : eta.data_timestamp)) / 60000);
+                    const mins = Math.round((new Date(eta.eta) - new Date(provider === 'KMB' ? eta.generated_timestamp : eta.data_timestamp)) / 60000);
                     span.textContent = mins >= 0 ? ` (ETA: ${mins} min)` : ` (Due now)`;
                 } else {
                     span.textContent = ` (No ETA data)`;
                 }
             } catch (e) {
                 span.textContent = ` (ETA unavailable)`;
-                console.error(`ETA fetch error for ${company} route ${route} at stop ${stop}:`, e);
+                console.error(`ETA fetch error for ${provider} route ${route} at stop ${stop}:`, e);
             }
         }
 
