@@ -210,10 +210,191 @@
             }
         }
 
-       
-       
+        function haversineDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3;
+            const φ1 = lat1 * Math.PI / 180;
+            const φ2 = lat2 * Math.PI / 180;
+            const Δφ = (lat2 - lat1) * Math.PI / 180;
+            const Δλ = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
 
-       
+        function findNearbyStops(targetStop, stops) {
+            return stops.filter(stop => 
+                stop.lat && stop.long && 
+                haversineDistance(targetStop.lat, targetStop.long, stop.lat, stop.long) <= 1000
+            );
+        }
+
+        function findBusRoutes(startStopId, endStopId, company) {
+            const stops = company === 'KMB' ? kmbStops : citybusStops;
+            const routes = company === 'KMB' ? kmbRoutes : citybusRoutes;
+            const routeStopsMap = company === 'KMB' ? kmbRouteStopsMap : citybusRouteStopsMap;
+
+            const startStop = stops.find(s => s.stop === startStopId);
+            const endStop = stops.find(s => s.stop === endStopId);
+            const routeDiv = document.getElementById('route');
+            if (!startStop || !endStop) {
+                routeDiv.innerHTML = '<p>Invalid bus stops selected.</p>';
+                return;
+            }
+
+            const startStops = findNearbyStops(startStop, stops);
+            const endStops = findNearbyStops(endStop, stops);
+            const startStopIds = startStops.map(s => s.stop);
+            const endStopIds = endStops.map(s => s.stop);
+
+            const directRoutes = [];
+
+            for (const route of routes) {
+                const direction = route.bound === 'O' ? 'outbound' : 'inbound';
+                const key = `${route.route}-${route.bound}`;
+                const stopsList = routeStopsMap[key] || [];
+                const startMatches = stopsList.filter(id => startStopIds.includes(id));
+                const endMatches = stopsList.filter(id => endStopIds.includes(id));
+                if (startMatches.length > 0 && endMatches.length > 0) {
+                    let closestStartStop = null, minStartDistance = Infinity;
+                    for (const stopId of startMatches) {
+                        const stop = stops.find(s => s.stop === stopId);
+                        const distance = haversineDistance(startStop.lat, startStop.long, stop.lat, stop.long);
+                        if (distance < minStartDistance) {
+                            minStartDistance = distance;
+                            closestStartStop = stopId;
+                        }
+                    }
+                    const startIndex = stopsList.indexOf(closestStartStop);
+                    const possibleEndStops = endMatches.filter(id => stopsList.indexOf(id) > startIndex);
+                    if (possibleEndStops.length > 0) {
+                        let closestEndStop = null, minEndDistance = Infinity;
+                        for (const stopId of possibleEndStops) {
+                            const stop = stops.find(s => s.stop === stopId);
+                            const distance = haversineDistance(endStop.lat, endStop.long, stop.lat, stop.long);
+                            if (distance < minEndDistance) {
+                                minEndDistance = distance;
+                                closestEndStop = stopId;
+                            }
+                        }
+                        const stopDetails = stopsList.map(id => {
+                            const stop = stops.find(s => s.stop === id);
+                            return { 
+                                id, 
+                                name: stop ? stop.name_en : `Stop ${id}` 
+                            };
+                        });
+                        directRoutes.push({
+                            route: route.route,
+                            direction,
+                            stops: stopDetails,
+                            boardingStop: closestStartStop,
+                            alightingStop: closestEndStop,
+                            boardingDistance: minStartDistance,
+                            alightingDistance: minEndDistance,
+                            company: company
+                        });
+                    }
+                }
+            }
+
+            if (directRoutes.length > 0) {
+                routeDiv.innerHTML = `<h3>Direct ${company} Bus Routes</h3>` + renderDirectBusRoutes(directRoutes);
+            } else {
+                routeDiv.innerHTML = '<p>No direct bus routes found between the selected stops.</p>';
+            }
+        }
+
+        function renderDirectBusRoutes(routes) {
+            return routes.map((route, index) => {
+                const stops = route.company === 'KMB' ? kmbStops : citybusStops;
+                const boardingStop = stops.find(s => s.stop === route.boardingStop);
+                const alightingStop = stops.find(s => s.stop === route.alightingStop);
+                const boardingName = boardingStop ? boardingStop.name_en : `Stop ${route.boardingStop}`;
+                const alightingName = alightingStop ? alightingStop.name_en : `Stop ${route.alightingStop}`;
+                const numStops = route.stops.findIndex(s => s.id === route.alightingStop) - 
+                                route.stops.findIndex(s => s.id === route.boardingStop);
+
+                const summary = `
+                    <div 
+                        class="route-option" 
+                        id="route-summary-${index}" 
+                        data-route="${route.route}" 
+                        data-direction="${route.direction}" 
+                        data-boarding-stop="${route.boardingStop}" 
+                        data-company="${route.company}" 
+                        onclick="toggleRouteDetails('route-details-${index}', this)"
+                    >
+                        <strong>Route ${route.route} (${route.direction})</strong> - ${numStops} stops<br>
+                        Walk ${Math.round(route.boardingDistance)}m to ${boardingName}, alight at ${alightingName} (${Math.round(route.alightingDistance)}m)
+                    </div>
+                `;
+                let details = `<div class="route-details" id="route-details-${index}">`;
+                details += '<ul class="stop-list">';
+                route.stops.forEach(stop => {
+                    const stopInfo = stops.find(s => s.stop === stop.id);
+                    const stopName = stopInfo ? stopInfo.name_en : `Stop ${stop.id}`;
+                    const className = stop.id === route.boardingStop ? 'boarding-stop' : 
+                                    stop.id === route.alightingStop ? 'alighting-stop' : '';
+                    const etaSpan = stop.id === route.boardingStop ? `<span id="eta-${index}"></span>` : '';
+                    details += `<li class="${className}">${stopName}${etaSpan}</li>`;
+                });
+                details += '</ul></div>';
+                return summary + details;
+            }).join('');
+        }
+
+        async function fetchETA(route, direction, stopId, detailsId, company) {
+            const etaSpan = document.querySelector(`#${detailsId} .boarding-stop span`);
+            if (!etaSpan) return;
+
+            try {
+                const url = company === 'KMB'
+                    ? `https://data.etabus.gov.hk/v1/transport/kmb/eta/${stopId}/${route}/1`
+                    : `https://rt.data.gov.hk/v2/transport/citybus/eta/CTB/${stopId}/${route}`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+
+                let eta = null;
+                if (company === 'KMB') {
+                    eta = data.data.find(e => e.seq === 1);
+                    if (eta && eta.eta) {
+                        const minutesLeft = Math.round((new Date(eta.eta) - new Date(data.generated_timestamp)) / 60000);
+                        etaSpan.textContent = minutesLeft >= 0 ? ` (ETA: ${minutesLeft} min)` : ` (Due now)`;
+                    } else {
+                        etaSpan.textContent = ` (No ETA data)`;
+                    }
+                } else {
+                    const dirMapping = { "outbound": "O", "inbound": "I" };
+                    eta = data.data.find(e => e.eta_seq === 1 && e.dir === dirMapping[direction]) || 
+                          data.data.find(e => e.eta_seq === 1);
+                    if (eta && eta.eta) {
+                        const minutesLeft = Math.round((new Date(eta.eta) - new Date(eta.data_timestamp)) / 60000);
+                        etaSpan.textContent = minutesLeft >= 0 ? ` (ETA: ${minutesLeft} min)` : ` (Due now)`;
+                    } else {
+                        etaSpan.textContent = ` (No ETA data)`;
+                    }
+                }
+            } catch (error) {
+                etaSpan.textContent = ` (ETA unavailable)`;
+                console.error(`${company} ETA fetch failed for ${route} at ${stopId}:`, error);
+            }
+        }
+
+        function toggleRouteDetails(detailsId, summaryElement) {
+            const detailsDiv = document.getElementById(detailsId);
+            if (detailsDiv.style.display === 'none' || !detailsDiv.style.display) {
+                detailsDiv.style.display = 'block';
+                const route = summaryElement.getAttribute('data-route');
+                const direction = summaryElement.getAttribute('data-direction');
+                const boardingStop = summaryElement.getAttribute('data-boarding-stop');
+                const company = summaryElement.getAttribute('data-company');
+                fetchETA(route, direction, boardingStop, detailsId, company);
+            } else {
+                detailsDiv.style.display = 'none';
+            }
+        }
 
         function getUniqueMTRStations() {
             const stationSet = new Set();
@@ -299,29 +480,30 @@
             const destinationId = destinationInput.dataset.value;
             const currentCompany = currentInput.dataset.company;
             const destinationCompany = destinationInput.dataset.company;
-        
+
+            const routeDiv = document.getElementById('route');
+            routeDiv.innerHTML = '';
+
             if (!currentId || !destinationId) {
                 alert("Please select both a starting and destination station.");
                 return;
             }
-        
-            let url = '/general_schedule.html?';
+
             if (currentType === 'MTR' && destinationType === 'MTR') {
-                url += `currentStation=${currentId}&destinationStation=${destinationId}`;
+                window.location.href = `/general_schedule.html?currentStation=${currentId}&destinationStation=${destinationId}`;
             } else if (currentType === 'Bus' && destinationType === 'MTR') {
-                url += `startBusStop=${currentId}&destinationStation=${destinationId}&company=${currentCompany}`;
+                window.location.href = `/general_schedule.html?startBusStop=${currentId}&destinationStation=${destinationId}&company=${currentCompany}`;
             } else if (currentType === 'MTR' && destinationType === 'Bus') {
-                url += `currentStation=${currentId}&endBusStop=${destinationId}&company=${destinationCompany}`;
+                window.location.href = `/general_schedule.html?currentStation=${currentId}&endBusStop=${destinationId}&company=${destinationCompany}`;
             } else if (currentType === 'Bus' && destinationType === 'Bus') {
-                url += `startBusStop=${currentId}&endBusStop=${destinationId}`;
-                if (currentCompany) url += `&startCompany=${currentCompany}`;
-                if (destinationCompany) url += `&endCompany=${destinationCompany}`;
+                if (currentCompany === destinationCompany) {
+                    findBusRoutes(currentId, destinationId, currentCompany);
+                } else {
+                    // Bus-to-Bus different companies (e.g., CTB to KMB)
+                    window.location.href = `/general_schedule.html?startBusStop=${currentId}&endBusStop=${destinationId}`;
+                }
             }
-            window.location.href = url;
         });
-
-
-
 
         window.onload = async function() {
             await initializeData();

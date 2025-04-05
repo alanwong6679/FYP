@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const buttons = [
         { id: 'home-btn', text: 'Home', href: 'home.html', icon: '/static/images/home.png' },
         { id: 'transit_planner-btn', text: 'Search', href: 'transit_planner.html', icon: '/static/images/transit_planner.png' },
-        { id: 'route_planner-btn', text: 'Planning', href: 'index.html', icon: '/static/images/route_planning.png' },
+        { id: 'route_planner-btn', text: 'Planning', href: 'route_planner.html', icon: '/static/images/route_planning.png' },
         { id: 'train-btn', text: 'Train', href: 'mtr.html', icon: '/static/images/mtr_button.png' },
         { id: 'citybus-btn', text: 'CityBus', href: 'citybus.html', icon: '/static/images/citybus_button.png' },
         { id: 'tram-btn', text: 'Tram', href: 'tram_schedule.html', icon: '/static/images/tram_button.png' },
