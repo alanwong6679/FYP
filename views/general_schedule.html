@@ -6,7 +6,7 @@
     <title>General Schedule</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/navbar.css">
-    <link rel="stylesheet" href="/static/css/general_schedule.css">
+    <link rel="stylesheet" href="/static/css/general_schedule.css"> <!-- Your separated CSS file -->
 </head>
 <body>
     <header><h1>MTR & Bus Schedule</h1></header>
@@ -15,6 +15,7 @@
             <button class="sort-button" id="sortByTime">Sort by Time</button>
             <button class="sort-button" id="sortByWalk">Sort by Walk Distance</button>
         </div>
+        <!-- Placeholder for dynamically generated routes -->
         <div id="route-options"></div>
         <div id="schedule" class="schedule-detail"></div>
     </div>
@@ -22,7 +23,10 @@
     <div id="newsModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="toggleModal()">×</span>
-            <div class="language-switch"><button id="btnChinese">中文</button><button id="btnEnglish">English</button></div>
+            <div class="language-switch">
+                <button id="btnChinese">中文</button>
+                <button id="btnEnglish">English</button>
+            </div>
             <div id="newsContent">Loading...</div>
             <div class="source-reference">Source: RTHK</div>
         </div>
@@ -31,6 +35,5 @@
     <script src="/static/js/navbar.js"></script>
     <script src="/static/js/RTHK.js"></script>
     <script src="/static/js/general_schedule.js"></script>
-
 </body>
 </html>

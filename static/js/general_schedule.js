@@ -672,96 +672,202 @@ function findBusRoutesToStops(startBusStopIds, targetStopIds, provider, routes =
     }
     return directRoutes;
 }
+// Add this at the top of general_schedule.js, before the existing functions
+function generateTimeline(route) {
+    const items = getTimelineItems(route);
+    let html = '<div class="timeline">';
+    items.forEach(item => {
+        if (item.type === 'point') {
+            html += generatePointItem(item);
+        } else if (item.type === 'segment') {
+            html += generateSegmentItem(item);
+        }
+    });
+    html += '</div>';
+    return html;
+}
 
+function getTimelineItems(route) {
+    const now = new Date();
+    const startTime = now.toTimeString().slice(0, 5);
+    const arrivalTime = new Date(now.getTime() + route.estimatedTime * 60000).toTimeString().slice(0, 5);
+    const items = [];
+
+    // Handle different route types
+    if (route.type === 'MTR') {
+        items.push({ type: 'point', mode: 'MTR', name: getStationFullName(route.from), time: startTime, isStart: true, line: route.route[0] });
+        items.push({ type: 'segment', mode: 'MTR', lines: route.route, duration: route.estimatedTime, to: getStationFullName(route.to) });
+        items.push({ type: 'point', mode: 'MTR', name: getStationFullName(route.to), time: arrivalTime, isEnd: true, line: route.route[route.route.length - 1] });
+    } else if (route.type === 'Bus') {
+        // For bus routes, we need to use the stop names from your data
+        const startStopName = allStops.find(s => s.stop === route.busRoute.boardingStop)?.name_en || `Stop ${route.busRoute.boardingStop}`;
+        const endStopName = allStops.find(s => s.stop === route.busRoute.alightingStop)?.name_en || `Stop ${route.busRoute.alightingStop}`;
+        items.push({ type: 'point', mode: 'Bus', name: startStopName, time: startTime, isStart: true, provider: route.busRoute.provider });
+        items.push({ type: 'segment', mode: 'Walk', duration: calculateWalkDuration(route.boardingDistance), distance: route.boardingDistance, to: route.boardingStopName });
+        items.push({ type: 'point', mode: 'Bus', name: route.boardingStopName, provider: route.busRoute.provider });
+        items.push({ type: 'segment', mode: 'Bus', route: route.busRoute.route, direction: route.busRoute.direction, stops: route.stopCount, duration: route.estimatedTime - calculateWalkDuration(route.boardingDistance) - calculateWalkDuration(route.alightingDistance), alightingStopName: route.alightingStopName, provider: route.busRoute.provider });
+        items.push({ type: 'point', mode: 'Bus', name: route.alightingStopName, provider: route.busRoute.provider });
+        items.push({ type: 'segment', mode: 'Walk', duration: calculateWalkDuration(route.alightingDistance), distance: route.alightingDistance, to: endStopName });
+        items.push({ type: 'point', mode: 'End', name: endStopName, time: arrivalTime, isEnd: true });
+    } else if (route.type === 'MTR-to-Bus-with-Interchange') {
+        // Calculate segment times
+        const mtrTime = route.mtrRoute.route.reduce((t, l) => t + lines[l].length * 2, 0) + route.mtrRoute.interchangeCount * 5;
+        const walkingToBusTime = calculateWalkDuration(route.mtrWalkingDistance);
+        const busTime = route.estimatedTime - mtrTime - walkingToBusTime - calculateWalkDuration(route.busWalkingDistance);
+        const walkingFromBusTime = calculateWalkDuration(route.busWalkingDistance);
+
+        items.push({ type: 'point', mode: 'MTR', name: getStationFullName(route.from), time: startTime, isStart: true, line: route.mtrRoute.route[0] });
+        items.push({ type: 'segment', mode: 'MTR', lines: route.mtrRoute.route, duration: mtrTime, to: getStationFullName(route.to) });
+        items.push({ type: 'point', mode: 'MTR', name: getStationFullName(route.to), line: route.mtrRoute.route[route.mtrRoute.route.length - 1] });
+        items.push({ type: 'segment', mode: 'Walk', duration: walkingToBusTime, distance: route.mtrWalkingDistance, to: route.boardingStopName });
+        items.push({ type: 'point', mode: 'Bus', name: route.boardingStopName, provider: route.provider });
+        items.push({ type: 'segment', mode: 'Bus', route: route.busRoute.route, direction: route.busRoute.direction, stops: route.busStopCount, duration: busTime, alightingStopName: route.alightingStopName, provider: route.provider });
+        items.push({ type: 'point', mode: 'Bus', name: route.alightingStopName, provider: route.provider });
+        items.push({ type: 'segment', mode: 'Walk', duration: walkingFromBusTime, distance: route.busWalkingDistance, to: route.endStopName });
+        items.push({ type: 'point', mode: 'End', name: route.endStopName, time: arrivalTime, isEnd: true });
+    } else if (route.type === 'Bus-to-MTR') {
+        const busTime = route.stopCount * 2;
+        const walkingTime = calculateWalkDuration(route.walkingDistance);
+        const mtrTime = route.estimatedTime - busTime - walkingTime;
+
+        items.push({ type: 'point', mode: 'Bus', name: route.boardingStopName, time: startTime, isStart: true, provider: route.busRoute.provider });
+        items.push({ type: 'segment', mode: 'Bus', route: route.busRoute.route, direction: route.busRoute.direction, stops: route.stopCount, duration: busTime, alightingStopName: route.alightingStopName, provider: route.busRoute.provider });
+        items.push({ type: 'point', mode: 'Bus', name: route.alightingStopName, provider: route.busRoute.provider });
+        items.push({ type: 'segment', mode: 'Walk', duration: walkingTime, distance: route.walkingDistance, to: getStationFullName(route.interchangeStation) });
+        items.push({ type: 'point', mode: 'MTR', name: getStationFullName(route.interchangeStation), line: route.mtrRoute.route[0] });
+        items.push({ type: 'segment', mode: 'MTR', lines: route.mtrRoute.route, duration: mtrTime, to: getStationFullName(route.to) });
+        items.push({ type: 'point', mode: 'MTR', name: getStationFullName(route.to), time: arrivalTime, isEnd: true, line: route.mtrRoute.route[route.mtrRoute.route.length - 1] });
+    } else if (route.type === 'Bus-to-MTR-to-Bus') {
+        const firstBusTime = route.firstBusRoute.stopCount * 2;
+        const walkingToMtrTime = calculateWalkDuration(route.walkingDistance / 3); // Approximate split
+        const mtrTime = route.mtrRoute.route.reduce((t, l) => t + lines[l].length * 2, 0) + route.mtrRoute.interchangeCount * 5;
+        const walkingToSecondBusTime = calculateWalkDuration(route.walkingDistance / 3);
+        const secondBusTime = route.secondBusRoute.stopCount * 2;
+        const walkingToEndTime = calculateWalkDuration(route.walkingDistance / 3);
+
+        items.push({ type: 'point', mode: 'Bus', name: route.firstBoardingStopName, time: startTime, isStart: true, provider: route.firstBusRoute.provider });
+        items.push({ type: 'segment', mode: 'Bus', route: route.firstBusRoute.route, direction: route.firstBusRoute.direction, stops: route.firstBusRoute.stopCount, duration: firstBusTime, alightingStopName: route.firstAlightingStopName, provider: route.firstBusRoute.provider });
+        items.push({ type: 'point', mode: 'Bus', name: route.firstAlightingStopName, provider: route.firstBusRoute.provider });
+        items.push({ type: 'segment', mode: 'Walk', duration: walkingToMtrTime, distance: route.walkingDistance / 3, to: getStationFullName(route.mtrFrom) });
+        items.push({ type: 'point', mode: 'MTR', name: getStationFullName(route.mtrFrom), line: route.mtrRoute.route[0] });
+        items.push({ type: 'segment', mode: 'MTR', lines: route.mtrRoute.route, duration: mtrTime, to: getStationFullName(route.mtrTo) });
+        items.push({ type: 'point', mode: 'MTR', name: getStationFullName(route.mtrTo), line: route.mtrRoute.route[route.mtrRoute.route.length - 1] });
+        items.push({ type: 'segment', mode: 'Walk', duration: walkingToSecondBusTime, distance: route.walkingDistance / 3, to: route.secondBoardingStopName });
+        items.push({ type: 'point', mode: 'Bus', name: route.secondBoardingStopName, provider: route.secondBusRoute.provider });
+        items.push({ type: 'segment', mode: 'Bus', route: route.secondBusRoute.route, direction: route.secondBusRoute.direction, stops: route.secondBusRoute.stopCount, duration: secondBusTime, alightingStopName: route.secondAlightingStopName, provider: route.secondBusRoute.provider });
+        items.push({ type: 'point', mode: 'Bus', name: route.secondAlightingStopName, provider: route.secondBusRoute.provider });
+        items.push({ type: 'segment', mode: 'Walk', duration: walkingToEndTime, distance: route.walkingDistance / 3, to: route.endStopName });
+        items.push({ type: 'point', mode: 'End', name: route.endStopName, time: arrivalTime, isEnd: true });
+    } else if (route.type === 'CTB-to-KMB') {
+        const ctbTime = route.ctbStopCount * 2;
+        const walkingTime = calculateWalkDuration(route.walkingDistance);
+        const kmbTime = route.kmbStopCount * 2;
+
+        items.push({ type: 'point', mode: 'Bus', name: route.ctbBoardingStopName, time: startTime, isStart: true, provider: 'CityBus' });
+        items.push({ type: 'segment', mode: 'Bus', route: route.ctbRoute.route, direction: route.ctbRoute.direction, stops: route.ctbStopCount, duration: ctbTime, alightingStopName: route.ctbAlightingStopName, provider: 'CityBus' });
+        items.push({ type: 'point', mode: 'Bus', name: route.ctbAlightingStopName, provider: 'CityBus' });
+        items.push({ type: 'segment', mode: 'Walk', duration: walkingTime, distance: route.walkingDistance, to: route.kmbBoardingStopName });
+        items.push({ type: 'point', mode: 'Bus', name: route.kmbBoardingStopName, provider: 'KMB' });
+        items.push({ type: 'segment', mode: 'Bus', route: route.kmbRoute.route, direction: route.kmbRoute.direction, stops: route.kmbStopCount, duration: kmbTime, alightingStopName: route.kmbAlightingStopName, provider: 'KMB' });
+        items.push({ type: 'point', mode: 'End', name: route.kmbAlightingStopName, time: arrivalTime, isEnd: true, provider: 'KMB' });
+    }
+
+    return items;
+}
+
+function generatePointItem(item) {
+    const classes = `timeline-item station-point ${item.isStart ? 'start-point' : ''} ${item.isEnd ? 'end-point' : ''}`;
+    const dataLine = item.mode === 'End' ? 'End' : item.mode === 'Bus' ? item.provider : item.line || item.mode;
+    const time = item.time || '--:--';
+    const tag = item.isStart ? '<span class="tag">From</span>' : item.isEnd ? '<span class="tag to">To</span>' : '';
+    const lineTagClass = item.mode === 'End' ? 'dest' : item.mode === 'Walk' ? 'walk' : item.mode === 'Bus' ? item.provider.toLowerCase() : item.line.toLowerCase();
+    const lineAbbr = item.mode === 'End' ? 'Destination' : item.mode === 'Walk' ? 'Walk' : item.mode === 'Bus' ? item.provider.toUpperCase() : item.line;
+    return `
+        <div class="${classes}" data-line="${dataLine}">
+            <div class="timeline-marker">
+                <div class="marker-time">${time}</div>
+                <div class="marker-icon"></div>
+            </div>
+            <div class="timeline-content">
+                <div class="station-name">${tag} ${item.name} <span class="line-tag ${lineTagClass}">${lineAbbr}</span></div>
+            </div>
+        </div>
+    `;
+}
+
+function generateSegmentItem(item) {
+    const dataLine = item.mode === 'Bus' ? item.provider : item.mode;
+    const statsHtml = item.mode === 'Walk'
+        ? `<span class="stat-duration">~${Math.round(item.duration)} min</span><span class="stat-distance">${Math.round(item.distance)}m</span>`
+        : `<span class="stat-duration">~${Math.round(item.duration)} min</span><span class="stat-distance">-- km</span>`;
+    let detailsHtml = '';
+    if (item.mode === 'MTR') {
+        const lineNamesHtml = item.lines.map(line => lineNames[line].split('<')[0].trim()).join(' → ');
+        detailsHtml = `<span class="line-name">MTR: ${lineNamesHtml}</span><span class="direction">To ${item.to}</span>`;
+    } else if (item.mode === 'Bus') {
+        detailsHtml = `<span class="line-name">Bus ${item.route} (${item.direction})</span><span class="direction">Alight at ${item.alightingStopName}</span><span class="stops">${item.stops} stops</span>`;
+    } else if (item.mode === 'Walk') {
+        detailsHtml = `<span class="line-name">Walk</span><span class="direction">To ${item.to}</span>`;
+    }
+    return `
+        <div class="timeline-item" data-line="${dataLine}">
+            <div class="timeline-marker">
+                <div class="marker-icon"></div>
+                <div class="segment-stats">${statsHtml}</div>
+            </div>
+            <div class="timeline-content">
+                <div class="segment-details">${detailsHtml}</div>
+            </div>
+        </div>
+    `;
+}
+
+function calculateWalkDuration(distance) {
+    return (distance / 5000) * 60; // 5 km/h walking speed
+}
+
+// Replace the existing displaySortedRoutes function
 function displaySortedRoutes() {
     const opts = document.getElementById('route-options');
     opts.innerHTML = '';
     const now = new Date();
-    const currentTime = now.toTimeString().slice(0, 5);
+    const startTime = now.toTimeString().slice(0, 5);
 
     currentRoutes.slice(0, 7).forEach((route, i) => {
-        const arrivalTime = new Date(now.getTime() + route.estimatedTime * 60000);
-        const arrivalTimeStr = arrivalTime.toTimeString().slice(0, 5);
-        let html = '';
-
+        const arrivalTime = new Date(now.getTime() + route.estimatedTime * 60000).toTimeString().slice(0, 5);
+        let transfers = 0;
         if (route.type === 'MTR') {
-            // Existing MTR logic (unchanged)
+            transfers = route.route.length - 1; // Number of line changes
         } else if (route.type === 'Bus') {
-            html = `
-                <div class="route-option" id="route-summary-${i}" onclick="toggleRouteDetails('route-details-${i}', this)">
-                    <strong>Route ${i + 1}</strong><br>
-                    <div class="time-display">${currentTime} → ${arrivalTimeStr} <span class="eta">(${route.estimatedTime} mins)</span></div>
-                    Bus ${route.busRoute.route} (${route.busRoute.direction}): Walk ${Math.round(route.boardingDistance)}m to ${route.boardingStopName}, alight at ${route.alightingStopName} (${route.stopCount} stops, ${Math.round(route.alightingDistance)}m walk)
-                </div>
-                <div class="route-details" id="route-details-${i}">
-                    <ul class="stop-list">${route.busRoute.stops.map(s => `<li class="${s.id === route.busRoute.boardingStop ? 'boarding-stop' : s.id === route.busRoute.alightingStop ? 'alighting-stop' : ''}">${s.name}${s.id === route.busRoute.boardingStop ? `<span id="eta-${i}"></span>` : ''}</li>`).join('')}</ul>
-                </div>`;
-        } else if (route.type === 'Bus-to-MTR') {
-            // Existing Bus-to-MTR logic (unchanged)
-        } else if (route.type === 'MTR-to-Bus') {
-            // Existing MTR-to-Bus logic (unchanged)
-        } else if (route.type === 'MTR-to-Bus-with-Interchange') {
-            html = `
-                <div class="route-option" id="route-summary-${i}" onclick="toggleRouteDetails('route-details-${i}', this)">
-                    <strong>Route ${i + 1}</strong><br>
-                    <div class="time-display">${currentTime} → ${arrivalTimeStr} <span class="eta">(${route.estimatedTime} mins)</span></div>
-                    MTR: ${route.mtrRoute.route.map(l => lineNames[l]).join(' → ')}: From ${getStationFullName(route.from)} to ${getStationFullName(route.to)}<br>
-                    Walk ${Math.round(route.mtrWalkingDistance)}m to ${route.boardingStopName} (${route.provider === 'kmb' ? 'KMB' : 'Citybus'} Stop)<br>
-                    Bus ${route.busRoute.route} (${route.busRoute.direction}): Alight at ${route.alightingStopName} (${route.busStopCount} stops)<br>
-                    Walk ${Math.round(route.busWalkingDistance)}m to ${route.endStopName} (Bus Stop)
-                </div>
-                <div class="route-details" id="route-details-${i}">
-                    <h4>MTR Segment</h4>
-                    ${route.mtrRoute.route.map(line => {
-                        const direction = getDirection(route.from, route.to, line, route.schedules);
-                        const trains = route.schedules[line]?.[direction] || [];
-                        const nextTrain = trains.find(t => new Date(t.time) > new Date()) || trains[0];
-                        return `
-                            <h5>${lineNames[line]}</h5>
-                            <table class="schedule-table">
-                                <tr><th>Next Train (mins)</th><th>Platform</th><th>Destination</th><th>Sequence</th></tr>
-                                ${nextTrain ? `<tr><td>${calculateETAMins(nextTrain.time)}</td><td>${nextTrain.plat}</td><td>${getStationFullName(nextTrain.dest)}</td><td>${nextTrain.seq}</td></tr>` : '<tr><td colspan="4">No upcoming trains</td></tr>'}
-                            </table>`;
-                    }).join('')}
-                    <h4>Bus Segment (${route.provider === 'kmb' ? 'KMB' : 'Citybus'})</h4>
-                    <p>Walk ${Math.round(route.mtrWalkingDistance)}m to ${route.boardingStopName}</p>
-                    <ul class="stop-list">${route.busRoute.stops.map(s => `<li class="${s.id === route.busRoute.boardingStop ? 'boarding-stop' : s.id === route.busRoute.alightingStop ? 'alighting-stop' : ''}">${s.name}${s.id === route.busRoute.boardingStop ? `<span id="eta-${i}"></span>` : ''}</li>`).join('')}</ul>
-                    <p>Walk ${Math.round(route.busWalkingDistance)}m to ${route.endStopName}</p>
-                </div>`;
-        } else if (route.type === 'Bus-to-MTR-to-Bus') {
-            html = `
-                <div class="route-option" id="route-summary-${i}" onclick="toggleRouteDetails('route-details-${i}', this)">
-                    <strong>Route ${i + 1}</strong><br>
-                    <div class="time-display">${currentTime} → ${arrivalTimeStr} <span class="eta">(${route.estimatedTime} mins)</span></div>
-                    Bus ${route.firstBusRoute.route} (${route.firstBusRoute.direction}): Walk to ${route.firstBoardingStopName}, alight at ${route.firstAlightingStopName}<br>
-                    MTR: ${route.mtrRoute.route.map(l => lineNames[l]).join(' → ')}: From ${getStationFullName(route.mtrFrom)} to ${getStationFullName(route.mtrTo)}<br>
-                    Bus ${route.secondBusRoute.route} (${route.secondBusRoute.direction}): From ${route.secondBoardingStopName} to ${route.secondAlightingStopName}<br>
-                    Walk to ${route.endStopName}
-                </div>
-                <div class="route-details" id="route-details-${i}">
-                    <h4>First Bus Segment</h4>
-                    <ul class="stop-list">${route.firstBusRoute.stops.map(s => `<li class="${s.id === route.firstBusRoute.boardingStop ? 'boarding-stop' : s.id === route.firstBusRoute.alightingStop ? 'alighting-stop' : ''}">${s.name}${s.id === route.firstBusRoute.boardingStop ? `<span id="eta-first-${i}"></span>` : ''}</li>`).join('')}</ul>
-                    <h4>MTR Segment</h4>
-                    ${route.mtrRoute.route.map(line => {
-                        const direction = getDirection(route.mtrFrom, route.mtrTo, line, route.schedules);
-                        const trains = route.schedules[line]?.[direction] || [];
-                        const nextTrain = trains.find(t => new Date(t.time) > new Date()) || trains[0];
-                        return `
-                            <h5>${lineNames[line]}</h5>
-                            <table class="schedule-table">
-                                <tr><th>Next Train (mins)</th><th>Platform</th><th>Destination</th><th>Sequence</th></tr>
-                                ${nextTrain ? `<tr><td>${calculateETAMins(nextTrain.time)}</td><td>${nextTrain.plat}</td><td>${getStationFullName(nextTrain.dest)}</td><td>${nextTrain.seq}</td></tr>` : '<tr><td colspan="4">No upcoming trains</td></tr>'}
-                            </table>`;
-                    }).join('')}
-                    <h4>Second Bus Segment</h4>
-                    <ul class="stop-list">${route.secondBusRoute.stops.map(s => `<li class="${s.id === route.secondBusRoute.boardingStop ? 'boarding-stop' : s.id === route.secondBusRoute.alightingStop ? 'alighting-stop' : ''}">${s.name}${s.id === route.secondBusRoute.boardingStop ? `<span id="eta-second-${i}"></span>` : ''}</li>`).join('')}</ul>
-                    <p>Walk to ${route.endStopName}</p>
-                </div>`;
+            transfers = 0; // Direct bus route
+        } else if (route.type === 'MTR-to-Bus-with-Interchange' || route.type === 'Bus-to-MTR') {
+            transfers = 1; // One transfer between modes
+        } else if (route.type === 'Bus-to-MTR-to-Bus' || route.type === 'CTB-to-KMB') {
+            transfers = 2; // Two transfers
         }
-        opts.innerHTML += html;
+
+        const headerHtml = `
+            <div class="route-header">
+                <div><span class="time-info">${startTime} → ${arrivalTime}</span> <span class="duration">(${route.estimatedTime} mins)</span></div>
+                <div class="cost-transfers">
+                    <div class="fare">Fare: (Not Available)</div>
+                    <div class="transfers">~${transfers} Transfers</div>
+                </div>
+            </div>
+        `;
+        opts.innerHTML += `
+            <div class="route-container" id="route-summary-${i}" onclick="toggleRouteDetails('route-details-${i}', this)">
+                ${headerHtml}
+                ${generateTimeline(route)}
+                <div class="route-details" id="route-details-${i}" style="display: none;">
+                    <!-- Detailed schedule will be added here if needed -->
+                </div>
+            </div>
+        `;
     });
 }
 
+// Update toggleRouteDetails to work with the new structure (minimal change needed)
 function toggleRouteDetails(id, el) {
     const details = document.getElementById(id);
     details.style.display = details.style.display === 'none' ? 'block' : 'none';
@@ -786,6 +892,7 @@ function toggleRouteDetails(id, el) {
     }
 }
 
+// Ensure the rest of your general_schedule.js remains intact, such as window.onload, fetchSchedule, etc.
 async function fetchETA(route, dir, stop, detailsId, provider, index, segment = '') {
     const span = document.querySelector(`#${detailsId} .boarding-stop span[id='eta-${segment ? segment + '-' : ''}${index}']`);
     if (!span) return;
