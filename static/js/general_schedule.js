@@ -798,6 +798,7 @@ function generatePointItem(item) {
 function generateSegmentItem(item) {
     const dataLine = item.mode === 'Bus' ? item.provider : item.mode;
     const statsHtml = item.mode === 'Walk'
+    
         ? `<span class="stat-duration">~${Math.round(item.duration)} min</span><span class="stat-distance">${Math.round(item.distance)}m</span>`
         : `<span class="stat-duration">~${Math.round(item.duration)} min</span><span class="stat-distance">-- km</span>`;
     let detailsHtml = '';
@@ -820,7 +821,10 @@ function generateSegmentItem(item) {
             </div>
         </div>
     `;
+    
 }
+
+
 
 function calculateWalkDuration(distance) {
     return (distance / 5000) * 60; // 5 km/h walking speed
