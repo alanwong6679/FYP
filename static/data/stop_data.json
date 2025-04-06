@@ -17545,6 +17545,11 @@
             "lat": "22.382373",
             "long": "114.188294"
         },
+        "84BAF05C529889BB": {
+            "name_en": "SHATIN CENTRAL BUS TERMINUS",
+            "lat": "22.382282",
+            "long": "114.188281"
+        },
         "F608A74B860B3C47": {
             "name_en": "ROYAL PARK HOTEL",
             "lat": "22.379864",
@@ -25230,11 +25235,6 @@
             "lat": "22.408730",
             "long": "114.220556"
         },
-        "84BAF05C529889BB": {
-            "name_en": "SHATIN CENTRAL BUS TERMINUS",
-            "lat": "22.382282",
-            "long": "114.188281"
-        },
         "D9AAA33F19B8E45A": {
             "name_en": "HANG HAU (NORTH)(TSEUNG KWAN O HOSPITAL)",
             "lat": "22.317870",
@@ -32885,6 +32885,21 @@
             "lat": "22.286032",
             "long": "114.161172"
         },
+        "1CBCE3D9633DC5C7": {
+            "name_en": "SHEUNG WAN (PMQ)",
+            "lat": "22.284012",
+            "long": "114.150490"
+        },
+        "993431C67E83B130": {
+            "name_en": "KENNEDY TOWN (FORBES STREET)",
+            "lat": "22.281243",
+            "long": "114.126697"
+        },
+        "5F32C53A90CDEB52": {
+            "name_en": "CENTRAL (MACAU FERRY)",
+            "lat": "22.288088",
+            "long": "114.150019"
+        },
         "77D8D65A6BD868B3": {
             "name_en": "SHEK MUN STATION",
             "lat": "22.387499",
@@ -32899,6 +32914,51 @@
             "name_en": "NAM CHEONG STATION (V WALK)",
             "lat": "22.328007",
             "long": "114.153683"
+        },
+        "97959A28795E3EFF": {
+            "name_en": "KAI TAK (AIRSIDE)",
+            "lat": "22.331877",
+            "long": "114.198474"
+        },
+        "2D3BD1583B26087F": {
+            "name_en": "KOWLOON BAY (TELFORD GARDEN)",
+            "lat": "22.321698",
+            "long": "114.212921"
+        },
+        "9252A494500A05C9": {
+            "name_en": "KWUN TONG FERRY (KEI YIP STREET)",
+            "lat": "22.309177",
+            "long": "114.221147"
+        },
+        "0C8085DE147882C0": {
+            "name_en": "LAM TIN (SIN FAT ROAD)",
+            "lat": "22.307003",
+            "long": "114.231210"
+        },
+        "E85A10E61A00CC09": {
+            "name_en": "HARBOUR NORTH",
+            "lat": "22.292777",
+            "long": "114.202044"
+        },
+        "A8DC6F85E7043234": {
+            "name_en": "TSING YI STATION",
+            "lat": "22.359696",
+            "long": "114.106578"
+        },
+        "A31DD8C4FD6740D4": {
+            "name_en": "SPCA TSING YI",
+            "lat": "22.346439",
+            "long": "114.111897"
+        },
+        "CD4D0EF3F601A4A7": {
+            "name_en": "TAI NAN WEST STREET",
+            "lat": "22.336102",
+            "long": "114.149431"
+        },
+        "4B63964A12D91E2A": {
+            "name_en": "HING NING ROAD KWAI FONG",
+            "lat": "22.357927",
+            "long": "114.127273"
         },
         "D807FB5CE82945A2": {
             "name_en": "MOKO Mong Kok",
@@ -35079,8 +35139,8 @@
         },
         "002225": {
             "name_en": "Ocean Park",
-            "lat": "22.247250092091",
-            "long": "114.17391734053"
+            "lat": "22.247392812091",
+            "long": "114.17392013053"
         },
         "002347": {
             "name_en": "Aberdeen Tunnel Bus-Bus Interchange",
@@ -36849,8 +36909,8 @@
         },
         "003339": {
             "name_en": "Central (Hong Kong Observation Wheel)",
-            "lat": "22.286125172091",
-            "long": "114.16143998053"
+            "lat": "22.285987782091",
+            "long": "114.16174587053"
         },
         "001031": {
             "name_en": "City Hall, Connaught Road Central",
@@ -38869,8 +38929,8 @@
         },
         "001139": {
             "name_en": "Admiralty - MTR Exit B",
-            "lat": "22.279678602091",
-            "long": "114.16378945053"
+            "lat": "22.279768672091",
+            "long": "114.16383960053"
         },
         "001165": {
             "name_en": "Serene Court, Victoria Road",
@@ -45929,8 +45989,8 @@
         },
         "003874": {
             "name_en": "Kai Tak Sports Park, Sung Wong Toi Road",
-            "lat": "22.323282892091",
-            "long": "114.19270136053"
+            "lat": "22.323294602091",
+            "long": "114.19286007053"
         },
         "003444": {
             "name_en": "Fire and Ambulance Services Academy",
@@ -57619,6 +57679,111 @@
             "lat": 22.311269158118723,
             "long": 114.26066375466304
         },
+        "20021481": {
+            "name_en": "Anderson (On Yu Road) Public Transport Terminus",
+            "lat": 22.329062563264163,
+            "long": 114.23353850841524
+        },
+        "20021482": {
+            "name_en": "On Yu Road, opposite On Pak Court",
+            "lat": 22.325100207428243,
+            "long": 114.23587739467621
+        },
+        "20021483": {
+            "name_en": "On Yu Road, outside On Sau Court",
+            "lat": 22.32247263452519,
+            "long": 114.23701465129854
+        },
+        "20021484": {
+            "name_en": "On Yu Road, near On Yu Path",
+            "lat": 22.321165032594006,
+            "long": 114.23811435699463
+        },
+        "20015584": {
+            "name_en": "Po Lam Road near Ma Yau Tong",
+            "lat": 22.31959580885326,
+            "long": 114.24560358465378
+        },
+        "20021485": {
+            "name_en": "Po Lam Road, near Mau Wu Tsai",
+            "lat": 22.31749028301471,
+            "long": 114.25210475921631
+        },
+        "20021486": {
+            "name_en": "Po Lam Road North, opposite Po Yan House, Po Lam Estate",
+            "lat": 22.326427621573924,
+            "long": 114.25176411867143
+        },
+        "20020394": {
+            "name_en": "Po Lam Road North, near Tseung Kwan O Jockey Club Clinic",
+            "lat": 22.32509276394882,
+            "long": 114.25921261310579
+        },
+        "20014683": {
+            "name_en": "Po Lam Road North, opposite King Min House, King Lam Estate",
+            "lat": 22.32211120493217,
+            "long": 114.26149159658964
+        },
+        "20021487": {
+            "name_en": "Sheung Tak Public Transport Terminus",
+            "lat": 22.311103283466945,
+            "long": 114.25958275794984
+        },
+        "20021488": {
+            "name_en": "Bus lay-by on Po Hong Road outside Tseung Kwan O Sports Ground opposite to Beverly Garden Block 6",
+            "lat": 22.31014297504951,
+            "long": 114.26319301128389
+        },
+        "20021489": {
+            "name_en": "Chiu Shun Road, near Wai Ming House, Yuk Ming Court",
+            "lat": 22.314758350440712,
+            "long": 114.26843404769899
+        },
+        "20014673": {
+            "name_en": "Po Lam Road North, outside King Min House, King Lam Estate",
+            "lat": 22.321940827201587,
+            "long": 114.26132848579839
+        },
+        "20014676": {
+            "name_en": "Po Lam Road North, opposite Tseung Kwan O West Low Level Salt Water Service Reservoir",
+            "lat": 22.321633377808883,
+            "long": 114.25019256724053
+        },
+        "20021490": {
+            "name_en": "Po Lam Road North, opposite Hong Sing Garden",
+            "lat": 22.318194969027452,
+            "long": 114.25448656082155
+        },
+        "20021491": {
+            "name_en": "Po Lam Road North, near Po Lam Road Disciplined Services Quarters",
+            "lat": 22.31746547006209,
+            "long": 114.25339221954347
+        },
+        "20021492": {
+            "name_en": "Po Lam Road, near Mau Wu Tsai",
+            "lat": 22.317400956364647,
+            "long": 114.25252854824068
+        },
+        "20021493": {
+            "name_en": "Po Lam Road, near Ma Yau Tong",
+            "lat": 22.320120430976484,
+            "long": 114.24468845129014
+        },
+        "20021494": {
+            "name_en": "On Yu Road, near On Yu Path",
+            "lat": 22.321063302138807,
+            "long": 114.23794269561769
+        },
+        "20021495": {
+            "name_en": "On Yu Road, outside On Lai Court",
+            "lat": 22.322988724514726,
+            "long": 114.23674643039705
+        },
+        "20021496": {
+            "name_en": "On Yu Road, outside On Pak Court",
+            "lat": 22.32490419567121,
+            "long": 114.23575937747957
+        },
         "20012474": {
             "name_en": "Hong Kong University of Science and Technology (North Station)",
             "lat": 22.33854992596409,
@@ -57784,11 +57949,6 @@
             "lat": 22.379050028608024,
             "long": 113.98050159215929
         },
-        "20014673": {
-            "name_en": "Po Lam Road North, outside King Min House, King Lam Estate",
-            "lat": 22.321940827201587,
-            "long": 114.26132848579839
-        },
         "20018181": {
             "name_en": "Yan King Road, outside Block 6, Metro City Phase 2",
             "lat": 22.323296316146184,
@@ -57798,11 +57958,6 @@
             "name_en": "Tsui Lam Indoor Creation Centre",
             "lat": 22.32231460964801,
             "long": 114.24944718650136
-        },
-        "20014676": {
-            "name_en": "Po Lam Road North, opposite Tseung Kwan O West Low Level Salt Water Service Reservoir",
-            "lat": 22.321633377808883,
-            "long": 114.25019256724053
         },
         "20014677": {
             "name_en": "Mau Tai Road, outside Block 2, Verbena Heights",
@@ -66710,5 +66865,5 @@
             "long": 113.97700801491739
         }
     },
-    "timestamp": 1743705086448
+    "timestamp": 1743918100068
 }

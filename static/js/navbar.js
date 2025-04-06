@@ -17,9 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'transit_planner-btn', text: 'Search', href: 'transit_planner.html', icon: '/static/images/transit_planner.png' },
         { id: 'route_planner-btn', text: 'Planning', href: 'route_planner.html', icon: '/static/images/route_planning.png' },
         { id: 'train-btn', text: 'Train', href: 'mtr.html', icon: '/static/images/mtr_button.png' },
-        { id: 'citybus-btn', text: 'CityBus', href: 'citybus.html', icon: '/static/images/citybus_button.png' },
         { id: 'tram-btn', text: 'Tram', href: 'tram_schedule.html', icon: '/static/images/tram_button.png' },
-        { id: 'mini-btn', text: 'Mini Bus', href: 'minibus_schedule.html', icon: '/static/images/minibus_button.png' },
         { id: 'ferry-btn', text: 'Ferry', href: 'ferry.html', icon: '/static/images/ferry_button.png' },
     ];
 

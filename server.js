@@ -6,6 +6,7 @@ require('dotenv').config();
 const path = require('path');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const { spawn } = require('child_process');
 
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
@@ -21,7 +22,7 @@ app.use('/static', express.static(path.join(__dirname, 'static')));
 app.use(express.static(path.join(__dirname, 'views')));
 app.use(express.json());
 app.use(cookieParser());
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -404,7 +405,7 @@ app.post('/api/consent', (req, res) => {
 app.get('/', (req, res) => {
     const consented = req.cookies.consented === 'true';
     if (consented) {
-        res.sendFile(path.join(__dirname, 'views', 'index.html'));
+        res.sendFile(path.join(__dirname, 'views', 'home.html'));
     } else {
         res.sendFile(path.join(__dirname, 'views', 'cookie.html'));
     }
@@ -413,4 +414,18 @@ app.get('/', (req, res) => {
 // Start the server
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
+    
+    // Spawn Python script as a child process
+    const pythonProcess = spawn('python3', ['fetch_transport_data.py'], {
+        cwd: __dirname,
+        stdio: 'inherit' // Log Python output to server console
+    });
+    
+    pythonProcess.on('error', (err) => {
+        console.error('Failed to start Python script:', err);
+    });
+    
+    pythonProcess.on('exit', (code) => {
+        console.log(`Python script exited with code ${code}`);
+    });
 });

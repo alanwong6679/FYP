@@ -1,24 +1,46 @@
-/* transit.css */
+/* Reset default margins */
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overflow-x: hidden;
+}
+
+/* Default (light theme) body styling - Adjusted for less brightness and black text */
 body {
     font-family: 'Roboto', sans-serif;
     margin: 0;
     padding: 20px;
-    background: linear-gradient(135deg, #e0e7ff, #f4f4f9);
+    background: linear-gradient(135deg, #c7d2fe, #e2e8f0); /* Softer indigo to slate gray */
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
     flex-direction: column;
     transition: background 0.3s ease, color 0.3s ease;
+    color: #000000; /* Pure black text for light theme */
+    background-size: cover;
+    background-repeat: no-repeat;
 }
 
+/* Dark theme override */
 :where([data-theme="dark"]) body {
-    background: #1a1a1a;
-    color: #e0e0e0;
+    background: linear-gradient(135deg, #1e293b, #334155) !important; /* Dark theme gradient */
+    color: #e0e0e0 !important; /* Light text for dark theme */
 }
 
+/* Ensure no white background leakage in forced dark mode */
+@media (prefers-color-scheme: dark) {
+    body:not([data-theme="light"]) {
+        background: linear-gradient(135deg, #1e293b, #334155) !important;
+        color: #e0e0e0 !important;
+    }
+}
+
+/* Container - Adjusted for less brightness */
 .container {
-    background: #ffffff;
+    background: #f7fafc; /* Soft off-white */
     padding: 30px;
     border-radius: 15px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
@@ -38,9 +60,82 @@ body {
     transform: translateY(-5px);
 }
 
+/* Route options and details */
+.route-option {
+    padding: 10px;
+    margin: 5px 0;
+    background: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+:where([data-theme="dark"]) .route-option {
+    background: #444;
+    color: #e0e0e0;
+}
+
+.route-details {
+    padding: 10px;
+    background: #edf2f7;
+    border-radius: 8px;
+    margin-top: 5px;
+}
+
+:where([data-theme="dark"]) .route-details {
+    background: #2a2a2a;
+    color: #e0e0e0;
+}
+
+/* Stop list */
+.stop-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.stop-list li {
+    padding: 5px 0;
+    color: #000000; /* Black text for light mode */
+}
+
+:where([data-theme="dark"]) .stop-list li {
+    color: #e0e0e0; /* Light gray for dark mode */
+}
+
+.boarding-stop, .alighting-stop {
+    font-weight: bold;
+}
+
+.stop-list li span[id^="eta-"] {
+    color: #000000 !important; /* Force black in light mode */
+    font-weight: normal;
+    margin-left: 5px;
+}
+
+:where([data-theme="dark"]) .stop-list li span[id^="eta-"] {
+    color: #e0e0e0 !important; /* Force light gray in dark mode */
+}
+
+/* Google Maps InfoWindow styling - No dark mode support */
+#map .gm-style-iw.gm-style-iw-c {
+    color: #000000 !important; /* Always black, no theme variation */
+}
+
+#map .gm-style-iw.gm-style-iw-c strong,
+#map .gm-style-iw.gm-style-iw-c br,
+#map .gm-style-iw.gm-style-iw-c div {
+    color: inherit !important; /* Ensure nested elements inherit */
+}
+
+/* For Google Maps InfoWindow ETA (transit.js compatibility) */
+.gm-style-iw .eta-info {
+    color: #000000 !important; /* Always black */
+}
+
 h1 {
     font-size: 28px;
-    color: #333;
+    color: #000000;
     margin-bottom: 10px;
     font-weight: 700;
     transition: color 0.3s ease;
@@ -52,7 +147,7 @@ h1 {
 
 h2 {
     font-size: 20px;
-    color: #555;
+    color: #1a202c;
     margin-bottom: 20px;
     font-weight: 500;
     transition: color 0.3s ease;
@@ -62,6 +157,7 @@ h2 {
     color: #bbbbbb;
 }
 
+/* Back button */
 .back-button {
     position: absolute;
     top: 15px;
@@ -92,6 +188,7 @@ h2 {
     background-color: #4169e1;
 }
 
+/* Map styling */
 #map {
     height: 400px;
     width: 100%;
@@ -105,16 +202,17 @@ h2 {
     border-color: #555555;
 }
 
+/* Readonly input */
 input[readonly] {
     padding: 12px;
     font-size: 16px;
-    border: 2px solid #ddd;
+    border: 2px solid #cbd5e0;
     border-radius: 8px;
     width: 100%;
     box-sizing: border-box;
     margin-bottom: 15px;
-    background-color: #f8f8f8;
-    color: #333;
+    background-color: #edf2f7;
+    color: #000000;
     cursor: not-allowed;
     text-align: center;
     font-weight: 500;
@@ -127,6 +225,7 @@ input[readonly] {
     border-color: #666666;
 }
 
+/* General button styling */
 button {
     padding: 12px 24px;
     background-color: #28a745;
@@ -156,13 +255,14 @@ button:active {
     transform: scale(0.95);
 }
 
+/* Route list */
 .route-list {
     margin-top: 20px;
     max-height: 150px;
     overflow-y: auto;
     list-style: none;
     padding: 0;
-    border: 1px solid #ddd;
+    border: 1px solid #cbd5e0;
     border-radius: 8px;
     transition: border-color 0.3s ease, background 0.3s ease;
 }
@@ -177,10 +277,11 @@ button:active {
     justify-content: space-between;
     align-items: center;
     padding: 12px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid #e2e8f0;
     cursor: pointer;
     transition: background-color 0.2s ease, color 0.3s ease;
     background: inherit;
+    color: #000000;
 }
 
 :where([data-theme="dark"]) .route-list li {
@@ -194,19 +295,20 @@ button:active {
 }
 
 .route-list li:hover {
-    background-color: #f0f0f0;
+    background-color: #edf2f7;
 }
 
 :where([data-theme="dark"]) .route-list li:hover {
     background-color: #3a3a3a;
 }
 
+/* Route info */
 .route-info {
     margin: 20px 0;
     font-size: 18px;
-    color: #444;
+    color: #1a202c;
     font-weight: 500;
-    background: #e9f7ef;
+    background: #edf2f7;
     padding: 10px;
     border-radius: 8px;
     transition: background 0.3s ease, color 0.3s ease;
@@ -217,6 +319,7 @@ button:active {
     color: #e0e0e0;
 }
 
+/* Keypad */
 #keypad {
     display: flex;
     flex-direction: column;
@@ -246,8 +349,8 @@ button:active {
     font-size: 16px;
     border: none;
     border-radius: 8px;
-    background-color: #e0e0e0;
-    color: #333;
+    background-color: #e2e8f0;
+    color: #000000;
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.1s ease, color 0.3s ease;
 }
@@ -258,7 +361,7 @@ button:active {
 }
 
 #keypad button:hover {
-    background-color: #d0d0d0;
+    background-color: #cbd5e0;
     transform: scale(1.05);
 }
 
@@ -287,8 +390,9 @@ button:active {
     background-color: #c0392b;
 }
 
+/* Loading and error messages */
 .loading-message {
-    color: #666;
+    color: #4a5568;
     font-size: 14px;
     margin-top: 10px;
     transition: color 0.3s ease;
@@ -299,11 +403,11 @@ button:active {
 }
 
 .error-message {
-    background-color: #ffcccc;
+    background-color: #fed7d7;
     padding: 10px;
     border-radius: 8px;
     margin-bottom: 15px;
-    color: #721c24;
+    color: #9b2c2c;
     font-weight: 500;
     transition: background 0.3s ease, color 0.3s ease;
 }
@@ -313,6 +417,7 @@ button:active {
     color: #ff9999;
 }
 
+/* Star button */
 .star-btn {
     background: transparent;
     border: none;
@@ -338,6 +443,7 @@ button:active {
     color: #ffcc00;
 }
 
+/* Filter buttons */
 .filter-buttons {
     display: flex;
     gap: 10px;
@@ -382,10 +488,11 @@ button:active {
     background-color: #4169e1;
 }
 
+/* Radius options */
 .radius-options {
     position: absolute;
-    background: #ffffff;
-    border: 2px solid #ddd;
+    background: #f7fafc;
+    border: 2px solid #cbd5e0;
     border-radius: 8px;
     padding: 10px;
     z-index: 1000;

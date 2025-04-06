@@ -8667,10 +8667,45 @@
             "provider": "kmb"
         },
         {
+            "route": "PB2A",
+            "bound": "O",
+            "orig_en": "CENTRAL HARBOURFRONT",
+            "dest_en": "WEST KOWLOON CULTURAL DISTRICT",
+            "provider": "kmb"
+        },
+        {
             "route": "PB2B",
             "bound": "O",
             "orig_en": "SHEK MUN STATION",
             "dest_en": "WEST KOWLOON CULTURAL DISTRICT (From Sha Tin)",
+            "provider": "kmb"
+        },
+        {
+            "route": "PB3A",
+            "bound": "O",
+            "orig_en": "KAI TAK",
+            "dest_en": "HARNOUR NORTH",
+            "provider": "kmb"
+        },
+        {
+            "route": "PB3B",
+            "bound": "O",
+            "orig_en": "TSUEN WAN",
+            "dest_en": "NORTH POINT(From Tsuen Wan) (Circular)",
+            "provider": "kmb"
+        },
+        {
+            "route": "PBS1",
+            "bound": "O",
+            "orig_en": "TSUEN WAN",
+            "dest_en": "MA WAN(From Tsuen Wan) (Circular)",
+            "provider": "kmb"
+        },
+        {
+            "route": "PBS2",
+            "bound": "O",
+            "orig_en": "CENTRAL",
+            "dest_en": "MA WAN(From Central) (Circular)",
             "provider": "kmb"
         },
         {
@@ -15046,6 +15081,24 @@
             "provider": "minibus"
         },
         {
+            "route": "117A",
+            "bound": 1,
+            "route_id": 2010896,
+            "region": "NT",
+            "orig_en": "Anderson (OnYu Road) Public Transport Terminus",
+            "dest_en": "Sheung Tak Public Terminus",
+            "provider": "minibus"
+        },
+        {
+            "route": "117A",
+            "bound": 2,
+            "route_id": 2010896,
+            "region": "NT",
+            "orig_en": "Sheung Tak Public Terminus",
+            "dest_en": "Anderson (OnYu Road) Public Transport Terminus",
+            "provider": "minibus"
+        },
+        {
             "route": "11A",
             "bound": 1,
             "route_id": 2004824,
@@ -18781,5 +18834,5 @@
             "provider": "minibus"
         }
     ],
-    "timestamp": 1743704980369
+    "timestamp": 1743917989459
 }
