@@ -3,37 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MTR Schedule</title>
+    <title>Tram Schedule</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Link to shared CSS files -->
+    <link rel="stylesheet" href="/static/css/styles.css">
     <link rel="stylesheet" href="/static/css/navbar.css">
     <link rel="stylesheet" href="/static/css/tram_schedule.css">
 </head>
 <body>
-    <header>
-        <h1>MTR Schedule</h1>
-    </header>
     <div class="container">
-        <div id="route-options"></div>
-        <div id="schedule" class="schedule-detail"></div>
+        <h1>Tram Schedule</h1>
+        <ul class="route-list">
+            <li data-route="shau-kei-wan-western" data-time="68" data-fare="$3">
+                <span class="route-name">Shau Kei Wan - Western Market</span>
+                <div class="direction-btns">
+                    <button class="west-btn">West</button>
+                    <button class="east-btn">East</button>
+                </div>
+                <div class="route-details" id="details-shau-kei-wan-western"></div>
+            </li>
+            <li data-route="shau-kei-wan-happy" data-time="54" data-fare="$3">
+                <span class="route-name">Shau Kei Wan - Happy Valley</span>
+                <div class="direction-btns">
+                    <button class="west-btn">West</button>
+                    <button class="east-btn">East</button>
+                </div>
+                <div class="route-details" id="details-shau-kei-wan-happy"></div>
+            </li>
+            <li data-route="kennedy-happy" data-time="51" data-fare="$3">
+                <span class="route-name">Kennedy Town - Happy Valley</span>
+                <div class="direction-btns">
+                    <button class="west-btn">West</button>
+                    <button class="east-btn">East</button>
+                </div>
+                <div class="route-details" id="details-kennedy-happy"></div>
+            </li>
+            <li data-route="shek-tong-causeway" data-time="40" data-fare="$3">
+                <span class="route-name">Shek Tong Tsui - Causeway Bay</span>
+                <div class="direction-btns">
+                    <button class="west-btn">West</button>
+                    <button class="east-btn">East</button>
+                </div>
+                <div class="route-details" id="details-shek-tong-causeway"></div>
+            </li>
+            <li data-route="north-point-shek" data-time="52" data-fare="$3">
+                <span class="route-name">North Point - Shek Tong Tsui</span>
+                <div class="direction-btns">
+                    <button class="west-btn">West</button>
+                    <button class="east-btn">East</button>
+                </div>
+                <div class="route-details" id="details-north-point-shek"></div>
+            </li>
+            <li data-route="kennedy-western" data-time="18" data-fare="$3">
+                <span class="route-name">Kennedy Town - Western Market</span>
+                <div class="direction-btns">
+                    <button class="west-btn">West</button>
+                    <button class="east-btn">East</button>
+                </div>
+                <div class="route-details" id="details-kennedy-western"></div>
+            </li>
+            <li data-route="shau-kei-wan-kennedy" data-time="86" data-fare="$3">
+                <span class="route-name">Shau Kei Wan - Kennedy Town</span>
+                <div class="direction-btns">
+                    <button class="west-btn">West</button>
+                    <button class="east-btn">East</button>
+                </div>
+                <div class="route-details" id="details-shau-kei-wan-kennedy"></div>
+            </li>
+        </ul>
     </div>
 
-    <div class="news-icon"></div>
-    <div id="newsModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="toggleModal()">×</span>
-            <div class="language-switch">
-                <button id="btnChinese">中文</button>
-                <button id="btnEnglish">English</button>
-            </div>
-            <div id="newsContent">Loading news content...</div>
-            <div class="source-reference">Source: RTHK</div>
-        </div>
-    </div>
 
-    <script src="/static/js/stations.js"></script>
     <script src="/static/js/navbar.js"></script>
-    <script src="/static/js/RTHK.js"></script>
-    <script src="/static/js/minibus.js"></script>
-    <script src="/static/js/temperature.js"></script>
     <script src="/static/js/tram_schedule.js"></script>
 </body>
 </html>

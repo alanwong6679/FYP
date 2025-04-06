@@ -1,36 +1,40 @@
-/* Reset default margins */
+/* Define custom properties at root level */
+:root {
+    --border-radius: 8px;
+    --transition-default: 0.3s ease;
+    --shadow-light: 0 8px 20px rgba(0, 0, 0, 0.15);
+    --shadow-dark: 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Reset default margins and ensure scrolling */
 html, body {
     margin: 0;
     padding: 0;
-    height: 100%;
     width: 100%;
     overflow-x: hidden;
+    overflow-y: auto; /* Ensure vertical scrolling */
 }
 
-/* Default (light theme) body styling - Adjusted for less brightness and black text */
+/* Default (light theme) body styling */
 body {
     font-family: 'Roboto', sans-serif;
     margin: 0;
     padding: 20px;
-    background: linear-gradient(135deg, #c7d2fe, #e2e8f0); /* Softer indigo to slate gray */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    flex-direction: column;
-    transition: background 0.3s ease, color 0.3s ease;
-    color: #000000; /* Pure black text for light theme */
+    background: linear-gradient(135deg, #c7d2fe, #e2e8f0);
+    color: #000000;
     background-size: cover;
     background-repeat: no-repeat;
+    min-height: 100vh; /* Allow growth beyond viewport */
+    transition: background var(--transition-default), color var(--transition-default);
 }
 
 /* Dark theme override */
 :where([data-theme="dark"]) body {
-    background: linear-gradient(135deg, #1e293b, #334155) !important; /* Dark theme gradient */
-    color: #e0e0e0 !important; /* Light text for dark theme */
+    background: linear-gradient(135deg, #1e293b, #334155) !important;
+    color: #e0e0e0 !important;
 }
 
-/* Ensure no white background leakage in forced dark mode */
+/* Forced dark mode */
 @media (prefers-color-scheme: dark) {
     body:not([data-theme="light"]) {
         background: linear-gradient(135deg, #1e293b, #334155) !important;
@@ -38,22 +42,22 @@ body {
     }
 }
 
-/* Container - Adjusted for less brightness */
+/* Container */
 .container {
-    background: #f7fafc; /* Soft off-white */
+    background: #f7fafc;
     padding: 30px;
-    border-radius: 15px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-light);
     width: 90%;
     max-width: 600px;
     text-align: center;
-    position: relative;
-    transition: transform 0.2s ease, background 0.3s ease, box-shadow 0.3s ease;
+    margin: 0 auto 20px auto; /* Center horizontally, space below */
+    transition: transform 0.2s ease, background var(--transition-default), box-shadow var(--transition-default);
 }
 
 :where([data-theme="dark"]) .container {
     background: #333333;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+    box-shadow: var(--shadow-dark);
 }
 
 .container:hover {
@@ -65,9 +69,9 @@ body {
     padding: 10px;
     margin: 5px 0;
     background: #fff;
-    border-radius: 8px;
+    border-radius: var(--border-radius);
     cursor: pointer;
-    transition: background 0.3s ease;
+    transition: background var(--transition-default);
 }
 
 :where([data-theme="dark"]) .route-option {
@@ -78,7 +82,7 @@ body {
 .route-details {
     padding: 10px;
     background: #edf2f7;
-    border-radius: 8px;
+    border-radius: var(--border-radius);
     margin-top: 5px;
 }
 
@@ -96,11 +100,11 @@ body {
 
 .stop-list li {
     padding: 5px 0;
-    color: #000000; /* Black text for light mode */
+    color: #000000;
 }
 
 :where([data-theme="dark"]) .stop-list li {
-    color: #e0e0e0; /* Light gray for dark mode */
+    color: #e0e0e0;
 }
 
 .boarding-stop, .alighting-stop {
@@ -108,37 +112,48 @@ body {
 }
 
 .stop-list li span[id^="eta-"] {
-    color: #000000 !important; /* Force black in light mode */
+    color: #000000 !important;
     font-weight: normal;
     margin-left: 5px;
 }
 
 :where([data-theme="dark"]) .stop-list li span[id^="eta-"] {
-    color: #e0e0e0 !important; /* Force light gray in dark mode */
+    color: #e0e0e0 !important;
 }
 
-/* Google Maps InfoWindow styling - No dark mode support */
+/* Google Maps InfoWindow styling with dark mode support */
 #map .gm-style-iw.gm-style-iw-c {
-    color: #000000 !important; /* Always black, no theme variation */
+    color: #000000 !important;
+    background-color: #ffffff !important;
+}
+
+:where([data-theme="dark"]) #map .gm-style-iw.gm-style-iw-c {
+    color: #e0e0e0 !important;
+    background-color: #333333 !important;
 }
 
 #map .gm-style-iw.gm-style-iw-c strong,
 #map .gm-style-iw.gm-style-iw-c br,
 #map .gm-style-iw.gm-style-iw-c div {
-    color: inherit !important; /* Ensure nested elements inherit */
+    color: inherit !important;
 }
 
-/* For Google Maps InfoWindow ETA (transit.js compatibility) */
+
 .gm-style-iw .eta-info {
-    color: #000000 !important; /* Always black */
+    color: #000000 !important;
 }
 
+:where([data-theme="dark"]) .gm-style-iw .eta-info {
+    color: #e0e0e0 !important;
+}
+
+/* Headings */
 h1 {
     font-size: 28px;
     color: #000000;
     margin-bottom: 10px;
     font-weight: 700;
-    transition: color 0.3s ease;
+    transition: color var(--transition-default);
 }
 
 :where([data-theme="dark"]) h1 {
@@ -150,7 +165,7 @@ h2 {
     color: #1a202c;
     margin-bottom: 20px;
     font-weight: 500;
-    transition: color 0.3s ease;
+    transition: color var(--transition-default);
 }
 
 :where([data-theme="dark"]) h2 {
@@ -166,14 +181,14 @@ h2 {
     background-color: #007bff;
     color: #ffffff;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--border-radius);
     cursor: pointer;
     font-size: 16px;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: background-color 0.3s ease;
+    transition: background-color var(--transition-default);
 }
 
 :where([data-theme="dark"]) .back-button {
@@ -195,7 +210,7 @@ h2 {
     margin-top: 20px;
     border-radius: 10px;
     border: 2px solid #e0e0e0;
-    transition: border-color 0.3s ease;
+    transition: border-color var(--transition-default);
 }
 
 :where([data-theme="dark"]) #map {
@@ -207,7 +222,7 @@ input[readonly] {
     padding: 12px;
     font-size: 16px;
     border: 2px solid #cbd5e0;
-    border-radius: 8px;
+    border-radius: var(--border-radius);
     width: 100%;
     box-sizing: border-box;
     margin-bottom: 15px;
@@ -216,7 +231,7 @@ input[readonly] {
     cursor: not-allowed;
     text-align: center;
     font-weight: 500;
-    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    transition: background-color var(--transition-default), color var(--transition-default), border-color var(--transition-default);
 }
 
 :where([data-theme="dark"]) input[readonly] {
@@ -231,11 +246,11 @@ button {
     background-color: #28a745;
     color: #ffffff;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--border-radius);
     cursor: pointer;
     font-size: 16px;
     font-weight: 600;
-    transition: background-color 0.3s ease, transform 0.1s ease;
+    transition: background-color var(--transition-default), transform 0.1s ease;
 }
 
 :where([data-theme="dark"]) button {
@@ -263,8 +278,8 @@ button:active {
     list-style: none;
     padding: 0;
     border: 1px solid #cbd5e0;
-    border-radius: 8px;
-    transition: border-color 0.3s ease, background 0.3s ease;
+    border-radius: var(--border-radius);
+    transition: border-color var(--transition-default), background var(--transition-default);
 }
 
 :where([data-theme="dark"]) .route-list {
@@ -279,7 +294,7 @@ button:active {
     padding: 12px;
     border-bottom: 1px solid #e2e8f0;
     cursor: pointer;
-    transition: background-color 0.2s ease, color 0.3s ease;
+    transition: background-color 0.2s ease, color var(--transition-default);
     background: inherit;
     color: #000000;
 }
@@ -310,8 +325,8 @@ button:active {
     font-weight: 500;
     background: #edf2f7;
     padding: 10px;
-    border-radius: 8px;
-    transition: background 0.3s ease, color 0.3s ease;
+    border-radius: var(--border-radius);
+    transition: background var(--transition-default), color var(--transition-default);
 }
 
 :where([data-theme="dark"]) .route-info {
@@ -325,7 +340,8 @@ button:active {
     flex-direction: column;
     gap: 8px;
     margin-bottom: 20px;
-    width: 240px;
+    width: 80%;
+    max-width: 240px;
     margin-left: auto;
     margin-right: auto;
 }
@@ -348,11 +364,11 @@ button:active {
     padding: 12px;
     font-size: 16px;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--border-radius);
     background-color: #e2e8f0;
     color: #000000;
     cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.1s ease, color 0.3s ease;
+    transition: background-color var(--transition-default), transform 0.1s ease, color var(--transition-default);
 }
 
 :where([data-theme="dark"]) #keypad button {
@@ -395,7 +411,7 @@ button:active {
     color: #4a5568;
     font-size: 14px;
     margin-top: 10px;
-    transition: color 0.3s ease;
+    transition: color var(--transition-default);
 }
 
 :where([data-theme="dark"]) .loading-message {
@@ -405,11 +421,11 @@ button:active {
 .error-message {
     background-color: #fed7d7;
     padding: 10px;
-    border-radius: 8px;
+    border-radius: var(--border-radius);
     margin-bottom: 15px;
     color: #9b2c2c;
     font-weight: 500;
-    transition: background 0.3s ease, color 0.3s ease;
+    transition: background var(--transition-default), color var(--transition-default);
 }
 
 :where([data-theme="dark"]) .error-message {
@@ -426,7 +442,7 @@ button:active {
     cursor: pointer;
     color: #ffd700;
     line-height: 1;
-    transition: color 0.3s ease;
+    transition: color var(--transition-default);
     outline: none;
 }
 
@@ -456,11 +472,11 @@ button:active {
     background-color: #007bff;
     color: #ffffff;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--border-radius);
     cursor: pointer;
     font-size: 16px;
     font-weight: 500;
-    transition: background-color 0.3s ease, transform 0.1s ease;
+    transition: background-color var(--transition-default), transform 0.1s ease;
 }
 
 :where([data-theme="dark"]) .filter-buttons button {
@@ -493,11 +509,11 @@ button:active {
     position: absolute;
     background: #f7fafc;
     border: 2px solid #cbd5e0;
-    border-radius: 8px;
+    border-radius: var(--border-radius);
     padding: 10px;
     z-index: 1000;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    transition: background 0.3s ease;
+    transition: background var(--transition-default);
 }
 
 :where([data-theme="dark"]) .radius-options {
@@ -519,7 +535,7 @@ button:active {
     font-size: 14px;
     font-weight: 500;
     text-align: center;
-    transition: background-color 0.3s ease, transform 0.1s ease;
+    transition: background-color var(--transition-default), transform 0.1s ease;
 }
 
 :where([data-theme="dark"]) .radius-btn {

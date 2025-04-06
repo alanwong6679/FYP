@@ -4,7 +4,7 @@ let map;
 let routeMarkers = [];
 let routePolyline;
 let userLocationMarker = null;
-let userLocationCircle = null; // New variable for the radius circle
+let userLocationCircle = null;
 let kmbRouteList = null;
 let ctbRouteList = null;
 let minibusRouteList = null;
@@ -19,54 +19,71 @@ let currentInfoWindow = null;
 let debounceTimeout;
 let nearbyStops = [];
 let radiusOptionsVisible = false;
-let favoriteRoutes = [];
+let favoriteRoutes = JSON.parse(localStorage.getItem('favoriteRoutes')) || [];
 
 function initMap() {
     map = new google.maps.Map(document.getElementById('map'), { zoom: 12 });
+    
+    const isHomePage = window.location.pathname.includes('home.html');
+    const isTransitPlannerPage = window.location.pathname.includes('transit_planner.html');
+
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             position => {
                 const userLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
                 map.setCenter(userLocation);
-                userLocationMarker = new google.maps.Marker({
-                    position: userLocation,
-                    map: map,
-                    icon: { url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png" },
-                    title: "Your Location"
-                });
-                // Add initial circle with default radius (e.g., 200m)
-                userLocationCircle = new google.maps.Circle({
-                    strokeColor: '#007bff',
-                    strokeOpacity: 0.8,
-                    strokeWeight: 2,
-                    fillColor: '#007bff',
-                    fillOpacity: 0.2,
-                    map: map,
-                    center: userLocation,
-                    radius: 200 // Default radius in meters
-                });
+
+                if (isHomePage) {
+                    userLocationMarker = new google.maps.Marker({
+                        position: userLocation,
+                        map: map,
+                        icon: { url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png" },
+                        title: "Your Location"
+                    });
+                    loadRouteData().then(() => displayFavoriteRoutes()); // Wait for data
+                }
+
+                if (isTransitPlannerPage) {
+                    loadRouteData().then(() => {
+                        if (document.getElementById("routeList")) displayAllRoutes();
+                        if (document.getElementById("favoriteRouteList")) displayFavoriteRoutes();
+                    });
+                }
             },
             () => {
                 console.warn("Geolocation failed, using default center");
                 map.setCenter({ lat: 22.3193, lng: 114.1694 });
+                if (isHomePage) {
+                    userLocationMarker = new google.maps.Marker({
+                        position: { lat: 22.3193, lng: 114.1694 },
+                        map: map,
+                        icon: { url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png" },
+                        title: "Default Location (Hong Kong)"
+                    });
+                    loadRouteData().then(() => displayFavoriteRoutes()); // Wait for data
+                }
             }
         );
     } else {
         console.warn("Geolocation not supported, using default center");
         map.setCenter({ lat: 22.3193, lng: 114.1694 });
+        if (isHomePage) {
+            userLocationMarker = new google.maps.Marker({
+                position: { lat: 22.3193, lng: 114.1694 },
+                map: map,
+                icon: { url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png" },
+                title: "Default Location (Hong Kong)"
+            });
+            loadRouteData().then(() => displayFavoriteRoutes()); // Wait for data
+        }
     }
-    loadRouteData().then(async () => {
-        await loadFavorites();
-        if (document.getElementById("routeList")) displayAllRoutes();
-        if (document.getElementById("favoriteRouteList")) displayFavoriteRoutes();
-    });
 }
 
 function showError(message) {
     const errorDiv = document.createElement('div');
     errorDiv.className = 'error-message';
     errorDiv.textContent = message;
-    document.querySelector('.container').prepend(errorDiv);
+    document.querySelector('.container')?.prepend(errorDiv);
     setTimeout(() => errorDiv.remove(), 5000);
 }
 
@@ -140,15 +157,23 @@ async function loadRouteData() {
     }
 }
 
-async function loadFavorites() {
-    try {
-        favoriteRoutes = await fetchWithRetry('/api/favorites');
-        console.log('Favorites loaded:', favoriteRoutes);
-    } catch (err) {
-        console.error('Failed to load favorites:', err);
-        showError('Could not load favorite routes. Please accept cookies to enable favorites.');
-        favoriteRoutes = [];
+function toggleFavorite(route) {
+    if (isFavorite(route)) {
+        favoriteRoutes = favoriteRoutes.filter(fav => 
+            !(fav.route === route.route && fav.bound === route.bound && fav.provider === route.provider)
+        );
+    } else {
+        favoriteRoutes.push({
+            route: route.route,
+            bound: route.bound,
+            provider: route.provider,
+            orig_en: route.orig_en,
+            dest_en: route.dest_en
+        });
     }
+    localStorage.setItem('favoriteRoutes', JSON.stringify(favoriteRoutes));
+    console.log('Favorites updated in localStorage:', favoriteRoutes);
+    displayFavoriteRoutes(); // Update UI immediately
 }
 
 async function fetchRouteStops(provider, route, bound) {
@@ -180,7 +205,10 @@ async function fetchRouteStops(provider, route, bound) {
 }
 
 function getStopDetails(provider, stopId) {
-    if (!stopData) return null;
+    if (!stopData) {
+        console.warn("stopData not loaded yet");
+        return null;
+    }
     let stopDetails = null;
     if (provider === 'kmb' && stopData.kmb_stops[stopId]) {
         stopDetails = stopData.kmb_stops[stopId];
@@ -262,33 +290,6 @@ function isFavorite(route) {
     );
 }
 
-async function toggleFavorite(route) {
-    if (isFavorite(route)) {
-        favoriteRoutes = favoriteRoutes.filter(fav => 
-            !(fav.route === route.route && fav.bound === route.bound && fav.provider === route.provider)
-        );
-    } else {
-        favoriteRoutes.push({
-            route: route.route,
-            bound: route.bound,
-            provider: route.provider,
-            orig_en: route.orig_en,
-            dest_en: route.dest_en
-        });
-    }
-    try {
-        await fetchWithRetry('/api/favorites', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(favoriteRoutes)
-        });
-        console.log('Favorites updated on server:', favoriteRoutes);
-    } catch (err) {
-        console.error('Failed to save favorites:', err);
-        showError('Could not save favorites. Please accept cookies to enable this feature.');
-    }
-}
-
 function displayAllRoutes() {
     if (!routeListUl) return;
     routeListUl.innerHTML = '';
@@ -314,11 +315,10 @@ function displayRoutes(routes) {
         starBtn.textContent = isFavorite(route) ? '★' : '☆';
         starBtn.className = 'star-btn';
         starBtn.setAttribute('aria-label', `Toggle favorite for ${routeText}`);
-        starBtn.addEventListener('click', async (e) => {
+        starBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            await toggleFavorite(route);
+            toggleFavorite(route);
             starBtn.textContent = isFavorite(route) ? '★' : '☆';
-            displayFavoriteRoutes();
         });
 
         li.textContent = routeText;
@@ -346,10 +346,9 @@ function displayFavoriteRoutes() {
         starBtn.textContent = '★';
         starBtn.className = 'star-btn';
         starBtn.setAttribute('aria-label', `Remove favorite for ${routeText}`);
-        starBtn.addEventListener('click', async (e) => {
+        starBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            await toggleFavorite(route);
-            displayFavoriteRoutes();
+            toggleFavorite(route);
         });
 
         li.textContent = routeText;
@@ -361,6 +360,12 @@ function displayFavoriteRoutes() {
 }
 
 function selectRoute(route) {
+    if (!stopData || !routeStopData) {
+        showError("Route data not loaded yet. Please wait...");
+        loadRouteData().then(() => selectRoute(route)); // Retry after loading
+        return;
+    }
+
     selectedRoute = route.route;
     selectedBound = route.bound;
     selectedProvider = route.provider;
@@ -375,7 +380,6 @@ function selectRoute(route) {
     if (currentInfoWindow) currentInfoWindow.close();
     currentInfoWindow = null;
 
-    // Hide the radius circle when selecting a route
     if (userLocationCircle) userLocationCircle.setMap(null);
 
     fetchRouteStops(selectedProvider, selectedRoute, selectedBound).then(stopsForRoute => {
@@ -482,7 +486,6 @@ async function displayRouteOnMap(stopsForRoute) {
 
     const bounds = new google.maps.LatLngBounds();
     stops.forEach(stop => bounds.extend({ lat: stop.lat, lng: stop.lng }));
-    if (userLocationMarker) bounds.extend(userLocationMarker.getPosition());
     map.fitBounds(bounds);
 }
 
@@ -501,16 +504,13 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 }
 
 async function findNearbyStops(radius) {
-    if (!userLocationMarker) {
-        showError("User location not available");
-        return;
-    }
     if (!stopData || !routeStopData) {
         showError("Stop or route-stop data not loaded yet");
-        return;
+        await loadRouteData(); // Ensure data is loaded
+        return findNearbyStops(radius); // Retry
     }
 
-    const userPos = userLocationMarker.getPosition();
+    const userPos = map.getCenter();
     const userLat = userPos.lat();
     const userLng = userPos.lng();
 
@@ -519,7 +519,6 @@ async function findNearbyStops(radius) {
     if (routePolyline) routePolyline.setMap(null);
     if (currentInfoWindow) currentInfoWindow.close();
 
-    // Update or create the radius circle
     if (userLocationCircle) {
         userLocationCircle.setRadius(radius);
         userLocationCircle.setCenter(userPos);
@@ -579,7 +578,6 @@ async function findNearbyStops(radius) {
 
 function displayNearbyStops(stops) {
     const bounds = new google.maps.LatLngBounds();
-    if (userLocationMarker) bounds.extend(userLocationMarker.getPosition());
 
     routeMarkers = stops.map(stop => {
         const position = { lat: stop.lat, lng: stop.long };
@@ -629,6 +627,9 @@ function displayNearbyStops(stops) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    const isHomePage = window.location.pathname.includes('home.html');
+    const isTransitPlannerPage = window.location.pathname.includes('transit_planner.html');
+    
     const allRoutesBtn = document.getElementById('allRoutesBtn');
     const kmbRoutesBtn = document.getElementById('kmbRoutesBtn');
     const ctbRoutesBtn = document.getElementById('ctbRoutesBtn');
@@ -636,75 +637,127 @@ document.addEventListener('DOMContentLoaded', () => {
     const favoriteRoutesBtn = document.getElementById("favoriteRoutesBtn");
     const nearbyBtn = document.getElementById('nearbyBtn');
 
-    if (allRoutesBtn) allRoutesBtn.addEventListener('click', displayAllRoutes);
-    if (kmbRoutesBtn) kmbRoutesBtn.addEventListener('click', () => displayRoutes(kmbRouteList || []));
-    if (ctbRoutesBtn) ctbRoutesBtn.addEventListener('click', () => displayRoutes(ctbRouteList || []));
-    if (minibusRoutesBtn) minibusRoutesBtn.addEventListener('click', () => displayRoutes(minibusRouteList || []));
-    if (favoriteRoutesBtn) favoriteRoutesBtn.addEventListener('click', displayFavoriteRoutes);
-
-    if (nearbyBtn) {
-        nearbyBtn.addEventListener('click', () => {
-            if (radiusOptionsVisible) {
-                document.querySelector('.radius-options')?.remove();
-                radiusOptionsVisible = false;
-                nearbyBtn.classList.remove('active');
-                if (userLocationCircle) userLocationCircle.setMap(null); // Hide circle when closing options
-                return;
-            }
-
-            document.querySelector('.radius-options')?.remove();
-
-            const optionsDiv = document.createElement('div');
-            optionsDiv.className = 'radius-options';
-            optionsDiv.style.left = `${nearbyBtn.offsetLeft}px`;
-            optionsDiv.style.top = `${nearbyBtn.offsetTop + nearbyBtn.offsetHeight}px`;
-
-            [100, 200, 400].forEach(radius => {
-                const btn = document.createElement('button');
-                btn.textContent = `${radius}m`;
-                btn.className = 'radius-btn';
-                btn.addEventListener('click', () => {
-                    findNearbyStops(radius);
-                    optionsDiv.remove();
+    if (isHomePage) {
+        if (favoriteRoutesBtn) {
+            favoriteRoutesBtn.addEventListener('click', displayFavoriteRoutes);
+        }
+        if (nearbyBtn) {
+            nearbyBtn.addEventListener('click', () => {
+                if (radiusOptionsVisible) {
+                    document.querySelector('.radius-options')?.remove();
                     radiusOptionsVisible = false;
                     nearbyBtn.classList.remove('active');
-                });
-                optionsDiv.appendChild(btn);
-            });
-
-            nearbyBtn.parentElement.appendChild(optionsDiv);
-            radiusOptionsVisible = true;
-            nearbyBtn.classList.add('active');
-
-            document.addEventListener('click', function handler(e) {
-                if (!optionsDiv.contains(e.target) && e.target !== nearbyBtn) {
-                    optionsDiv.remove();
-                    radiusOptionsVisible = false;
-                    nearbyBtn.classList.remove('active');
-                    if (userLocationCircle) userLocationCircle.setMap(null); // Hide circle when clicking outside
-                    document.removeEventListener('click', handler);
+                    if (userLocationCircle) userLocationCircle.setMap(null);
+                    return;
                 }
-            }, { once: true });
-        });
+
+                document.querySelector('.radius-options')?.remove();
+
+                const optionsDiv = document.createElement('div');
+                optionsDiv.className = 'radius-options';
+                optionsDiv.style.left = `${nearbyBtn.offsetLeft}px`;
+                optionsDiv.style.top = `${nearbyBtn.offsetTop + nearbyBtn.offsetHeight}px`;
+
+                [100, 200, 400].forEach(radius => {
+                    const btn = document.createElement('button');
+                    btn.textContent = `${radius}m`;
+                    btn.className = 'radius-btn';
+                    btn.addEventListener('click', () => {
+                        findNearbyStops(radius);
+                        optionsDiv.remove();
+                        radiusOptionsVisible = false;
+                        nearbyBtn.classList.remove('active');
+                    });
+                    optionsDiv.appendChild(btn);
+                });
+
+                nearbyBtn.parentElement.appendChild(optionsDiv);
+                radiusOptionsVisible = true;
+                nearbyBtn.classList.add('active');
+
+                document.addEventListener('click', function handler(e) {
+                    if (!optionsDiv.contains(e.target) && e.target !== nearbyBtn) {
+                        optionsDiv.remove();
+                        radiusOptionsVisible = false;
+                        nearbyBtn.classList.remove('active');
+                        if (userLocationCircle) userLocationCircle.setMap(null);
+                        document.removeEventListener('click', handler);
+                    }
+                }, { once: true });
+            });
+        }
     }
 
-    if (keypad) {
-        keypad.querySelectorAll("button").forEach(button => {
-            button.addEventListener("click", function() {
-                if (button.id === "clear-btn") {
-                    currentInput = '';
-                    inputDisplay.value = "Enter Route Number";
-                    filterRoutes();
-                } else {
-                    if (currentInput === '' && inputDisplay.value === "Enter Route Number") {
-                        inputDisplay.value = '';
-                    }
-                    currentInput += button.dataset.value;
-                    inputDisplay.value = currentInput;
-                    filterRoutes();
+    if (isTransitPlannerPage) {
+        if (allRoutesBtn) allRoutesBtn.addEventListener('click', displayAllRoutes);
+        if (kmbRoutesBtn) kmbRoutesBtn.addEventListener('click', () => displayRoutes(kmbRouteList || []));
+        if (ctbRoutesBtn) ctbRoutesBtn.addEventListener('click', () => displayRoutes(ctbRouteList || []));
+        if (minibusRoutesBtn) minibusRoutesBtn.addEventListener('click', () => displayRoutes(minibusRouteList || []));
+        if (favoriteRoutesBtn) favoriteRoutesBtn.addEventListener('click', displayFavoriteRoutes);
+        if (nearbyBtn) {
+            nearbyBtn.addEventListener('click', () => {
+                if (radiusOptionsVisible) {
+                    document.querySelector('.radius-options')?.remove();
+                    radiusOptionsVisible = false;
+                    nearbyBtn.classList.remove('active');
+                    if (userLocationCircle) userLocationCircle.setMap(null);
+                    return;
                 }
+
+                document.querySelector('.radius-options')?.remove();
+
+                const optionsDiv = document.createElement('div');
+                optionsDiv.className = 'radius-options';
+                optionsDiv.style.left = `${nearbyBtn.offsetLeft}px`;
+                optionsDiv.style.top = `${nearbyBtn.offsetTop + nearbyBtn.offsetHeight}px`;
+
+                [100, 200, 400].forEach(radius => {
+                    const btn = document.createElement('button');
+                    btn.textContent = `${radius}m`;
+                    btn.className = 'radius-btn';
+                    btn.addEventListener('click', () => {
+                        findNearbyStops(radius);
+                        optionsDiv.remove();
+                        radiusOptionsVisible = false;
+                        nearbyBtn.classList.remove('active');
+                    });
+                    optionsDiv.appendChild(btn);
+                });
+
+                nearbyBtn.parentElement.appendChild(optionsDiv);
+                radiusOptionsVisible = true;
+                nearbyBtn.classList.add('active');
+
+                document.addEventListener('click', function handler(e) {
+                    if (!optionsDiv.contains(e.target) && e.target !== nearbyBtn) {
+                        optionsDiv.remove();
+                        radiusOptionsVisible = false;
+                        nearbyBtn.classList.remove('active');
+                        if (userLocationCircle) userLocationCircle.setMap(null);
+                        document.removeEventListener('click', handler);
+                    }
+                }, { once: true });
             });
-        });
+        }
+
+        if (keypad) {
+            keypad.querySelectorAll("button").forEach(button => {
+                button.addEventListener("click", function() {
+                    if (button.id === "clear-btn") {
+                        currentInput = '';
+                        inputDisplay.value = "Enter Route Number";
+                        filterRoutes();
+                    } else {
+                        if (currentInput === '' && inputDisplay.value === "Enter Route Number") {
+                            inputDisplay.value = '';
+                        }
+                        currentInput += button.dataset.value;
+                        inputDisplay.value = currentInput;
+                        filterRoutes();
+                    }
+                });
+            });
+        }
     }
 });
 

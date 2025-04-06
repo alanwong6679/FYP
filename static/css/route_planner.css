@@ -1,9 +1,10 @@
+/* /static/css/tram_schedule.css */
+
 body {
     font-family: 'Roboto', sans-serif;
     margin: 0;
     padding: 0;
     background-color: #f4f4f9;
-    background-image: url("/static/images/index.png");
     color: #333;
     display: flex;
     justify-content: center;
@@ -13,6 +14,19 @@ body {
     background-size: cover;
     background-repeat: no-repeat;
 }
+
+:where([data-theme="dark"]) body {
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+}
+
+@media (prefers-color-scheme: dark) {
+    body:not([data-theme="light"]) {
+        background: linear-gradient(135deg, #1e293b, #334155) !important;
+        color: #e0e0e0 !important;
+    }
+}
+
 .container {
     background-color: #fff;
     padding: 20px;
@@ -24,47 +38,82 @@ body {
     margin-left: 160px;
     position: relative;
 }
+
+:where([data-theme="dark"]) .container {
+    background-color: #333;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
 h1 {
     text-align: center;
     font-size: 2rem;
     margin-bottom: 20px;
     color: #007dc5;
 }
+
+:where([data-theme="dark"]) h1 {
+    color: #1e90ff;
+}
+
 form {
     display: flex;
     flex-direction: column;
     gap: 15px;
 }
+
 .place-container {
     display: flex;
     flex-direction: column;
     gap: 15px;
     position: relative;
 }
+
 .station-row {
     display: flex;
     align-items: center;
     gap: 10px;
     width: 100%;
 }
+
 .station-row dt {
     flex-shrink: 0;
 }
+
+.station-row .starting-station,
+.station-row .destination-station {
+    color: #000000; /* Darker text in light mode */
+}
+
+:where([data-theme="dark"]) .station-row .starting-station,
+:where([data-theme="dark"]) .station-row .destination-station {
+    color: #e0e0e0;
+}
+
 .station-row dd {
     flex: 1;
     margin: 0;
 }
+
 .searchable-select {
     position: relative;
     width: 100%;
 }
+
 .searchable-select input {
     width: 100%;
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
     box-sizing: border-box;
+    color: #000000;
 }
+
+:where([data-theme="dark"]) .searchable-select input {
+    border-color: #666;
+    background-color: #444;
+    color: #e0e0e0;
+}
+
 .searchable-select .options {
     position: absolute;
     top: 100%;
@@ -79,13 +128,31 @@ form {
     border-radius: 4px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
+
+:where([data-theme="dark"]) .searchable-select .options {
+    border-color: #666;
+    background-color: #444;
+    color: #e0e0e0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+}
+
 .searchable-select .options div {
     padding: 10px;
     cursor: pointer;
 }
+
+:where([data-theme="dark"]) .searchable-select .options div {
+    color: #e0e0e0;
+}
+
 .searchable-select .options div:hover {
     background-color: #f0f0f0;
 }
+
+:where([data-theme="dark"]) .searchable-select .options div:hover {
+    background-color: #555;
+}
+
 .input-change {
     position: absolute;
     top: 50%;
@@ -95,10 +162,12 @@ form {
     padding: 5px;
     z-index: 10;
 }
+
 .input-change img {
     width: 24px;
     height: 24px;
 }
+
 button {
     padding: 10px;
     border: none;
@@ -109,9 +178,19 @@ button {
     cursor: pointer;
     transition: background-color 0.3s;
 }
+
+:where([data-theme="dark"]) button {
+    background-color: #1e90ff;
+}
+
 button:hover {
     background-color: #0056b3;
 }
+
+:where([data-theme="dark"]) button:hover {
+    background-color: #4169e1;
+}
+
 .status-button {
     position: absolute;
     top: 10px;
@@ -120,9 +199,19 @@ button:hover {
     font-size: 14px;
     background-color: #28a745;
 }
+
+:where([data-theme="dark"]) .status-button {
+    background-color: #2ecc71;
+}
+
 .status-button:hover {
     background-color: #218838;
 }
+
+:where([data-theme="dark"]) .status-button:hover {
+    background-color: #27ae60;
+}
+
 .modal {
     display: none;
     position: fixed;
@@ -135,6 +224,11 @@ button:hover {
     justify-content: center;
     align-items: center;
 }
+
+:where([data-theme="dark"]) .modal {
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
 .modal-content {
     background-color: #fff;
     padding: 20px;
@@ -144,7 +238,14 @@ button:hover {
     max-height: 80vh;
     overflow-y: auto;
     position: relative;
+    color: #000000; /* Darker text in light mode */
 }
+
+:where([data-theme="dark"]) .modal-content {
+    background-color: #333;
+    color: #e0e0e0;
+}
+
 .close-button {
     position: absolute;
     top: 10px;
@@ -153,38 +254,66 @@ button:hover {
     cursor: pointer;
     color: #333;
 }
+
+:where([data-theme="dark"]) .close-button {
+    color: #e0e0e0;
+}
+
 .status-row {
     display: flex;
     align-items: center;
     padding: 10px 0;
     border-bottom: 1px solid #eee;
 }
+
+:where([data-theme="dark"]) .status-row {
+    border-bottom-color: #555;
+}
+
 .status-row:last-child {
     border-bottom: none;
 }
+
 .color-bar {
     width: 8px;
     height: 40px;
     margin-right: 10px;
     flex-shrink: 0;
 }
+
 .line-info {
     flex-grow: 1;
 }
+
 .line-name {
     font-weight: bold;
     font-size: 16px;
 }
+
+:where([data-theme="dark"]) .line-name {
+    color: #e0e0e0;
+}
+
 .line-status {
     font-size: 14px;
     color: #666;
 }
+
+:where([data-theme="dark"]) .line-status {
+    color: #bbb;
+}
+
 .update-time {
     font-size: 14px;
     color: #999;
     margin-left: 20px;
     white-space: nowrap;
 }
+
+:where([data-theme="dark"]) .update-time {
+    color: #aaa;
+}
+
 .color-ael { background-color: #009688; }
 .color-tcl { background-color: #ff9800; }
 .color-tml { background-color: #8b4513; }
@@ -194,6 +323,7 @@ button:hover {
 .color-twl { background-color: #f44336; }
 .color-isl { background-color: #2196f3; }
 .color-ktl { background-color: #4caf50; }
+
 .bottom-bar {
     background-color: rgba(51, 51, 51, 0.8);
     color: white;
@@ -206,49 +336,92 @@ button:hover {
     justify-content: flex-start;
     z-index: 1000;
 }
+
+:where([data-theme="dark"]) .bottom-bar {
+    background-color: rgba(80, 80, 80, 0.8);
+}
+
 #temperature {
     font-size: 16px;
     margin-left: 20px;
 }
+
+:where([data-theme="dark"]) #temperature {
+    color: #e0e0e0;
+}
+
 #loading {
     text-align: center;
     color: #666;
     margin-top: 10px;
 }
+
+:where([data-theme="dark"]) #loading {
+    color: #bbb;
+}
+
 #route {
     margin-top: 20px;
     position: relative;
     z-index: 500;
 }
+
 .route-option {
     padding: 10px;
     border-bottom: 1px solid #eee;
     cursor: pointer;
     color: #007bff;
 }
+
+:where([data-theme="dark"]) .route-option {
+    border-bottom-color: #555;
+    color: #1e90ff;
+}
+
 .route-details {
     display: none;
     margin-left: 20px;
     padding: 10px;
 }
+
+:where([data-theme="dark"]) .route-details {
+    color: #e0e0e0;
+}
+
 .stop-list {
     list-style-type: none;
     padding: 0;
 }
+
 .stop-list li {
     padding: 8px 0;
     border-bottom: 1px solid #eee;
 }
+
+:where([data-theme="dark"]) .stop-list li {
+    border-bottom-color: #555;
+}
+
 .boarding-stop {
     color: blue;
     font-weight: bold;
     animation: pulse 1.5s infinite;
 }
+
+:where([data-theme="dark"]) .boarding-stop {
+    color: #1e90ff;
+}
+
 .alighting-stop {
     color: red;
     font-weight: bold;
     animation: pulse 1.5s infinite;
 }
+
+:where([data-theme="dark"]) .alighting-stop {
+    color: #ff5555;
+}
+
 @keyframes pulse {
     0% { opacity: 1; }
     50% { opacity: 0.5; }
