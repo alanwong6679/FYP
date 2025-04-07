@@ -48056,8 +48056,8 @@
         },
         "20014419": {
             "name_en": "HONG ON STREET, near Kornhill Block K",
-            "lat": 22.284290695331507,
-            "long": 114.21700351267936
+            "lat": 22.283302537747492,
+            "long": 114.21739295125009
         },
         "20011318": {
             "name_en": "Shek Pai Wan Estate Public Transport Interchange",
@@ -52210,7 +52210,7 @@
             "long": 114.1784178547705
         },
         "20000673": {
-            "name_en": "Kowloon Tong Station, opposite Kent Road exit",
+            "name_en": "Kent Road, near Kowloon Tong Station",
             "lat": 22.337190348733554,
             "long": 114.1764666641069
         },
@@ -66865,5 +66865,5 @@
             "long": 113.97700801491739
         }
     },
-    "timestamp": 1743918100068
+    "timestamp": 1744027885980
 }

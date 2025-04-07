@@ -9,14 +9,19 @@
     <link rel="stylesheet" href="/static/css/general_schedule.css"> <!-- Your separated CSS file -->
 </head>
 <body>
-    <header><h1>MTR & Bus Schedule</h1></header>
-    <div class="container">
-        <div class="sort-buttons">
-            <button class="sort-button" id="sortByTime">Sort by Time</button>
-            <button class="sort-button" id="sortByWalk">Sort by Walk Distance</button>
+    <header><h1>MTR & Bus Schedule</h1></header> <!-- Or your actual header -->
+<div class="container"> <!-- Or your main page container -->
+
+    <div class="sort-buttons">
+        <button class="sort-button" id="sortByTime">Sort by Time</button>
+        <button class="sort-button" id="sortByWalk">Sort by Walk Distance</button>
+    </div>
+    <div class="options-wrapper">
+        <div id="route-options">
+            
+            <!-- Route summaries will be injected here by JS -->
         </div>
-        <!-- Placeholder for dynamically generated routes -->
-        <div id="route-options"></div>
+    </div>
         <div id="schedule" class="schedule-detail"></div>
     </div>
     <div class="news-icon"></div>
@@ -35,6 +40,7 @@
     <script src="/static/js/navbar.js"></script>
     <script src="/static/js/RTHK.js"></script>
     <script src="/static/js/general_schedule.js"></script>
+    <div id="details-backdrop" class="details-backdrop"></div>
 </body>
 </html>
 

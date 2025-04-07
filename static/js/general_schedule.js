@@ -273,11 +273,9 @@ class RouteFinder {
              console.error("MTR Route Error:", response.error || "No route found", "from", start, "to", end);
              return [];
         }
-
         return [{
             type: 'MTR',
             mtrRoute: response.bestRoute,
-            // Use time from response if available, otherwise estimate
             estimatedTime: response.bestRoute.totalDuration || this.calculateMTRTime(response.bestRoute),
             schedules: response.schedules,
             currentStation: start,
@@ -786,169 +784,449 @@ class TimelineGenerator {
         return interchangeStations[key1] || interchangeStations[key2] || 'UKN';
     }
 }
+// --- (Keep all your existing code: Constants, TransitData, RouteFinder, TimelineGenerator) ---
+// ... (Lines 1 to ~540 of your provided code) ...
+
 
 // 5. Main Logic
-let currentRoutes = [];
+let currentRoutes = []; // Keep track of the fully calculated routes
+let mtrStations = []; // Store loaded MTR stations
 
-// Ensure MTR station data (lines) is loaded before this script runs, or load it here.
-// Example: if (typeof lines === 'undefined') { /* load stations.js */ }
+// Function to extract the sequence of modes/lines for the summary bar
+function getRouteSequenceTags(route) {
+    const items = TimelineGenerator.getItems(route); // Get the detailed steps
+    const sequenceTags = [];
+    let lastTagInfo = null; // Store { tag: 'XYZ', mode: 'MTR'/'Bus'/'Walk' }
 
+    items.forEach(item => {
+        let currentTag = null;
+        let currentMode = item.mode;
+        let tagClass = '';
+
+        if (item.type === 'point' && item.isStart) {
+            // Handle starting point mode/line
+            if (item.mode === 'Bus') {
+                 currentTag = item.provider?.toUpperCase() || 'BUS';
+                 tagClass = item.provider?.toLowerCase() || 'bus';
+            } else if (item.mode === 'MTR' && item.line) {
+                 currentTag = item.line;
+                 tagClass = item.line.toLowerCase();
+            } // Ignore Walk start point for sequence bar unless it's the *only* mode
+            else if (item.mode === 'Walk') { // Handle cases like walking directly to destination
+                 currentTag = 'Walk';
+                 tagClass = 'walk';
+            }
+        } else if (item.type === 'segment') {
+            // Handle segments
+             if (item.mode === 'Bus') {
+                 currentTag = item.provider?.toUpperCase() || 'BUS';
+                 tagClass = item.provider?.toLowerCase() || 'bus';
+            } else if (item.mode === 'Walk') {
+                 currentTag = 'Walk';
+                 tagClass = 'walk';
+            } else if (item.mode === 'MTR' && item.lines && item.lines[0]) {
+                 currentTag = item.lines[0];
+                 tagClass = item.lines[0].toLowerCase();
+            }
+        } else if (item.type === 'point' && item.interchange && item.toLine) {
+             // Handle interchange point - use the line you are changing *to*
+             currentTag = item.toLine;
+             tagClass = item.toLine.toLowerCase();
+             currentMode = 'MTR'; // Ensure mode is set
+        }
+
+        const currentTagInfo = currentTag ? { tag: currentTag, mode: currentMode, cssClass: tagClass } : null;
+
+        // Add tag if it's significant and different from the last one added
+        // Avoid adding MTR line tags back-to-back if it's just an interchange point without a walk
+        let addThisTag = false;
+        if (currentTagInfo) {
+            if (!lastTagInfo) { // First tag
+                addThisTag = true;
+            } else {
+                 // Add if tag OR mode changes
+                 if (currentTagInfo.tag !== lastTagInfo.tag || currentTagInfo.mode !== lastTagInfo.mode) {
+                     // Special case: Don't add MTR line if prev was MTR and current is MTR unless prev was Walk
+                     if (!(currentTagInfo.mode === 'MTR' && lastTagInfo.mode === 'MTR' && item.type === 'point' && items[items.indexOf(item) - 1]?.type !== 'segment' && items[items.indexOf(item) - 1]?.mode !== 'Walk')) {
+                          addThisTag = true;
+                     } else if (currentTagInfo.tag !== lastTagInfo.tag) { // Allow if line actually changes even if point
+                          addThisTag = true;
+                     }
+                 }
+            }
+        }
+
+
+        if (addThisTag) {
+            // Avoid duplicate consecutive tags (e.g., Walk segment followed by Walk point)
+            if (sequenceTags.length === 0 || sequenceTags[sequenceTags.length - 1].tag !== currentTagInfo.tag) {
+                sequenceTags.push(currentTagInfo);
+                lastTagInfo = currentTagInfo; // Update last *added* tag
+            }
+        }
+    });
+
+    // Ensure "Walk" isn't the very last tag if the final point isn't 'Walk' mode
+    const lastItem = items[items.length - 1];
+    if (sequenceTags.length > 0 && sequenceTags[sequenceTags.length - 1].tag === 'Walk' && lastItem?.mode !== 'Walk') {
+         sequenceTags.pop(); // Remove trailing walk if the destination isn't reached by walking
+    }
+
+
+    // Add 'Arrived' tag
+    sequenceTags.push({ tag: 'Arrived', cssClass: 'arrived' });
+    return sequenceTags;
+}
+
+
+// --- Modify window.onload ---
 window.onload = async () => {
     const params = new URLSearchParams(window.location.search);
-    const cs = params.get('currentStation'); // MTR start
-    const ds = params.get('destinationStation'); // MTR end
-    const sbs = params.get('startBusStop'); // Bus start ID
-    const ebs = params.get('endBusStop'); // Bus end ID
+    const cs = params.get('currentStation');
+    const ds = params.get('destinationStation');
+    const sbs = params.get('startBusStop');
+    const ebs = params.get('endBusStop');
 
-    const mtrStations = typeof lines !== 'undefined' ? getUniqueMTRStations() : [];
+    // Use the globally stored mtrStations if already loaded, otherwise load them
+    if (mtrStations.length === 0) {
+       mtrStations = typeof lines !== 'undefined' ? getUniqueMTRStations() : [];
+    }
+
     if (mtrStations.length === 0 && (cs || ds)) {
-        // ... (error handling) ...
+        document.getElementById('route-options').innerHTML = '<div class="error">MTR station data not loaded. Cannot perform MTR search.</div>';
         return;
     }
     const finder = new RouteFinder(transit, mtrStations);
 
-    // Check if bus data is needed and loaded
     const requiresBusData = sbs || ebs;
     if (requiresBusData && transit.stops.length === 0) {
-        document.getElementById('schedule').innerHTML = '<div class="error">Bus stop data not loaded from local storage.</div>';
+        document.getElementById('route-options').innerHTML = '<div class="error">Bus stop data not loaded from local storage.</div>';
         return;
     }
 
-    document.getElementById('schedule').innerHTML = '<div class="loading">Finding routes...</div>'; // Loading indicator
+    document.getElementById('route-options').innerHTML = '<div class="loading">Finding routes...</div>'; // Loading in options area
+    document.getElementById('schedule').innerHTML = ''; // Clear details area
+    document.getElementById('schedule').style.display = 'none'; // Hide details area initially
+    document.getElementById('route-options').style.display = 'block'; // Show options area
 
     try {
+        // --- (Keep the route finding logic exactly the same) ---
         if (cs && ds && !sbs && !ebs) { // MTR Only
             currentRoutes = await finder.findMTRRoute(cs, ds);
         } else if (sbs && ebs && !cs && !ds) { // Bus Only
-            currentRoutes = finder.findBusRoute(sbs, ebs); // This is synchronous
+             // Bus only needs modification to fit the standard route object structure better
+            const busRouteOptions = finder.findBusRoutes([sbs], [ebs]); // Use array inputs
+            currentRoutes = busRouteOptions.map(br => {
+                const boardingStop = transit.findStop(br.boardingStop);
+                const alightingStop = transit.findStop(br.alightingStop);
+                // Estimate walking: Assume 150m walk at start and end if stops are far from hypothetical points
+                // This is a placeholder - ideally, the start/end points would have coords
+                const walkDist = 300;
+                const walkTime = calculateWalkDuration(walkDist);
+                const busTime = (br.stopCount || 1) * 2; // Estimate
+                return {
+                    type: 'Bus', // Assign a type
+                    busRoute: br,
+                    estimatedTime: walkTime + busTime, // Rough total time
+                    walkingDistance: walkDist, // Total assumed walk
+                    boardingStopName: boardingStop?.name_en || `Stop ${br.boardingStop}`,
+                    alightingStopName: alightingStop?.name_en || `Stop ${br.alightingStop}`,
+                    // Add schedules if available later
+                };
+            });
         } else if (sbs && ds && !cs && !ebs) { // Bus to MTR
             currentRoutes = await finder.findMixedRoute(sbs, ds, 'bus', 'mtr');
         } else if (cs && ebs && !sbs && !ds) { // MTR to Bus
             currentRoutes = await finder.findMixedRoute(cs, ebs, 'mtr', 'bus');
         } else {
-             document.getElementById('schedule').innerHTML = '<div class="error">Invalid combination of search parameters. Please provide (Start MTR and End MTR) OR (Start Bus and End Bus) OR (Start Bus and End MTR) OR (Start MTR and End Bus).</div>';
+             document.getElementById('route-options').innerHTML = '<div class="error">Invalid combination...</div>';
              return;
         }
+        // --- (End of route finding logic) ---
+
     } catch (error) {
         console.error("Error finding routes:", error);
-        document.getElementById('schedule').innerHTML = '<div class="error">An error occurred while finding routes. Please try again.</div>';
+        document.getElementById('route-options').innerHTML = '<div class="error">An error occurred...</div>';
         return;
     }
 
 
     if (!currentRoutes || currentRoutes.length === 0) {
-        document.getElementById('schedule').innerHTML = '<div class="error">No routes found for the selected locations.</div>';
+        document.getElementById('route-options').innerHTML = '<div class="error">No routes found for the selected locations.</div>';
         return;
     }
 
-    // Initial sort (e.g., by estimated time)
-    currentRoutes.sort((a, b) => a.estimatedTime - b.estimatedTime);
+    // Initial sort
+    currentRoutes.sort((a, b) => (a.estimatedTime || Infinity) - (b.estimatedTime || Infinity));
 
-    displaySortedRoutes(); // Display initially sorted routes
+    displayRouteSummaries(); // Display summaries instead of full details
 
-    // Add event listeners for sort buttons
+    // --- (Keep the sort button event listeners, but make them call displayRouteSummaries) ---
     document.getElementById('sortByTime')?.addEventListener('click', () => {
-         currentRoutes.sort((a, b) => a.estimatedTime - b.estimatedTime);
-         displaySortedRoutes();
+         currentRoutes.sort((a, b) => (a.estimatedTime || Infinity) - (b.estimatedTime || Infinity));
+         displayRouteSummaries(); // Re-display summaries
     });
      document.getElementById('sortByWalk')?.addEventListener('click', () => {
-         // Calculate total walk distance for sorting
-         const getTotalWalk = (route) => {
-             let walk = 0;
-             if (route.walkingDistance) walk += route.walkingDistance; // Includes walk to/from bus/MTR
-
-             return walk;
-         };
+         const getTotalWalk = (route) => route.walkingDistance || 0;
          currentRoutes.sort((a, b) => getTotalWalk(a) - getTotalWalk(b));
-         displaySortedRoutes();
+         displayRouteSummaries(); // Re-display summaries
     });
+
+     // --- Add Event Listener for Clicking Summaries ---
+     document.getElementById('route-options').addEventListener('click', (event) => {
+         const summaryElement = event.target.closest('.route-summary-option');
+         if (summaryElement) {
+             const routeIndex = parseInt(summaryElement.dataset.routeIndex, 10);
+             if (!isNaN(routeIndex) && routeIndex >= 0 && routeIndex < currentRoutes.length) {
+                 displayRouteDetails(routeIndex);
+             }
+         }
+     });
 };
 
-function displaySortedRoutes() {
-    const scheduleDiv = document.getElementById('schedule'); // Target the main schedule display area
-    scheduleDiv.innerHTML = ''; // Clear previous routes
-    const now = new Date();
-    const startTime = now.toTimeString().slice(0, 5);
 
-    if (!currentRoutes || currentRoutes.length === 0) {
-         scheduleDiv.innerHTML = '<div class="error">No routes to display.</div>';
-         return;
+
+
+
+function generateDetailedSequenceHtml(route) {
+    const items = TimelineGenerator.getItems(route);
+    if (!items || items.length === 0) return '<span class="sequence-item arrived">Arrived</span>';
+
+    let sequenceHtml = '';
+    let lastAddedTag = null; // Keep track of the tag itself (e.g., "AEL", "Walk")
+    let lastItemWasStation = false; // Track if the last added element was a station name
+
+    // --- Determine Start Tag ---
+    const firstItem = items[0];
+    let startTag = null;
+    let startTagClass = '';
+    if (firstItem.isStart) {
+         if (firstItem.mode === 'Bus') {
+            startTag = firstItem.provider?.toUpperCase() || 'BUS';
+            startTagClass = `line-tag ${firstItem.provider?.toLowerCase() || 'bus'}`;
+        } else if (firstItem.mode === 'MTR' && firstItem.line) {
+            startTag = firstItem.line;
+            startTagClass = `line-tag ${firstItem.line.toLowerCase()}`;
+        } else if (firstItem.mode === 'Walk') {
+             startTag = 'Walk'; startTagClass = 'line-tag walk';
+        }
+        if(startTag){
+             sequenceHtml += `<span class="sequence-item ${startTagClass}">${startTag}</span>`;
+             lastAddedTag = startTag;
+             lastItemWasStation = false;
+        }
     }
 
-    // Limit displayed routes if needed (e.g., top 5)
-    const routesToDisplay = currentRoutes.slice(0, 5);
+    // --- Iterate through the rest of the items ---
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        let currentTag = null;
+        let currentTagClass = '';
+        let stationName = null;
 
-    routesToDisplay.forEach((route, i) => {
-        if (!route || route.estimatedTime === undefined) {
-            console.warn("Skipping invalid route object:", route);
-            return; // Skip invalid route objects
+        // --- Identify Station Name (only for MTR interchanges/stops in sequence) ---
+        if (item.type === 'point' && item.mode === 'MTR' && !item.isStart) {
+             // Check if it's the final destination MTR station for the *entire route*
+             let isFinalOverallMTRDest = false;
+             if ( (route.type === 'MTR' || route.type === 'Bus-to-MTR') && route.destinationStation === item.line ) {
+                 // This logic might be slightly off - destinationStation is the code, item.line is the line code
+                 // Let's compare item.name with the resolved destination name
+                 if (item.name === TimelineGenerator.getMTRName(route.destinationStation)){
+                      isFinalOverallMTRDest = true;
+                 }
+             }
+            if (!isFinalOverallMTRDest) { // Only consider if not the final destination
+                 stationName = item.name;
+            }
         }
 
-        const arrivalTime = new Date(now.getTime() + route.estimatedTime * 60000).toTimeString().slice(0, 5);
-
-        // Calculate transfers more accurately
-        let transfers = 0;
-        const items = TimelineGenerator.getItems(route); // Generate items once
-        items.forEach(item => {
-            if (item.interchange || (item.mode === 'Walk' && item.type === 'segment')) {
-                 // Count MTR changes and mode changes involving walk as transfers
-                 transfers++;
-            } else if (item.type === 'point' && items.length > 1) {
-                // Check for simple mode change (e.g., Bus -> Walk point without interchange flag) - rudimentary
-                const prevItem = items[items.indexOf(item) - 1];
-                if (prevItem && prevItem.mode !== item.mode && prevItem.mode && item.mode) {
-                    // This logic might be too simple, refine based on getItems structure
-                }
+        // --- Identify Tag (usually represents the mode/line *leaving* this point or the mode of a segment) ---
+        if (item.type === 'point' && item.interchange && item.toLine) { // MTR Interchange
+            currentTag = item.toLine;
+            currentTagClass = `line-tag ${item.toLine.toLowerCase()}`;
+        } else {
+            // Look ahead to the next *segment* to determine the tag
+            const nextSegment = items.find((seg, segIdx) => seg.type === 'segment' && segIdx >= i); // Find segment at or after current index
+            if (nextSegment) {
+                 if (nextSegment.mode === 'Bus') {
+                    currentTag = nextSegment.provider?.toUpperCase() || 'BUS';
+                    currentTagClass = `line-tag ${nextSegment.provider?.toLowerCase() || 'bus'}`;
+                 } else if (nextSegment.mode === 'Walk') {
+                    currentTag = 'Walk'; currentTagClass = 'line-tag walk';
+                 } else if (nextSegment.mode === 'MTR' && nextSegment.lines && nextSegment.lines[0]) {
+                    currentTag = nextSegment.lines[0];
+                    currentTagClass = `line-tag ${nextSegment.lines[0].toLowerCase()}`;
+                 }
             }
-        });
-        // Refine transfer count based on specific logic if needed. The above is a basic guess.
-
-        const headerHtml = `
-            <div class="route-header">
-                <div><span class="time-info">${startTime} → ${arrivalTime}</span> <span class="duration">(${Math.round(route.estimatedTime)} mins)</span></div>
-                <div class="cost-transfers">
-                    <div class="fare">Fare: (Not Available)</div>
-                    <div class="transfers">~${transfers} Transfers</div>
-                </div>
-            </div>
-        `;
-
-        // Generate timeline HTML using the pre-generated items
-        let timelineHtml = '<div class="timeline">';
-        items.forEach(item => {
-             timelineHtml += item.type === 'point' ? TimelineGenerator.generatePoint(item) : TimelineGenerator.generateSegment(item);
-        });
-        timelineHtml += '</div>';
+        }
 
 
-        const routeContainer = document.createElement('div');
-        routeContainer.className = 'route-container';
-        routeContainer.id = `route-summary-${i}`;
-        // Removed onclick for details for now, just display full timeline
-        routeContainer.innerHTML = headerHtml + timelineHtml;
+        // --- Append Station Name (if identified and previous item was a tag) ---
+         if (stationName && !lastItemWasStation) {
+            sequenceHtml += `<span class="sequence-station-name">${stationName}</span>`;
+            lastItemWasStation = true;
+         }
 
-        scheduleDiv.appendChild(routeContainer);
-    });
+        // --- Append Tag (if identified and different from last tag OR if a station was just added) ---
+         if (currentTag && (currentTag !== lastAddedTag || lastItemWasStation)) {
+            sequenceHtml += `<span class="sequence-item ${currentTagClass}">${currentTag}</span>`;
+            lastAddedTag = currentTag;
+            lastItemWasStation = false; // Reset station flag after adding a tag
+         }
+    }
+
+
+    // --- Add final "Arrived" tag ---
+    // Remove trailing station name if it somehow got added right before end
+    if (lastItemWasStation) {
+        sequenceHtml = sequenceHtml.substring(0, sequenceHtml.lastIndexOf('<span class="sequence-station-name">'));
+    }
+    sequenceHtml += `<span class="sequence-item arrived">Arrived</span>`;
+
+    return sequenceHtml;
 }
 
-// Removed toggleRouteDetails as we display full timeline directly
 
+
+// --- Modify displayRouteSummaries ---
+function displayRouteSummaries() {
+    const optionsDiv = document.getElementById('route-options');
+    optionsDiv.innerHTML = '';
+    const now = new Date();
+
+    // ... (rest of the calculation logic for time, transfers is fine) ...
+     const routesToDisplay = currentRoutes.slice(0, 5);
+
+     routesToDisplay.forEach((route, i) => {
+          // ... (calculations for startTime, arrivalTime, transfers) ...
+          const startTime = now.toTimeString().slice(0, 5);
+          const arrivalTime = new Date(now.getTime() + route.estimatedTime * 60000).toTimeString().slice(0, 5);
+          const items = TimelineGenerator.getItems(route); // Needed for transfers/sequence
+          let transfers = 0; // Simplified transfer calc - refine if needed
+          items.forEach(item => { if (item.interchange || (item.mode === 'Walk' && item.type === 'segment')) transfers++; });
+
+
+          // *** Use the NEW sequence generator ***
+          let sequenceHtml = generateDetailedSequenceHtml(route);
+
+          const summaryHtml = `
+              <div class="route-summary-option" data-route-index="${i}">
+                  <div class="summary-header">
+                      <div class="summary-time">
+                          <span class="time-departure">${startTime}</span>
+                          <span class="arrow">→</span>
+                          <span class="time-arrival">${arrivalTime}</span>
+                          <span class="duration">(${Math.round(route.estimatedTime)} mins)</span>
+                      </div>
+                      <div class="summary-tags"></div>
+                  </div>
+                  <div class="summary-details">
+                      <span class="detail-item fare">Fare: N/A</span>
+                      <span class="detail-item transfers">~${transfers} Transfers</span>
+                  </div>
+                  <div class="summary-sequence">
+                      ${sequenceHtml}
+                  </div>
+              </div>
+          `;
+          optionsDiv.innerHTML += summaryHtml;
+     });
+
+     showSummaries(); // Ensure correct view state
+}
+
+// --- Modify displayRouteDetails ---
+function displayRouteDetails(routeIndex) {
+    const scheduleDiv = document.getElementById('schedule');
+    const optionsDiv = document.getElementById('route-options');
+    const backdrop = document.getElementById('details-backdrop'); // Get backdrop
+    const selectedRoute = currentRoutes[routeIndex];
+
+    if (!selectedRoute) return;
+
+    scheduleDiv.innerHTML = '';
+
+    // ... (Regenerate Header HTML - same as before) ...
+    const now = new Date();
+    const startTime = now.toTimeString().slice(0, 5);
+    const arrivalTime = new Date(now.getTime() + selectedRoute.estimatedTime * 60000).toTimeString().slice(0, 5);
+    const items = TimelineGenerator.getItems(selectedRoute);
+    let transfers = 0;
+    items.forEach(item => { if (item.interchange || (item.mode === 'Walk' && item.type === 'segment')) transfers++; });
+    const headerHtml = `...`; // (Same header HTML generation)
+
+    // --- Generate Timeline HTML ---
+    const timelineHtml = TimelineGenerator.generate(selectedRoute);
+
+    // --- *** REMOVE Back Button HTML *** ---
+    // const backButtonHtml = `<button ... </button>`; // REMOVED
+
+    // --- Combine and Display ---
+    const routeContainer = document.createElement('div');
+    routeContainer.className = 'route-container';
+    // routeContainer.innerHTML = backButtonHtml + headerHtml + timelineHtml; // OLD
+    routeContainer.innerHTML = headerHtml + timelineHtml; // NEW (No back button)
+    scheduleDiv.appendChild(routeContainer);
+
+    // --- Hide Summaries, Show Details & Backdrop ---
+    optionsDiv.style.display = 'none';
+    scheduleDiv.style.display = 'block';
+    if (backdrop) backdrop.style.display = 'block'; // Show backdrop
+}
+
+// --- Modify showSummaries ---
+function showSummaries() {
+    const scheduleDiv = document.getElementById('schedule');
+    const optionsDiv = document.getElementById('route-options');
+    const backdrop = document.getElementById('details-backdrop'); // Get backdrop
+
+    if(scheduleDiv) {
+        scheduleDiv.style.display = 'none';
+        scheduleDiv.innerHTML = ''; // Clear details
+    }
+    if(optionsDiv) {
+        optionsDiv.style.display = 'block'; // Show summaries
+    }
+     if (backdrop) {
+        backdrop.style.display = 'none'; // Hide backdrop
+     }
+}
+
+
+// Add event listener for the backdrop *once* on load
+window.addEventListener('load', () => {
+    const backdrop = document.getElementById('details-backdrop');
+    if (backdrop) {
+        backdrop.addEventListener('click', () => {
+            showSummaries(); // Clicking backdrop closes details
+        });
+    }
+
+
+    showSummaries(); // Call this at the end of onload after setting up listeners
+});
+
+
+// --- (Keep existing getUniqueMTRStations function) ---
+
+// --- Keep getUniqueMTRStations ---
 function getUniqueMTRStations() {
-    if (typeof lines === 'undefined') return [];
-    const stationSet = new Set();
-    const uniqueStations = [];
-     Object.values(lines).flat().forEach(station => {
-        if (station && station.value && !stationSet.has(station.value)) {
-            stationSet.add(station.value);
-            // Ensure lat/long are present and are numbers
-            const lat = parseFloat(station.lat);
-            const long = parseFloat(station.long);
-            uniqueStations.push({
-                ...station,
-                 lat: !isNaN(lat) ? lat : null,
-                 long: !isNaN(long) ? long : null
-            });
-        }
-    });
-    return uniqueStations;
+    // ... (your existing function) ...
+     if (typeof lines === 'undefined') return [];
+     const stationSet = new Set();
+     const uniqueStations = [];
+      Object.values(lines).flat().forEach(station => {
+         if (station && station.value && !stationSet.has(station.value)) {
+             stationSet.add(station.value);
+             const lat = parseFloat(station.lat);
+             const long = parseFloat(station.long);
+             uniqueStations.push({
+                 ...station,
+                  lat: !isNaN(lat) ? lat : null,
+                  long: !isNaN(long) ? long : null
+             });
+         }
+     });
+     return uniqueStations;
 };
+

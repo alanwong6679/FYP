@@ -1,7 +1,213 @@
+/* =========================================== */
+/* Global Styles & Body                       */
+/* =========================================== */
+
 body {
     font-family: 'Roboto', sans-serif;
-    margin: 10px;
-    background-color: #f4f4f9;
+    margin: 0;
+    padding: 10px;
+    background-color: #000000; /* Black background as per image */
+    color: #e0e0e0;
+}
+
+header h1 {
+    color: #ffffff;
+    text-align: center;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.sort-buttons {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.sort-button {
+    background-color: #3a3a3a;
+    color: #e0e0e0;
+    border: 1px solid #555;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 0 5px;
+    font-size: 0.9em;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+.sort-button:hover {
+    background-color: #4a4a4a;
+    border-color: #777;
+}
+.sort-button:active {
+    background-color: #5a5a5a;
+}
+
+/* =========================================== */
+/* Wrapper for Centering Route Options        */
+/* =========================================== */
+
+.options-wrapper {
+    max-width: 700px;
+    margin: 20px auto;
+}
+
+#route-options {
+    display: block;
+}
+
+/* =========================================== */
+/* Route Option Summary Styles (Visible First) */
+/* =========================================== */
+
+.route-summary-option {
+    background-color: #1a1a1a; /* Dark gray from image */
+    color: #e0e0e0;
+    border-radius: 8px;
+    padding: 15px 20px;
+    margin-bottom: 30px;
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out;
+    border: 1px solid #333;
+    box-shadow: 0 1px 3px rgba(255, 255, 255, 0.05);
+}
+.route-summary-option:hover {
+    background-color: #2a2a2a;
+}
+
+.summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.summary-time {
+    font-size: 1.3em;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    color: #ffffff; /* White text from image */
+}
+.summary-time .arrow {
+    margin: 0 8px;
+    font-weight: normal;
+    color: #a0a0a0;
+}
+.summary-time .duration {
+    font-size: 0.8em;
+    font-weight: normal;
+    color: #a0a0a0; /* Gray text from image */
+    margin-left: 10px;
+}
+
+.summary-details {
+    display: flex;
+    align-items: center;
+    font-size: 1em;
+    color: #b0b0b0;
+    margin-bottom: 12px;
+    gap: 12px;
+}
+.summary-details .detail-item {
+    position: relative;
+    padding-right: 12px;
+}
+.summary-details .detail-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 14px;
+    width: 1px;
+    background-color: #444;
+}
+
+/* --- Summary Sequence Styling --- */
+.summary-sequence {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #383838;
+}
+
+.summary-sequence > * {
+    position: relative;
+    margin-right: 15px; 
+    margin-left: 15px;
+}
+
+
+.summary-sequence > *:first-child {
+    margin-left: 0;
+}
+
+
+.summary-sequence > *:last-child {
+    margin-right: 0;
+}
+
+
+.summary-sequence > *:not(:first-child)::before {
+    content: '→'; 
+    color: #888; 
+    position: absolute;
+    left: -15px; 
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px; 
+    text-align: center; 
+}
+
+/* Base styling for sequence items (line bars: AEL, CTB, Walk, Arrived, etc.) */
+.sequence-item {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-weight: bold;
+    min-width: 30px;
+    text-align: center;
+    color: white; /* White text inside bars */
+}
+
+/* Styling for station names */
+.sequence-station-name {
+    color: #a0a0a0;
+    font-size: 0.95em;
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+}
+
+/* --- Color Definitions for Sequence Bars --- */
+.sequence-item.line-tag.ael { background-color: #00888A; } /* Teal for AEL */
+.sequence-item.line-tag.tcl { background-color: #F7943E; } /* Orange for TCL */
+.sequence-item.line-tag.tml { background-color: #923011; } /* Red for TML */
+.sequence-item.line-tag.tkl { background-color: #7D499D; } /* Purple for TKL */
+.sequence-item.line-tag.eal { background-color: #53B7E8; } /* Light blue for EAL */
+.sequence-item.line-tag.sil { background-color: #BAC429; } /* Lime green for SIL */
+.sequence-item.line-tag.twl { background-color: #ED1D24; } /* Bright red for TWL */
+.sequence-item.line-tag.isl { background-color: #007DC5; } /* Blue for ISL */
+.sequence-item.line-tag.ktl { background-color: #00AB4E; } /* Green for KTL */
+.sequence-item.line-tag.kmb { background-color: #FF0000; } /* Red for KMB */
+.sequence-item.line-tag.ctb { background-color: #F5A623; } /* Yellow for CTB */
+.sequence-item.line-tag.walk { background-color: #888; } /* Gray for Walk */
+.sequence-item.arrived { background-color: #6c757d; border: 1px solid #888; } /* Gray for Arrived */
+
+/* =========================================== */
+/* Detailed Timeline Styles (Shown on Click)   */
+/* =========================================== */
+
+#schedule {
+    position: relative;
+    z-index: 10;
+    max-width: 600px;
+    margin: 20px auto;
+    display: none;
 }
 
 .route-container {
@@ -9,12 +215,12 @@ body {
     border: 1px solid #ddd;
     border-radius: 8px;
     padding: 0;
-    max-width: 600px; /* Adjust as needed */
-    margin: 20px auto;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    overflow: hidden;
+    color: #333;
 }
 
-/* Header Section (Unchanged) */
+/* Detail Header */
 .route-header {
     background-color: #e9ecef;
     padding: 10px 15px;
@@ -22,12 +228,11 @@ body {
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid #ddd;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
 }
 .route-header .time-info {
     font-size: 1.4em;
     font-weight: bold;
+    color: #333;
 }
 .route-header .duration {
     font-size: 0.9em;
@@ -46,46 +251,42 @@ body {
     color: #555;
 }
 
-/* Timeline Section */
+/* Detail Timeline */
 .timeline {
     padding: 15px;
 }
 .timeline-item {
     display: flex;
     position: relative;
-    padding-bottom: 25px; /* Increased padding */
+    padding-bottom: 25px;
 }
 .timeline-item:last-child {
     padding-bottom: 0;
 }
 
-/* Vertical Line & Icon Area */
 .timeline-marker {
-    width: 60px; /* Increased width to accommodate stats */
+    width: 60px;
     position: relative;
-    margin-right: 10px; /* Reduced margin */
+    margin-right: 10px;
     display: flex;
     flex-direction: column;
-    align-items: center; /* Center time */
+    align-items: center;
     flex-shrink: 0;
 }
 
-/* --- Vertical Line Styling (Continuous) --- */
+/* Detail Vertical Line */
 .timeline-item:not(:last-child) .timeline-marker::before {
     content: '';
     position: absolute;
-    width: 4px; /* Line thickness */
-    /* Start from center of current icon */
-    top: 31px; /* Approx center: 22px (icon top) + 9px (half icon height) */
-    /* Extend down to center of next icon */
-    bottom: -56px; /* Approx negative icon center offset */
-    left: 15px; /* Position line in the center of original 30px area */
+    width: 4px;
+    top: 31px;
+    bottom: -56px;
+    left: 15px;
     transform: translateX(-50%);
-    background-color: #ccc; /* Default color */
-    z-index: 0; /* Behind icon */
+    background-color: #ccc;
+    z-index: 0;
 }
-
-/* --- Line Color Definitions --- */
+/* Detail Line Colors */
 .timeline-item[data-line="AEL"]:not(:last-child) .timeline-marker::before { background-color: #00888A; }
 .timeline-item[data-line="TCL"]:not(:last-child) .timeline-marker::before { background-color: #F7943E; }
 .timeline-item[data-line="TML"]:not(:last-child) .timeline-marker::before { background-color: #923011; }
@@ -96,131 +297,114 @@ body {
 .timeline-item[data-line="ISL"]:not(:last-child) .timeline-marker::before { background-color: #007DC5; }
 .timeline-item[data-line="KTL"]:not(:last-child) .timeline-marker::before { background-color: #00AB4E; }
 .timeline-item[data-line="KMB"]:not(:last-child) .timeline-marker::before { background-color: #FF0000; }
-.timeline-item[data-line="CityBus"]:not(:last-child) .timeline-marker::before { background-color: #FFD700; }
+.timeline-item[data-line="CTB"]:not(:last-child) .timeline-marker::before { background-color: #F5A623; }
 .timeline-item[data-line="Walk"]:not(:last-child) .timeline-marker::before {
     width: 0;
     border-left: 3px dashed #888;
     background-color: transparent;
-    left: calc(15px - 1.5px); /* Center dashed line */
+    left: calc(15px - 1.5px);
     transform: translateX(0);
     top: 31px;
     bottom: -56px;
 }
 
-/* Station/Segment Markers */
+/* Detail Markers */
 .marker-time {
     font-size: 0.9em;
     font-weight: bold;
     margin-bottom: 5px;
     position: relative;
-    z-index: 2; /* Above line/icon */
+    z-index: 2;
     background: #fff;
     padding: 0 2px;
     height: 20px;
     line-height: 20px;
-    text-align: center; /* Center time text */
-    width: 100%; /* Take full marker width */
+    text-align: center;
+    width: 100%;
+    color: #333;
 }
-
-/* Colored Circle Icon for Segments */
 .marker-icon {
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background-color: #ccc; /* Default */
+    background-color: #ccc;
     position: absolute;
-    top: 22px; /* Position below time */
-    left: 15px; /* Center in original 30px area */
+    top: 22px;
+    left: 15px;
     transform: translateX(-50%);
-    z-index: 1; /* Above line */
+    z-index: 1;
     box-sizing: border-box;
 }
+/* Detail Segment Icon Colors */
+.timeline-item:not(.station-point)[data-line="AEL"] .marker-icon { background-color: #00888A; border: none; }
+.timeline-item:not(.station-point)[data-line="TCL"] .marker-icon { background-color: #F7943E; border: none; }
+.timeline-item:not(.station-point)[data-line="TML"] .marker-icon { background-color: #923011; border: none; }
+.timeline-item:not(.station-point)[data-line="TKL"] .marker-icon { background-color: #7D499D; border: none; }
+.timeline-item:not(.station-point)[data-line="EAL"] .marker-icon { background-color: #53B7E8; border: none; }
+.timeline-item:not(.station-point)[data-line="SIL"] .marker-icon { background-color: #BAC429; border: none; }
+.timeline-item:not(.station-point)[data-line="TWL"] .marker-icon { background-color: #ED1D24; border: none; }
+.timeline-item:not(.station-point)[data-line="ISL"] .marker-icon { background-color: #007DC5; border: none; }
+.timeline-item:not(.station-point)[data-line="KTL"] .marker-icon { background-color: #00AB4E; border: none; }
+.timeline-item:not(.station-point)[data-line="KMB"] .marker-icon { background-color: #FF0000; border: none; }
+.timeline-item:not(.station-point)[data-line="CTB"] .marker-icon { background-color: #F5A623; border: none; }
+.timeline-item:not(.station-point)[data-line="Walk"] .marker-icon { background-color: #888; border: none; }
 
-/* Segment Icon Colors */
-.timeline-item[data-line="AEL"] .marker-icon { background-color: #00888A; }
-.timeline-item[data-line="TCL"] .marker-icon { background-color: #F7943E; }
-.timeline-item[data-line="TML"] .marker-icon { background-color: #923011; }
-.timeline-item[data-line="TKL"] .marker-icon { background-color: #7D499D; }
-.timeline-item[data-line="EAL"] .marker-icon { background-color: #53B7E8; }
-.timeline-item[data-line="SIL"] .marker-icon { background-color: #BAC429; }
-.timeline-item[data-line="TWL"] .marker-icon { background-color: #ED1D24; }
-.timeline-item[data-line="ISL"] .marker-icon { background-color: #007DC5; }
-.timeline-item[data-line="KTL"] .marker-icon { background-color: #00AB4E; }
-.timeline-item[data-line="KMB"] .marker-icon { background-color: #FF0000; }
-.timeline-item[data-line="CityBus"] .marker-icon { background-color: #FFD700; }
-.timeline-item[data-line="Walk"] .marker-icon { background-color: #888; }
-
-/* Station Point Markers (Outline Style) */
+/* Detail Station Point Markers */
 .timeline-item.station-point .marker-icon {
     width: 12px;
     height: 12px;
-    top: 25px; /* Adjust position slightly */
+    top: 25px;
     background-color: #fff;
     border: 2px solid #555;
 }
-.timeline-item.start-point .marker-icon {
-    border-color: #007bff;
-}
-.timeline-item.end-point .marker-icon {
-    border-color: #dc3545;
-}
-.timeline-item.interchange-point .marker-icon {
-    background-color: #fff;
-    border: 2px dashed #555;
-}
+.timeline-item.start-point .marker-icon { border-color: #007bff; }
+.timeline-item.end-point .marker-icon { border-color: #dc3545; }
 
-.timeline-item .interchange-info {
-    color: #555;
-    font-size: 0.8em;
-    font-style: italic;
-    margin-top: 3px;
-}
-
-.tag.interchange {
-    background-color: #FFA500; /* Orange for interchange */
-}
-
-/* Enhance line color distinction for better visibility */
-.segment-details .line-name {
-    font-weight: bold;
-}
-/* --- Segment Duration/Distance Stats --- */
+/* Detail Segment Stats */
 .segment-stats {
     position: absolute;
-    left: 35px; /* Position to the right of the line */
-    top: 31px; /* Align vertically with icon center */
+    left: 35px;
+    top: 31px;
     transform: translateY(-50%);
     font-size: 0.85em;
     color: #555;
     line-height: 1.3;
-    z-index: 1; /* Same level as icon */
+    z-index: 1;
 }
-.segment-stats span {
-    display: block; /* Stack vertically */
-}
-.segment-stats .stat-duration {
-    font-weight: 500;
-}
-.segment-stats .stat-distance {
-    color: #777;
-}
-/* Hide stats for station points */
-.timeline-item.station-point .segment-stats {
-    display: none;
-}
+.segment-stats span { display: block; }
+.segment-stats .stat-duration { font-weight: 500; }
+.segment-stats .stat-distance { color: #777; }
+.timeline-item.station-point .segment-stats,
+.timeline-item:last-child .segment-stats { display: none; }
 
-/* Content Area */
-.timeline-content {
-    flex: 1;
-    padding-top: 2px;
-}
+/* Detail Content Area */
+.timeline-content { flex: 1; padding-top: 2px; }
 .station-name {
     font-weight: bold;
     font-size: 1.1em;
     display: flex;
     align-items: center;
-    margin-bottom: 5px;
+    flex-wrap: wrap;
+    margin-bottom: 3px;
+    color: #333;
 }
+.tag {
+    font-size: 0.75em;
+    background-color: #6c757d;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-right: 6px;
+    vertical-align: middle;
+    font-weight: normal;
+    display: inline-block;
+    margin-bottom: 2px;
+}
+.tag.from { background-color: #007bff; }
+.tag.to { background-color: #dc3545; }
+.tag.interchange { background-color: #fd7e14; }
+
+/* Detail Line Tags */
 .station-name .line-tag {
     font-size: 0.7em;
     font-weight: normal;
@@ -228,6 +412,9 @@ body {
     border-radius: 4px;
     margin-left: 8px;
     color: white;
+    display: inline-block;
+    margin-bottom: 2px;
+    vertical-align: middle;
 }
 .station-name .line-tag.ael { background-color: #00888A; }
 .station-name .line-tag.tcl { background-color: #F7943E; }
@@ -239,90 +426,96 @@ body {
 .station-name .line-tag.isl { background-color: #007DC5; }
 .station-name .line-tag.ktl { background-color: #00AB4E; }
 .station-name .line-tag.kmb { background-color: #FF0000; }
-.station-name .line-tag.ctb { background-color: #FFD700; }
+.station-name .line-tag.ctb { background-color: #F5A623; }
 .station-name .line-tag.walk { background-color: #888; }
-.line-tag.dest { background-color: #6c757d; }
-.tag {
-    font-size: 0.8em;
-    background-color: #007bff;
-    color: white;
-    padding: 2px 6px;
-    border-radius: 4px;
-    margin-right: 8px;
-    vertical-align: middle;
-}
-.tag.to {
-    background-color: #dc3545;
-}
-.segment-details {
-    margin-top: 5px;
+
+/* Detail Segment/Interchange Text */
+.interchange-info, .segment-details {
+    margin-top: 3px;
     font-size: 0.9em;
     color: #555;
-    padding-left: 5px;
+    padding-left: 0;
 }
-.segment-details .line-name {
-    font-weight: 500;
-    color: #333;
-}
-.segment-details .direction,
-.segment-details .stops,
-.segment-details .platform,
-.segment-details .distance {
+.interchange-info { font-style: italic; }
+.segment-details .line-name { font-weight: bold; color: #333; }
+.segment-details .direction, .segment-details .stops, .segment-details .platform,
+.segment-details .alight, .segment-details .distance {
     display: block;
     margin-top: 3px;
 }
-.segment-details .platform span {
-    background-color: #eee;
-    padding: 1px 4px;
-    border-radius: 3px;
-    margin-left: 5px;
+
+/* =========================================== */
+/* Backdrop for Details View                   */
+/* =========================================== */
+.details-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 9;
+    display: none;
 }
-.segment-duration-distance {
-    /* This can likely be removed now */
+
+/* =========================================== */
+/* Modal Styles for News                       */
+/* =========================================== */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 100;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
 }
 
+.modal-content {
+    background-color: #1a1a1a;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #333;
+    width: 80%;
+    max-width: 500px;
+    border-radius: 8px;
+    color: #e0e0e0;
+}
 
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.close:hover,
+.close:focus {
+    color: #fff;
+    text-decoration: none;
+}
 
+.language-switch {
+    text-align: center;
+    margin-bottom: 15px;
+}
+.language-switch button {
+    background-color: #3a3a3a;
+    color: #e0e0e0;
+    border: 1px solid #555;
+    padding: 5px 10px;
+    margin: 0 5px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.language-switch button:hover {
+    background-color: #4a4a4a;
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+.source-reference {
+    margin-top: 15px;
+    font-size: 0.9em;
+    color: #b0b0b0;
+    text-align: right;
+}
