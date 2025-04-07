@@ -1,17 +1,14 @@
 // navbar.js
 document.addEventListener('DOMContentLoaded', () => {
-    // Create the nav-bar element
     const navbar = document.createElement('div');
     navbar.classList.add('nav-bar');
 
-    // Add the title
     const title = document.createElement('a');
     title.href = '/index.html';
     title.classList.add('nav-title');
     title.textContent = 'Route Planner';
     navbar.appendChild(title);
 
-    // Define the buttons with their properties
     const buttons = [
         { id: 'home-btn', text: 'Home', href: 'home.html', icon: '/static/images/home.png' },
         { id: 'transit_planner-btn', text: 'Search', href: 'transit_planner.html', icon: '/static/images/transit_planner.png' },
@@ -19,17 +16,16 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'train-btn', text: 'Train', href: 'mtr.html', icon: '/static/images/mtr_button.png' },
         { id: 'tram-btn', text: 'Tram', href: 'tram_schedule.html', icon: '/static/images/tram_button.png' },
         { id: 'ferry-btn', text: 'Ferry', href: 'ferry.html', icon: '/static/images/ferry_button.png' },
+        { id: 'news-btn', text: 'News', href: '#', icon: '/static/images/news_icon.png' },
     ];
 
-    // Get the current page to set the active class
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+    let newsModal, newsContent, originalContent = '';
 
-    // Create and append each button
     buttons.forEach(buttonData => {
         const button = document.createElement('button');
         button.id = buttonData.id;
 
-        // Create the icon
         const icon = document.createElement('img');
         icon.src = buttonData.icon;
         icon.alt = `${buttonData.text} icon`;
@@ -38,57 +34,108 @@ document.addEventListener('DOMContentLoaded', () => {
         icon.style.marginRight = '8px';
         icon.style.verticalAlign = 'middle';
 
-        // Add icon and text to button
         button.appendChild(icon);
         button.appendChild(document.createTextNode(buttonData.text));
 
         if (buttonData.href === currentPage) {
             button.classList.add('active');
         }
-        button.addEventListener('click', () => {
-            window.location.href = buttonData.href;
-        });
+
+        if (buttonData.id === 'news-btn') {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                toggleNewsModal();
+            });
+        } else {
+            button.addEventListener('click', () => {
+                window.location.href = buttonData.href;
+            });
+        }
+        
         navbar.appendChild(button);
     });
 
-    // Add dark mode toggle button
+    function createNewsModal() {
+        const modal = document.createElement('div');
+        modal.id = 'newsModal';
+        modal.classList.add('modal');
+        modal.innerHTML = `
+            <div class="modal-content">
+                <span class="close">×</span>
+                <div id="newsContent">Loading news content...</div>
+                <div class="source-reference">Source: RTHK</div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        newsContent = modal.querySelector('#newsContent');
+        const closeBtn = modal.querySelector('.close');
+
+        closeBtn.addEventListener('click', () => modal.style.display = 'none');
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.style.display = 'none';
+        });
+
+        return modal;
+    }
+
+    function toggleNewsModal() {
+        if (!newsModal) {
+            newsModal = createNewsModal();
+            fetchNewsContent();
+        } else {
+            newsModal.style.display = newsModal.style.display === 'block' ? 'none' : 'block';
+            if (originalContent && newsContent.innerHTML === 'Loading news content...') {
+                newsContent.innerHTML = originalContent;
+            }
+        }
+    }
+
+    async function fetchNewsContent() {
+        newsContent.innerHTML = 'Loading news content...';
+        try {
+            const response = await fetch('https://programme.rthk.hk/channel/radio/trafficnews/index.php');
+            if (!response.ok) throw new Error('Network response was not ok');
+            const data = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(data, 'text/html');
+            const newsItems = doc.querySelectorAll('ul.dec > li.inner');
+            let content = '';
+            newsItems.forEach(item => {
+                content += `<div class="news-item">${item.textContent.trim()}</div>`;
+            });
+            originalContent = content || 'No news content available.';
+            newsContent.innerHTML = originalContent;
+        } catch (error) {
+            console.error('Error fetching news:', error);
+            newsContent.innerHTML = 'Failed to load news content. Please try again later.';
+        }
+    }
+
+    // Dark mode functionality
     const darkModeToggle = document.createElement('button');
     darkModeToggle.id = 'darkModeToggle';
     darkModeToggle.classList.add('dark-mode-toggle');
     darkModeToggle.setAttribute('aria-label', 'Toggle Dark Mode');
-    darkModeToggle.textContent = '🌙'; // Default to moon (light mode)
+    darkModeToggle.textContent = '🌙';
     navbar.appendChild(darkModeToggle);
 
-    // Append the navbar to the body
     document.body.insertBefore(navbar, document.body.firstChild);
 
-    // Dark mode functions
     function toggleDarkMode() {
         const isDark = document.body.getAttribute('data-theme') === 'dark';
-        if (isDark) {
-            document.body.removeAttribute('data-theme');
-            localStorage.setItem('theme', 'light');
-            darkModeToggle.textContent = '🌙';
-        } else {
-            document.body.setAttribute('data-theme', 'dark');
-            localStorage.setItem('theme', 'dark');
-            darkModeToggle.textContent = '☀️';
-        }
+        document.body.setAttribute('data-theme', isDark ? '' : 'dark');
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        darkModeToggle.textContent = isDark ? '🌙' : '☀️';
     }
 
     function initTheme() {
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
+        if (localStorage.getItem('theme') === 'dark') {
             document.body.setAttribute('data-theme', 'dark');
             darkModeToggle.textContent = '☀️';
-        } else {
-            document.body.removeAttribute('data-theme');
-            darkModeToggle.textContent = '🌙';
         }
     }
 
-    // Initialize theme and add event listener
     initTheme();
     darkModeToggle.addEventListener('click', toggleDarkMode);
-    
 });

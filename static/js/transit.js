@@ -1,8 +1,8 @@
 /* transit.js */
-const API_KEY = 'AIzaSyBBY8WRPKMG0sPNFkHAYNcCwkwTn4T5jGw';
+const API_KEY = 'AIzaSyBBY8WRPKMG0sPNFkHAYNcCwkwTn4T5jGw'; // Replace with a new, secure key
 let map;
 let routeMarkers = [];
-let routePolyline;
+let routePolyline = null;
 let userLocationMarker = null;
 let userLocationCircle = null;
 let kmbRouteList = null;
@@ -40,7 +40,7 @@ function initMap() {
                         icon: { url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png" },
                         title: "Your Location"
                     });
-                    loadRouteData().then(() => displayFavoriteRoutes()); // Wait for data
+                    loadRouteData().then(() => displayFavoriteRoutes());
                 }
 
                 if (isTransitPlannerPage) {
@@ -60,7 +60,7 @@ function initMap() {
                         icon: { url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png" },
                         title: "Default Location (Hong Kong)"
                     });
-                    loadRouteData().then(() => displayFavoriteRoutes()); // Wait for data
+                    loadRouteData().then(() => displayFavoriteRoutes());
                 }
             }
         );
@@ -74,7 +74,7 @@ function initMap() {
                 icon: { url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png" },
                 title: "Default Location (Hong Kong)"
             });
-            loadRouteData().then(() => displayFavoriteRoutes()); // Wait for data
+            loadRouteData().then(() => displayFavoriteRoutes());
         }
     }
 }
@@ -173,7 +173,7 @@ function toggleFavorite(route) {
     }
     localStorage.setItem('favoriteRoutes', JSON.stringify(favoriteRoutes));
     console.log('Favorites updated in localStorage:', favoriteRoutes);
-    displayFavoriteRoutes(); // Update UI immediately
+    displayFavoriteRoutes();
 }
 
 async function fetchRouteStops(provider, route, bound) {
@@ -362,7 +362,7 @@ function displayFavoriteRoutes() {
 function selectRoute(route) {
     if (!stopData || !routeStopData) {
         showError("Route data not loaded yet. Please wait...");
-        loadRouteData().then(() => selectRoute(route)); // Retry after loading
+        loadRouteData().then(() => selectRoute(route));
         return;
     }
 
@@ -376,7 +376,11 @@ function selectRoute(route) {
 
     routeMarkers.forEach(marker => marker.setMap(null));
     routeMarkers = [];
-    if (routePolyline) routePolyline.setMap(null);
+    if (routePolyline) {
+        routePolyline.setMap(null);
+        console.log("Cleared previous routePolyline");
+        routePolyline = null;
+    }
     if (currentInfoWindow) currentInfoWindow.close();
     currentInfoWindow = null;
 
@@ -414,6 +418,69 @@ async function displayRouteOnMap(stopsForRoute) {
         return;
     }
 
+    const etaPromises = stops.map(stop => 
+        fetchETA(stop.stopId, selectedProvider, selectedRoute, selectedRouteId, selectedBound)
+    );
+    const etaResults = await Promise.all(etaPromises);
+
+    let totalETAs = 0;
+    let delayedETAs = 0;
+    let avgInterval = 0;
+    let validETACount = 0;
+    const now = new Date();
+    const currentHour = now.getHours();
+
+    etaResults.forEach((etaData, index) => {
+        console.log(`Stop ${stops[index].name} ETA data:`, etaData.data);
+        etaData.data.forEach(eta => {
+            totalETAs++;
+            const etaTime = new Date(eta.eta);
+            if (etaTime && !isNaN(etaTime.getTime())) {
+                const timeDiff = (etaTime - now) / 60000; // Minutes until arrival
+                console.log(`ETA for ${eta.route}: timeDiff=${timeDiff.toFixed(2)}, diff=${eta.diff}`); // Debug ETA
+                if (timeDiff < -5) delayedETAs++; // Significant delays only
+                // Only include future or near-future ETAs for avgInterval
+                if (timeDiff >= -1 && eta.diff !== undefined && eta.diff >= 0) { // Allow slight past (-1 min) for freshness
+                    avgInterval += eta.diff;
+                    validETACount++;
+                }
+            }
+        });
+    });
+
+    avgInterval = validETACount > 0 ? avgInterval / validETACount : Infinity;
+    const busyScore = delayedETAs / (totalETAs || 1);
+
+    const isOffPeak = currentHour >= 0 && currentHour < 6;
+    let routeStatus = 'free';
+    let strokeColor = '#00FF00'; // Green
+
+    if (isOffPeak) {
+        if (avgInterval < 3 || busyScore > 0.5) {
+            routeStatus = 'busy';
+            strokeColor = '#FF0000'; // Red
+        } else if (avgInterval < 4 || busyScore > 0.35) {
+            routeStatus = 'busy half';
+            strokeColor = '#FF8C00'; // Dark Orange
+        } else if (avgInterval < 6 || busyScore > 0.2) {
+            routeStatus = 'moderate';
+            strokeColor = '#FFA500'; // Light Orange
+        }
+    } else {
+        if (avgInterval < 5 || busyScore > 0.3) {
+            routeStatus = 'busy';
+            strokeColor = '#FF0000'; // Red
+        } else if (avgInterval < 7 || busyScore > 0.2) {
+            routeStatus = 'busy half';
+            strokeColor = '#FF8C00'; // Dark Orange
+        } else if (avgInterval < 10 || busyScore > 0.1) {
+            routeStatus = 'moderate';
+            strokeColor = '#FFA500'; // Light Orange
+        }
+    }
+
+    console.log(`Route ${selectedRoute} at ${currentHour}:00 - Status: ${routeStatus}, Avg Interval: ${avgInterval.toFixed(2)} mins, Busy Score: ${busyScore.toFixed(2)}, Total ETAs: ${totalETAs}, Delayed: ${delayedETAs}, Valid ETAs: ${validETACount}`);
+
     routeMarkers = stops.map(stop => {
         const marker = new google.maps.Marker({
             position: { lat: stop.lat, lng: stop.lng },
@@ -439,7 +506,7 @@ async function displayRouteOnMap(stopsForRoute) {
                     let displayTime = bus.diff !== undefined ? `${bus.diff} mins` : 'Not Available';
                     if (arriveTime && !isNaN(arriveTime.getTime())) {
                         const timeDiff = Math.round((new Date() - arriveTime) / 60000);
-                        displayTime = timeDiff <= 0 ? `${timeDiff} mins` : "Arrived";
+                        displayTime = timeDiff <= 0 ? `${-timeDiff} mins` : "Arrived";
                     }
                     return `${bus.route} (${displayTime})${bus.remark_en ? ' - ' + bus.remark_en : ''}`;
                 }).join('<br/>')
@@ -454,34 +521,54 @@ async function displayRouteOnMap(stopsForRoute) {
     const sampledPath = samplePath(pathCoordinates, 100);
     const pathString = sampledPath.map(coord => `${coord.lat},${coord.lng}`).join('|');
 
+    console.log(`Path string length: ${sampledPath.length}, Path: ${pathString}`);
+
     try {
-        const response = await fetch(`https://roads.googleapis.com/v1/snapToRoads?path=${pathString}&interpolate=true&key=${API_KEY}`);
-        if (!response.ok) throw new Error(`Roads API request failed: ${response.statusText}`);
+        if (sampledPath.length < 2) throw new Error("Sampled path has fewer than 2 points.");
+        const response = await fetch(`https://roads.googleapis.com/v1/snapToRoads?path=${encodeURIComponent(pathString)}&interpolate=true&key=${API_KEY}`);
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Roads API request failed: ${response.status} - ${errorText}`);
+        }
         const data = await response.json();
         const snappedCoords = data.snappedPoints ? data.snappedPoints.map(point => ({
             lat: point.location.latitude,
             lng: point.location.longitude
         })) : pathCoordinates;
 
+        if (routePolyline) {
+            routePolyline.setMap(null);
+            console.log("Extra cleanup of lingering routePolyline");
+        }
         routePolyline = new google.maps.Polyline({
             path: snappedCoords,
             geodesic: true,
-            strokeColor: '#007bff',
+            strokeColor: strokeColor,
             strokeOpacity: 1.0,
             strokeWeight: 4
         });
         routePolyline.setMap(map);
+        console.log("New routePolyline set on map");
+
+        if (selectedRouteDisplay) {
+            selectedRouteDisplay.textContent = `Selected Route: ${selectedRoute} from ${stops[0].name} to ${stops[stops.length - 1].name} (${selectedProvider.toUpperCase()}) - Status: ${routeStatus}`;
+        }
     } catch (err) {
         console.error("Roads API error:", err);
-        showError("Roads API failed. Using unsnapped path.");
+        showError(`Failed to snap route to roads: ${err.message}. Using unsnapped path.`);
+        if (routePolyline) {
+            routePolyline.setMap(null);
+            console.log("Extra cleanup of lingering routePolyline in error case");
+        }
         routePolyline = new google.maps.Polyline({
             path: pathCoordinates,
             geodesic: true,
-            strokeColor: '#007bff',
+            strokeColor: strokeColor,
             strokeOpacity: 1.0,
             strokeWeight: 4
         });
         routePolyline.setMap(map);
+        console.log("New unsnapped routePolyline set on map");
     }
 
     const bounds = new google.maps.LatLngBounds();
@@ -506,8 +593,8 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 async function findNearbyStops(radius) {
     if (!stopData || !routeStopData) {
         showError("Stop or route-stop data not loaded yet");
-        await loadRouteData(); // Ensure data is loaded
-        return findNearbyStops(radius); // Retry
+        await loadRouteData();
+        return findNearbyStops(radius);
     }
 
     const userPos = map.getCenter();
