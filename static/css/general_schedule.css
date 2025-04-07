@@ -164,7 +164,26 @@ body {
 .timeline-item.end-point .marker-icon {
     border-color: #dc3545;
 }
+.timeline-item.interchange-point .marker-icon {
+    background-color: #fff;
+    border: 2px dashed #555;
+}
 
+.timeline-item .interchange-info {
+    color: #555;
+    font-size: 0.8em;
+    font-style: italic;
+    margin-top: 3px;
+}
+
+.tag.interchange {
+    background-color: #FFA500; /* Orange for interchange */
+}
+
+/* Enhance line color distinction for better visibility */
+.segment-details .line-name {
+    font-weight: bold;
+}
 /* --- Segment Duration/Distance Stats --- */
 .segment-stats {
     position: absolute;

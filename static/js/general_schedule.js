@@ -1,4 +1,4 @@
-
+// 1. Constants and Utilities
 const LINE_NAMES = {
     "AEL": { name: "Airport Express Line", color: "#00888A" },
     "TCL": { name: "Tung Chung Line", color: "#F7943E" },
@@ -61,6 +61,7 @@ class TransitData {
 
 const transit = new TransitData();
 
+
 // 3. Route Finder
 class RouteFinder {
     constructor(transitData, mtrStations) {
@@ -107,6 +108,7 @@ class RouteFinder {
         endPoint = endType === 'bus' ? this.transit.findStop(end) : this.mtrStations.find(s => s.value === end);
 
         if (!startPoint || !endPoint) {
+            console.error('Invalid start or end point:', startPoint, endPoint);
             document.getElementById('schedule').innerHTML = '<div class="error">Invalid start or end point.</div>';
             return routes;
         }
@@ -142,30 +144,39 @@ class RouteFinder {
             }
         } else if (startType === 'mtr' && endType === 'bus') {
             const nearestMTR = this.findNearestMTR(endPoint, true);
-            const mtrResponse = await this.fetchMTRSchedule(start, nearestMTR.station.value);
-            if (!mtrResponse.error) {
-                const mtrTime = this.calculateMTRTime(mtrResponse.bestRoute);
-                const walkTime = calculateWalkDuration(nearestMTR.distance);
-                const busRoutes = this.findBusRoutes(
-                    this.transit.getNearbyStops(nearestMTR.station).map(s => s.stop),
-                    [endPoint.stop],
-                    provider
-                );
-
-                busRoutes.forEach(busRoute => {
-                    const busTime = busRoute.stopCount * 2;
-                    routes.push({
-                        type: 'MTR-to-Bus',
-                        mtrRoute: mtrResponse.bestRoute,
-                        busRoute,
-                        walkingDistance: nearestMTR.distance,
-                        estimatedTime: mtrTime + walkTime + busTime,
-                        schedules: mtrResponse.schedules,
-                        currentStation: start,
-                        interchangeStation: nearestMTR.station.value
-                    });
-                });
+            if (!nearestMTR.station) {
+                console.error('No nearby MTR station found for end bus stop:', endPoint);
+                return routes;
             }
+
+            const mtrResponse = await this.fetchMTRSchedule(start, nearestMTR.station.value);
+            if (mtrResponse.error) {
+                console.error('MTR schedule fetch failed:', mtrResponse.error);
+                return routes;
+            }
+
+            const mtrTime = this.calculateMTRTime(mtrResponse.bestRoute);
+            const walkTime = calculateWalkDuration(nearestMTR.distance);
+            const nearbyStops = this.transit.getNearbyStops(nearestMTR.station).map(s => s.stop);
+            const busRoutes = this.findBusRoutes(nearbyStops, [endPoint.stop], provider);
+
+            if (!busRoutes.length) {
+                console.error('No bus routes found from nearby stops to end stop:', nearbyStops, endPoint.stop);
+            }
+
+            busRoutes.forEach(busRoute => {
+                const busTime = busRoute.stopCount * 2;
+                routes.push({
+                    type: 'MTR-to-Bus',
+                    mtrRoute: mtrResponse.bestRoute,
+                    busRoute,
+                    walkingDistance: nearestMTR.distance,
+                    estimatedTime: mtrTime + walkTime + busTime,
+                    schedules: mtrResponse.schedules,
+                    currentStation: start,
+                    interchangeStation: nearestMTR.station.value
+                });
+            });
         }
 
         return routes;
@@ -243,11 +254,12 @@ class RouteFinder {
     }
 
     calculateMTRTime(route) {
-        return route.route.reduce((t, line) => t + lines[line].length * 2, 0) + route.interchangeCount * 5;
+        return route.route.reduce((t, line) => t + (lines[line]?.length || 0) * 2, 0) + route.interchangeCount * 5;
     }
 }
 
 // 4. Timeline Generator
+// Updated TimelineGenerator class
 class TimelineGenerator {
     static generate(route) {
         const items = this.getItems(route);
@@ -265,9 +277,129 @@ class TimelineGenerator {
         const arrivalTime = new Date(now.getTime() + route.estimatedTime * 60000).toTimeString().slice(0, 5);
         const items = [];
 
-        console.log("Route data:", route);
+        if (route.type === 'MTR') {
+            // Start point
+            items.push({ 
+                type: 'point', 
+                mode: 'MTR', 
+                name: this.getMTRName(route.currentStation), 
+                time: startTime, 
+                isStart: true, 
+                line: route.mtrRoute.route[0] 
+            });
 
-        if (route.type === 'Bus-to-MTR') {
+            // Break down the MTR journey into separate line segments with interchange stations
+            if (route.mtrRoute.interchanges && route.mtrRoute.interchanges.length > 0) {
+                // We have interchange information
+                let totalTime = route.estimatedTime;
+                let remainingTime = totalTime;
+                const interchangeTime = 5; // 5 minutes per interchange
+                
+                // Calculate the actual journey time excluding interchanges
+                const journeyTime = totalTime - (route.mtrRoute.interchanges.length * interchangeTime);
+                
+                // Distribute time proportionally across segments
+                const segments = route.mtrRoute.route.length;
+                const timePerSegment = Math.round(journeyTime / segments);
+                
+                // Add segments with interchanges
+                for (let i = 0; i < route.mtrRoute.route.length; i++) {
+                    const currentLine = route.mtrRoute.route[i];
+                    
+                    // If not the last segment, add interchange point
+                    if (i < route.mtrRoute.route.length - 1) {
+                        const nextLine = route.mtrRoute.route[i+1];
+                        const interchangeStation = route.mtrRoute.interchanges[i] || this.getDefaultInterchange(currentLine, nextLine);
+                        
+                        // Add segment for current line
+                        items.push({ 
+                            type: 'segment', 
+                            mode: 'MTR', 
+                            lines: [currentLine], 
+                            duration: timePerSegment, 
+                            to: this.getMTRName(interchangeStation)
+                        });
+                        
+                        // Add interchange point
+                        items.push({ 
+                            type: 'point', 
+                            mode: 'MTR', 
+                            name: this.getMTRName(interchangeStation), 
+                            interchange: true,
+                            fromLine: currentLine,
+                            toLine: nextLine
+                        });
+                        
+                        remainingTime -= (timePerSegment + interchangeTime);
+                    } else {
+                        // Last segment to destination
+                        items.push({ 
+                            type: 'segment', 
+                            mode: 'MTR', 
+                            lines: [currentLine], 
+                            duration: remainingTime, 
+                            to: this.getMTRName(route.destinationStation) 
+                        });
+                    }
+                }
+            } else {
+                // Fallback to old method if no interchange info
+                let previousLine = null;
+                let remainingTime = route.estimatedTime;
+                const timePerSegment = Math.round(remainingTime / route.mtrRoute.route.length);
+                
+                route.mtrRoute.route.forEach((line, index) => {
+                    if (index < route.mtrRoute.route.length - 1) {
+                        // Get default interchange station between lines
+                        const nextLine = route.mtrRoute.route[index + 1];
+                        const interchangeStation = this.getDefaultInterchange(line, nextLine);
+                        
+                        // Add segment
+                        items.push({ 
+                            type: 'segment', 
+                            mode: 'MTR', 
+                            lines: [line], 
+                            duration: timePerSegment, 
+                            to: this.getMTRName(interchangeStation) 
+                        });
+                        
+                        // Add interchange point
+                        items.push({ 
+                            type: 'point', 
+                            mode: 'MTR', 
+                            name: this.getMTRName(interchangeStation), 
+                            interchange: true,
+                            fromLine: line,
+                            toLine: nextLine
+                        });
+                        
+                        remainingTime -= timePerSegment;
+                    } else {
+                        // Last segment
+                        items.push({ 
+                            type: 'segment', 
+                            mode: 'MTR', 
+                            lines: [line], 
+                            duration: remainingTime, 
+                            to: this.getMTRName(route.destinationStation) 
+                        });
+                    }
+                    
+                    previousLine = line;
+                });
+            }
+            
+            // End point
+            items.push({ 
+                type: 'point', 
+                mode: 'MTR', 
+                name: this.getMTRName(route.destinationStation), 
+                time: arrivalTime, 
+                isEnd: true, 
+                line: route.mtrRoute.route[route.mtrRoute.route.length - 1] 
+            });
+        } else if (route.type === 'Bus-to-MTR') {
+            // Existing Bus-to-MTR code
             const busTime = route.busRoute.stopCount * 2;
             const walkTime = calculateWalkDuration(route.walkingDistance);
             const mtrTime = route.estimatedTime - busTime - walkTime;
@@ -309,13 +441,58 @@ class TimelineGenerator {
                 name: this.getMTRName(route.interchangeStation), 
                 line: route.mtrRoute.route[0] 
             });
-            items.push({ 
-                type: 'segment', 
-                mode: 'MTR', 
-                lines: route.mtrRoute.route, 
-                duration: mtrTime, 
-                to: this.getMTRName(route.destinationStation) 
-            });
+            
+            // Break down MTR portion into segments with interchanges
+            if (route.mtrRoute.route.length > 1) {
+                let remainingMtrTime = mtrTime;
+                const interchangeTime = 5; // minutes per interchange
+                const totalInterchangeTime = (route.mtrRoute.route.length - 1) * interchangeTime;
+                const travelTime = mtrTime - totalInterchangeTime;
+                const timePerSegment = Math.round(travelTime / route.mtrRoute.route.length);
+                
+                route.mtrRoute.route.forEach((line, index) => {
+                    if (index < route.mtrRoute.route.length - 1) {
+                        const nextLine = route.mtrRoute.route[index + 1];
+                        const interchangeStation = route.mtrRoute.interchanges?.[index] || this.getDefaultInterchange(line, nextLine);
+                        
+                        items.push({ 
+                            type: 'segment', 
+                            mode: 'MTR', 
+                            lines: [line], 
+                            duration: timePerSegment, 
+                            to: this.getMTRName(interchangeStation) 
+                        });
+                        
+                        items.push({ 
+                            type: 'point', 
+                            mode: 'MTR', 
+                            name: this.getMTRName(interchangeStation), 
+                            interchange: true,
+                            fromLine: line,
+                            toLine: nextLine
+                        });
+                        
+                        remainingMtrTime -= (timePerSegment + interchangeTime);
+                    } else {
+                        items.push({ 
+                            type: 'segment', 
+                            mode: 'MTR', 
+                            lines: [line], 
+                            duration: remainingMtrTime, 
+                            to: this.getMTRName(route.destinationStation) 
+                        });
+                    }
+                });
+            } else {
+                items.push({ 
+                    type: 'segment', 
+                    mode: 'MTR', 
+                    lines: [route.mtrRoute.route[0]], 
+                    duration: mtrTime, 
+                    to: this.getMTRName(route.destinationStation) 
+                });
+            }
+            
             items.push({ 
                 type: 'point', 
                 mode: 'MTR', 
@@ -325,6 +502,8 @@ class TimelineGenerator {
                 line: route.mtrRoute.route[route.mtrRoute.route.length - 1] 
             });
         } else if (route.type === 'MTR-to-Bus') {
+            // Similar modifications needed for MTR-to-Bus route type
+            // Implementation follows the same pattern as above
             const mtrTime = route.estimatedTime - route.busRoute.stopCount * 2 - calculateWalkDuration(route.walkingDistance);
             const walkTime = calculateWalkDuration(route.walkingDistance);
             const busTime = route.busRoute.stopCount * 2;
@@ -337,13 +516,58 @@ class TimelineGenerator {
                 isStart: true, 
                 line: route.mtrRoute.route[0] 
             });
-            items.push({ 
-                type: 'segment', 
-                mode: 'MTR', 
-                lines: route.mtrRoute.route, 
-                duration: mtrTime, 
-                to: this.getMTRName(route.interchangeStation) 
-            });
+            
+            // Break down MTR portion into segments with interchanges
+            if (route.mtrRoute.route.length > 1) {
+                let remainingMtrTime = mtrTime;
+                const interchangeTime = 5; // minutes per interchange
+                const totalInterchangeTime = (route.mtrRoute.route.length - 1) * interchangeTime;
+                const travelTime = mtrTime - totalInterchangeTime;
+                const timePerSegment = Math.round(travelTime / route.mtrRoute.route.length);
+                
+                route.mtrRoute.route.forEach((line, index) => {
+                    if (index < route.mtrRoute.route.length - 1) {
+                        const nextLine = route.mtrRoute.route[index + 1];
+                        const interchangeStation = route.mtrRoute.interchanges?.[index] || this.getDefaultInterchange(line, nextLine);
+                        
+                        items.push({ 
+                            type: 'segment', 
+                            mode: 'MTR', 
+                            lines: [line], 
+                            duration: timePerSegment, 
+                            to: this.getMTRName(interchangeStation) 
+                        });
+                        
+                        items.push({ 
+                            type: 'point', 
+                            mode: 'MTR', 
+                            name: this.getMTRName(interchangeStation), 
+                            interchange: true,
+                            fromLine: line,
+                            toLine: nextLine
+                        });
+                        
+                        remainingMtrTime -= (timePerSegment + interchangeTime);
+                    } else {
+                        items.push({ 
+                            type: 'segment', 
+                            mode: 'MTR', 
+                            lines: [line], 
+                            duration: remainingMtrTime, 
+                            to: this.getMTRName(route.interchangeStation) 
+                        });
+                    }
+                });
+            } else {
+                items.push({ 
+                    type: 'segment', 
+                    mode: 'MTR', 
+                    lines: [route.mtrRoute.route[0]], 
+                    duration: mtrTime, 
+                    to: this.getMTRName(route.interchangeStation) 
+                });
+            }
+            
             items.push({ 
                 type: 'point', 
                 mode: 'MTR', 
@@ -381,31 +605,8 @@ class TimelineGenerator {
                 isEnd: true, 
                 provider: route.busRoute.provider 
             });
-        } else if (route.type === 'MTR') {
-            items.push({ 
-                type: 'point', 
-                mode: 'MTR', 
-                name: this.getMTRName(route.currentStation), 
-                time: startTime, 
-                isStart: true, 
-                line: route.mtrRoute.route[0] 
-            });
-            items.push({ 
-                type: 'segment', 
-                mode: 'MTR', 
-                lines: route.mtrRoute.route, 
-                duration: route.estimatedTime, 
-                to: this.getMTRName(route.destinationStation) 
-            });
-            items.push({ 
-                type: 'point', 
-                mode: 'MTR', 
-                name: this.getMTRName(route.destinationStation), 
-                time: arrivalTime, 
-                isEnd: true, 
-                line: route.mtrRoute.route[route.mtrRoute.route.length - 1] 
-            });
         } else if (route.type === 'Bus') {
+            // Existing Bus route code (unchanged)
             const walkToBus = calculateWalkDuration(route.walkingDistance / 2);
             const busTime = route.estimatedTime - route.walkingDistance / 2500 * 60;
             const walkFromBus = calculateWalkDuration(route.walkingDistance / 2);
@@ -468,6 +669,92 @@ class TimelineGenerator {
     }
 
     static generatePoint(item) {
+        const classes = `timeline-item station-point ${item.isStart ? 'start-point' : ''} ${item.isEnd ? 'end-point' : ''} ${item.interchange ? 'interchange-point' : ''}`;
+        const dataLine = item.mode === 'Bus' ? item.provider : item.line || item.mode;
+        const time = item.time || '--:--';
+        let tag = '';
+        
+        if (item.isStart) {
+            tag = '<span class="tag">From</span>';
+        } else if (item.isEnd) {
+            tag = '<span class="tag to">To</span>';
+        } else if (item.interchange) {
+            tag = '<span class="tag interchange">Change</span>';
+        }
+        
+        const lineTagClass = item.mode === 'Bus' ? (item.provider || 'unknown').toLowerCase() : (item.line || 'unknown').toLowerCase();
+        const lineAbbr = item.mode === 'Bus' ? (item.provider || 'Unknown').toUpperCase() : item.line || item.mode;
+
+        let interchangeInfo = '';
+        if (item.interchange && item.fromLine && item.toLine) {
+            const fromLineName = LINE_NAMES[item.fromLine]?.name || item.fromLine;
+            const toLineName = LINE_NAMES[item.toLine]?.name || item.toLine;
+            interchangeInfo = `<div class="interchange-info">Change from ${fromLineName} to ${toLineName}</div>`;
+        }
+
+        return `
+            <div class="${classes}" data-line="${dataLine}">
+                <div class="timeline-marker">
+                    <div class="marker-time">${time}</div>
+                    <div class="marker-icon"></div>
+                </div>
+                <div class="timeline-content">
+                    <div class="station-name">${tag} ${item.name} <span class="line-tag ${lineTagClass}">${lineAbbr}</span></div>
+                    ${interchangeInfo}
+                </div>
+            </div>
+        `;
+    }
+
+    static generateSegment(item) {
+        const dataLine = item.mode === 'Bus' ? item.provider : (item.lines && item.lines.length === 1) ? item.lines[0] : item.mode;
+        const statsHtml = item.mode === 'Walk'
+            ? `<span class="stat-duration">~${Math.round(item.duration)} min</span><span class="stat-distance">${Math.round(item.distance)}m</span>`
+            : `<span class="stat-duration">~${Math.round(item.duration)} min</span><span class="stat-distance">-- km</span>`;
+        
+        let detailsHtml = '';
+        if (item.mode === 'MTR') {
+            // Now we display only the current line segment, not the entire route
+            const lineName = (item.lines && item.lines.length === 1) ? LINE_NAMES[item.lines[0]]?.name || item.lines[0] : 'MTR';
+            detailsHtml = `<span class="line-name">MTR: ${lineName}</span><span class="direction">To ${item.to}</span>`;
+        } else if (item.mode === 'Bus') {
+            detailsHtml = `<span class="line-name">Bus ${item.route} (${item.direction})</span><span class="direction">Alight at ${item.alightingStopName}</span><span class="stops">${item.stops} stops</span>`;
+        } else if (item.mode === 'Walk') {
+            detailsHtml = `<span class="line-name">Walk</span><span class="direction">To ${item.to}</span>`;
+        }
+
+        return `
+            <div class="timeline-item" data-line="${dataLine}">
+                <div class="timeline-marker">
+                    <div class="marker-icon"></div>
+                    <div class="segment-stats">${statsHtml}</div>
+                </div>
+                <div class="timeline-content">
+                    <div class="segment-details">${detailsHtml}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    static getMTRName(code) {
+        const station = Object.values(lines).flat().find(s => s.value === code);
+        return station ? station.text : code;
+    }
+    
+    // Helper method to find default interchange stations between lines
+    static getDefaultInterchange(line1, line2) {
+        // Map of known interchange stations between lines
+        
+        
+        
+        const key1 = `${line1}_${line2}`;
+        const key2 = `${line2}_${line1}`;
+        
+        return interchangeStationsp[key1] || interchangeStations[key2] || 'UKN'; // UKN = Unknown/default
+    }
+
+
+    static generatePoint(item) {
         const classes = `timeline-item station-point ${item.isStart ? 'start-point' : ''} ${item.isEnd ? 'end-point' : ''}`;
         const dataLine = item.mode === 'Bus' ? item.provider : item.line || item.mode;
         const time = item.time || '--:--';
@@ -525,7 +812,6 @@ class TimelineGenerator {
 // 5. Main Logic
 let currentRoutes = [];
 
-
 window.onload = async () => {
     const params = new URLSearchParams(window.location.search);
     const [cs, ds, sbs, ebs] = [
@@ -538,10 +824,14 @@ window.onload = async () => {
     const mtrStations = getUniqueMTRStations();
     const finder = new RouteFinder(transit, mtrStations);
 
-    // Only check bus data for bus-related searches
     const requiresBusData = sbs || ebs;
     if (requiresBusData && !transit.stops.length) {
         document.getElementById('schedule').innerHTML = '<div class="error">Bus data not loaded.</div>';
+        return;
+    }
+
+    if (!Object.keys(lines).length) {
+        document.getElementById('schedule').innerHTML = '<div class="error">MTR data not loaded.</div>';
         return;
     }
 
@@ -565,7 +855,6 @@ window.onload = async () => {
 
     displaySortedRoutes();
 };
-
 function displaySortedRoutes() {
     const opts = document.getElementById('route-options');
     opts.innerHTML = '';
@@ -574,7 +863,19 @@ function displaySortedRoutes() {
 
     currentRoutes.slice(0, 7).forEach((route, i) => {
         const arrivalTime = new Date(now.getTime() + route.estimatedTime * 60000).toTimeString().slice(0, 5);
-        const transfers = route.type === 'Bus-to-MTR' || route.type === 'MTR-to-Bus' ? 1 : 0;
+        
+        // Calculate proper number of transfers
+        let transfers = 0;
+        
+        // Count MTR line changes
+        if (route.mtrRoute && route.mtrRoute.route.length > 1) {
+            transfers += route.mtrRoute.route.length - 1;
+        }
+        
+        // Add bus transfer if applicable
+        if (route.type === 'Bus-to-MTR' || route.type === 'MTR-to-Bus') {
+            transfers += 1;
+        }
 
         const headerHtml = `
             <div class="route-header">
