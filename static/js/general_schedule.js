@@ -205,12 +205,16 @@ class RouteFinder {
             }
         }
         return routes;
-    }async findMixedRoute(start, end, startType, endType) {
+    }
+    
+    
+    
+    
+    async findMixedRoute(start, end, startType, endType) {
         const routes = [];
         let startPoint = startType === 'bus' ? this.transit.findStop(start) : this.mtrStations.find(s => s.value === start);
         let endPoint = endType === 'bus' ? this.transit.findStop(end) : this.mtrStations.find(s => s.value === end);
     
-        // Validate start and end points
         if (!startPoint || !endPoint) {
             console.error('Invalid start or end point:', start, end);
             document.getElementById('schedule').innerHTML = '<div class="error">Invalid start or end point selected.</div>';
@@ -220,38 +224,73 @@ class RouteFinder {
         const provider = startType === 'bus' ? startPoint?.provider : (endType === 'bus' ? endPoint?.provider : null);
     
         if (startType === 'bus' && endType === 'mtr') {
-            // Existing Bus-to-MTR logic remains unchanged
-            // ...
+            // Step 1: Find the nearest MTR station to the start bus stop (for boarding)
+            const nearestMTRToStart = this.stopToNearestMTR.get(startPoint.stop);
+            if (!nearestMTRToStart?.station || nearestMTRToStart.distance > 1000) {
+                console.warn('No suitable nearby MTR station found for start bus stop:', startPoint.stop);
+                return routes;
+            }
+    
+            // Step 2: Find bus stops near the interchange MTR station
+            const nearbyBusStopsAtInterchange = this.transit.getNearbyStops(nearestMTRToStart.station, 1500).map(s => s.stop);
+    
+            // Step 3: Find bus routes from start bus stop to nearby bus stops
+            const startBusStopIdArray = [startPoint.stop];
+            const busRoutes = this.findBusRoutes(startBusStopIdArray, nearbyBusStopsAtInterchange, provider);
+    
+            if (!busRoutes.length) {
+                console.warn('No bus routes found from start to interchange:', startPoint.stop, nearbyBusStopsAtInterchange);
+                return routes;
+            }
+    
+            // Step 4: Fetch MTR route from interchange to destination
+            const mtrResponse = await this.fetchMTRSchedule(nearestMTRToStart.station.value, end);
+            if (mtrResponse.error || !mtrResponse.bestRoute) {
+                console.error('MTR schedule fetch failed for Bus-to-MTR leg:', nearestMTRToStart.station.value, '->', end);
+                return routes;
+            }
+    
+            // Step 5: Construct the mixed Bus-to-MTR routes
+            const mtrTime = this.calculateMTRTime(mtrResponse.bestRoute);
+            const walkTime = calculateWalkDuration(nearestMTRToStart.distance);
+    
+            busRoutes.forEach(busRoute => {
+                const busTime = busRoute.stopCount * 2; // Rough estimate
+                routes.push({
+                    type: 'Bus-to-MTR',
+                    busRoute,
+                    mtrRoute: mtrResponse.bestRoute,
+                    walkingDistance: nearestMTRToStart.distance,
+                    estimatedTime: busTime + walkTime + mtrTime,
+                    schedules: mtrResponse.schedules,
+                    currentStation: startPoint.stop,
+                    interchangeStation: nearestMTRToStart.station.value,
+                    destinationStation: end
+                });
+            });
         } else if (startType === 'mtr' && endType === 'bus') {
-            // Step 1: Find the nearest MTR station to the target bus stop
+            // Existing MTR-to-Bus logic (already working)
             const nearestMTRToTarget = this.stopToNearestMTR.get(endPoint.stop);
             if (!nearestMTRToTarget?.station || nearestMTRToTarget.distance > 1000) {
                 console.warn('No suitable nearby MTR station found for end bus stop:', endPoint.stop);
                 return routes;
             }
     
-            // Step 2: Fetch MTR route from start to the interchange MTR station
             const mtrResponse = await this.fetchMTRSchedule(start, nearestMTRToTarget.station.value);
             if (mtrResponse.error || !mtrResponse.bestRoute) {
                 console.error('MTR schedule fetch failed for MTR-to-Bus leg:', start, '->', nearestMTRToTarget.station.value);
                 return routes;
             }
     
-            // Calculate MTR travel time and walking time
             const mtrTime = this.calculateMTRTime(mtrResponse.bestRoute);
             const walkTime = calculateWalkDuration(nearestMTRToTarget.distance);
     
-            // Step 3: Find bus stops near the interchange MTR station
             const nearbyBusStopsAtInterchange = this.transit.getNearbyStops(nearestMTRToTarget.station, 1500).map(s => s.stop);
-            
-    
-            // Step 4: Find bus routes from nearby bus stops to the target bus stop
             const finalBusStopIdArray = [endPoint.stop];
             const busRoutes = this.findBusRoutes(nearbyBusStopsAtInterchange, finalBusStopIdArray, provider);
     
-            // Step 5: Construct the mixed MTR-to-Bus routes
             busRoutes.forEach(busRoute => {
-                const busTime = busRoute.stopCount * 2; // Rough estimate: 2 minutes per stop
+                const busTime = busRoute.stopCount * 2;
                 routes.push({
                     type: 'MTR-to-Bus',
                     mtrRoute: mtrResponse.bestRoute,
@@ -983,109 +1022,93 @@ window.onload = async () => {
          }
      });
 };
+// --- (Keep existing code: Constants, TransitData, RouteFinder, TimelineGenerator) ---
+// ...
 
-
-
-
-
+// --- Modify: Helper function to generate the *NEW* detailed sequence HTML ---
 function generateDetailedSequenceHtml(route) {
     const items = TimelineGenerator.getItems(route);
-    if (!items || items.length === 0) return '<span class="sequence-item arrived">Arrived</span>';
-
     let sequenceHtml = '';
-    let lastAddedTag = null; // Keep track of the tag itself (e.g., "AEL", "Walk")
-    let lastItemWasStation = false; // Track if the last added element was a station name
+    let lastAddedType = null; // 'tag' or 'station'
 
-    // --- Determine Start Tag ---
-    const firstItem = items[0];
-    let startTag = null;
-    let startTagClass = '';
-    if (firstItem.isStart) {
-         if (firstItem.mode === 'Bus') {
-            startTag = firstItem.provider?.toUpperCase() || 'BUS';
-            startTagClass = `line-tag ${firstItem.provider?.toLowerCase() || 'bus'}`;
-        } else if (firstItem.mode === 'MTR' && firstItem.line) {
-            startTag = firstItem.line;
-            startTagClass = `line-tag ${firstItem.line.toLowerCase()}`;
-        } else if (firstItem.mode === 'Walk') {
-             startTag = 'Walk'; startTagClass = 'line-tag walk';
-        }
-        if(startTag){
-             sequenceHtml += `<span class="sequence-item ${startTagClass}">${startTag}</span>`;
-             lastAddedTag = startTag;
-             lastItemWasStation = false;
-        }
-    }
+    items.forEach((item, index) => {
+        if (item.type === 'point') {
+            // --- Add Starting Tag (if applicable) ---
+            if (item.isStart) {
+                let startTag = null;
+                let startTagClass = '';
+                if (item.mode === 'Bus') {
+                    startTag = item.provider?.toUpperCase() || 'BUS';
+                    startTagClass = `line-tag ${item.provider?.toLowerCase() || 'bus'}`;
+                } else if (item.mode === 'MTR' && item.line) {
+                    startTag = item.line;
+                    startTagClass = `line-tag ${item.line.toLowerCase()}`;
+                } // No tag for Walk start unless it's the only segment
 
-    // --- Iterate through the rest of the items ---
-    for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        let currentTag = null;
-        let currentTagClass = '';
-        let stationName = null;
+                if (startTag) {
+                    sequenceHtml += `<span class="sequence-item ${startTagClass}">${startTag}</span>`;
+                    lastAddedType = 'tag';
+                }
+            }
 
-        // --- Identify Station Name (only for MTR interchanges/stops in sequence) ---
-        if (item.type === 'point' && item.mode === 'MTR' && !item.isStart) {
-             // Check if it's the final destination MTR station for the *entire route*
-             let isFinalOverallMTRDest = false;
-             if ( (route.type === 'MTR' || route.type === 'Bus-to-MTR') && route.destinationStation === item.line ) {
-                 // This logic might be slightly off - destinationStation is the code, item.line is the line code
-                 // Let's compare item.name with the resolved destination name
-                 if (item.name === TimelineGenerator.getMTRName(route.destinationStation)){
-                      isFinalOverallMTRDest = true;
+            // --- Add Station Name (if it's an interchange or end point) ---
+            // Only add station name if the last thing added was a tag
+            if (lastAddedType === 'tag' && (!item.isStart || sequenceHtml === '')) { // Add start point name if no tag was added before it
+                 sequenceHtml += `<span class="sequence-station-name">${item.name}</span>`;
+                 lastAddedType = 'station';
+            } else if (item.interchange || item.isEnd || (item.mode === 'Bus' && !item.isStart)) { // Add intermediate bus stop, interchange, or end point name
+                 // Check if previous item was a segment to add the station name
+                 const prevItem = items[index - 1];
+                 if (prevItem && prevItem.type === 'segment' && lastAddedType !== 'station') {
+                      sequenceHtml += `<span class="sequence-station-name">${item.name}</span>`;
+                      lastAddedType = 'station';
+                 } else if (item.isEnd && lastAddedType !== 'station') { // Ensure end station name is added
+                      sequenceHtml += `<span class="sequence-station-name">${item.name}</span>`;
+                      lastAddedType = 'station';
                  }
+            }
+
+             // --- Add Tag for Departing Line/Mode (after station name) ---
+             if (lastAddedType === 'station' && !item.isEnd) {
+                  let nextTag = null;
+                  let nextTagClass = '';
+                  const nextSegment = items.find((seg, segIdx) => seg.type === 'segment' && segIdx > index); // Find next segment
+
+                  if (item.interchange && item.toLine) { // MTR interchange
+                       nextTag = item.toLine;
+                       nextTagClass = `line-tag ${item.toLine.toLowerCase()}`;
+                  } else if (nextSegment) { // Look at the mode of the next segment
+                       if (nextSegment.mode === 'Bus') {
+                           nextTag = nextSegment.provider?.toUpperCase() || 'BUS';
+                           nextTagClass = `line-tag ${nextSegment.provider?.toLowerCase() || 'bus'}`;
+                       } else if (nextSegment.mode === 'Walk') {
+                           nextTag = 'Walk';
+                           nextTagClass = 'line-tag walk';
+                       } else if (nextSegment.mode === 'MTR' && nextSegment.lines && nextSegment.lines[0]) {
+                           nextTag = nextSegment.lines[0];
+                           nextTagClass = `line-tag ${nextSegment.lines[0].toLowerCase()}`;
+                       }
+                  }
+
+                  if (nextTag) {
+                       sequenceHtml += `<span class="sequence-item ${nextTagClass}">${nextTag}</span>`;
+                       lastAddedType = 'tag';
+                  }
              }
-            if (!isFinalOverallMTRDest) { // Only consider if not the final destination
-                 stationName = item.name;
-            }
+
+
         }
+        // Segments themselves don't add direct output here, points determine structure
+    });
 
-        // --- Identify Tag (usually represents the mode/line *leaving* this point or the mode of a segment) ---
-        if (item.type === 'point' && item.interchange && item.toLine) { // MTR Interchange
-            currentTag = item.toLine;
-            currentTagClass = `line-tag ${item.toLine.toLowerCase()}`;
-        } else {
-            // Look ahead to the next *segment* to determine the tag
-            const nextSegment = items.find((seg, segIdx) => seg.type === 'segment' && segIdx >= i); // Find segment at or after current index
-            if (nextSegment) {
-                 if (nextSegment.mode === 'Bus') {
-                    currentTag = nextSegment.provider?.toUpperCase() || 'BUS';
-                    currentTagClass = `line-tag ${nextSegment.provider?.toLowerCase() || 'bus'}`;
-                 } else if (nextSegment.mode === 'Walk') {
-                    currentTag = 'Walk'; currentTagClass = 'line-tag walk';
-                 } else if (nextSegment.mode === 'MTR' && nextSegment.lines && nextSegment.lines[0]) {
-                    currentTag = nextSegment.lines[0];
-                    currentTagClass = `line-tag ${nextSegment.lines[0].toLowerCase()}`;
-                 }
-            }
-        }
-
-
-        // --- Append Station Name (if identified and previous item was a tag) ---
-         if (stationName && !lastItemWasStation) {
-            sequenceHtml += `<span class="sequence-station-name">${stationName}</span>`;
-            lastItemWasStation = true;
-         }
-
-        // --- Append Tag (if identified and different from last tag OR if a station was just added) ---
-         if (currentTag && (currentTag !== lastAddedTag || lastItemWasStation)) {
-            sequenceHtml += `<span class="sequence-item ${currentTagClass}">${currentTag}</span>`;
-            lastAddedTag = currentTag;
-            lastItemWasStation = false; // Reset station flag after adding a tag
-         }
-    }
-
-
-    // --- Add final "Arrived" tag ---
-    // Remove trailing station name if it somehow got added right before end
-    if (lastItemWasStation) {
-        sequenceHtml = sequenceHtml.substring(0, sequenceHtml.lastIndexOf('<span class="sequence-station-name">'));
-    }
+    // Add final "Arrived" tag
     sequenceHtml += `<span class="sequence-item arrived">Arrived</span>`;
+
+    // Clean up potential duplicate arrows if structure is slightly off
+    sequenceHtml = sequenceHtml.replace(/(::after\s*){2,}/g, '$1'); // Basic cleanup, CSS handles most
 
     return sequenceHtml;
 }
-
 
 
 // --- Modify displayRouteSummaries ---
@@ -1193,6 +1216,7 @@ function showSummaries() {
 }
 
 
+
 // Add event listener for the backdrop *once* on load
 window.addEventListener('load', () => {
     const backdrop = document.getElementById('details-backdrop');
@@ -1201,7 +1225,6 @@ window.addEventListener('load', () => {
             showSummaries(); // Clicking backdrop closes details
         });
     }
-
 
     showSummaries(); // Call this at the end of onload after setting up listeners
 });
