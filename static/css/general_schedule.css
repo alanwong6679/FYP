@@ -78,7 +78,7 @@ body {
     /* Start from center of current icon */
     top: 31px; /* Approx center: 22px (icon top) + 9px (half icon height) */
     /* Extend down to center of next icon */
-    bottom: -31px; /* Approx negative icon center offset */
+    bottom: -56px; /* Approx negative icon center offset */
     left: 15px; /* Position line in the center of original 30px area */
     transform: translateX(-50%);
     background-color: #ccc; /* Default color */
@@ -104,7 +104,7 @@ body {
     left: calc(15px - 1.5px); /* Center dashed line */
     transform: translateX(0);
     top: 31px;
-    bottom: -31px;
+    bottom: -56px;
 }
 
 /* Station/Segment Markers */
