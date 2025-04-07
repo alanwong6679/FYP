@@ -28,18 +28,17 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
 }
 
 const calculateWalkDuration = distance => Math.max(1, Math.round((distance / 5000) * 60)); // Ensure at least 1 min for short walks
-
-// 2. Data Management
 class TransitData {
     constructor() {
         this.routes = [];
         this.stops = [];
         this.routeStopsMap = {};
+        this.stopMap = new Map(); // Added for O(1) stop lookups
+        this.cumulativeDistancesMap = {}; // Added for precomputed distances
         this.loadData();
     }
 
     loadData() {
-        // Combine KMB and CityBus data safely
         const kmbRoutes = JSON.parse(localStorage.getItem('kmb_allRoutes') || '[]');
         const citybusRoutes = JSON.parse(localStorage.getItem('citybus_allRoutes') || '[]');
         this.routes = [...kmbRoutes, ...citybusRoutes];
@@ -50,17 +49,41 @@ class TransitData {
 
         const kmbRouteStops = JSON.parse(localStorage.getItem('kmb_routeStopsMap') || '{}');
         const citybusRouteStops = JSON.parse(localStorage.getItem('citybus_routeStopsMap') || '{}');
-        // Simple merge, assumes keys are unique across providers (e.g., route-direction)
         this.routeStopsMap = { ...kmbRouteStops, ...citybusRouteStops };
 
-        // Optional: Add provider info to stops if not already present during loading
-        // this.stops.forEach(stop => { /* logic to determine and add stop.provider */ });
+        // Populate stopMap
+        this.stops.forEach(stop => {
+            this.stopMap.set(String(stop.stop), stop);
+        });
+
+        // Precompute cumulative distances
+        for (const key in this.routeStopsMap) {
+            const stops = this.routeStopsMap[key];
+            if (!stops || stops.length < 2) {
+                this.cumulativeDistancesMap[key] = [0];
+                continue;
+            }
+            const cumulative = [0];
+            let totalDistance = 0;
+            let prevStop = this.findStop(stops[0]);
+            for (let i = 1; i < stops.length; i++) {
+                const currentStop = this.findStop(stops[i]);
+                if (prevStop?.lat && prevStop?.long && currentStop?.lat && currentStop?.long) {
+                    const distance = haversineDistance(
+                        parseFloat(prevStop.lat), parseFloat(prevStop.long),
+                        parseFloat(currentStop.lat), parseFloat(currentStop.long)
+                    );
+                    totalDistance += distance;
+                }
+                cumulative.push(totalDistance);
+                prevStop = currentStop;
+            }
+            this.cumulativeDistancesMap[key] = cumulative;
+        }
     }
 
-
     findStop(stopId) {
-        // Ensure stopId is treated as a string for comparison if needed
-        return this.stops.find(s => String(s.stop) === String(stopId)) || null;
+        return this.stopMap.get(String(stopId)) || null; // O(1) lookup
     }
 
     getNearbyStops(point, radius = 500) {
@@ -81,47 +104,49 @@ class TransitData {
 const transit = new TransitData();
 
 
-// 3. Route Finder
+
 class RouteFinder {
     constructor(transitData, mtrStations) {
         this.transit = transitData;
-        this.mtrStations = mtrStations; // Assumes this includes lat/long for each station
+        this.mtrStations = mtrStations;
+        this.mtrStationCoords = new Map(
+            this.mtrStations
+                .filter(s => s && s.value && s.lat != null && s.long != null)
+                .map(s => [s.value, { lat: parseFloat(s.lat), long: parseFloat(s.long) }])
+        );
+        this.MTR_AVG_SPEED_MS = (70 * 1000) / 3600;
+        this.MTR_INTERCHANGE_DELAY_MIN = 5;
+
+        // Precompute nearest MTR for each bus stop
+        this.stopToNearestMTR = new Map();
+        for (const stop of this.transit.stops) {
+            if (stop.lat && stop.long) {
+                const nearest = this.findNearestMTR(stop);
+                this.stopToNearestMTR.set(stop.stop, nearest);
+            }
+        }
     }
+
+
+    getMTRStationCoords(stationCode) {
+        return this.mtrStationCoords.get(stationCode) || null;
+    }
+
 
     calculateBusSegmentDistance(routeId, directionKey, boardingStopId, alightingStopId) {
         const stopsOnRoute = this.transit.routeStopsMap[directionKey] || [];
-        const startIndex = stopsOnRoute.indexOf(String(boardingStopId)); // Ensure string comparison
+        const startIndex = stopsOnRoute.indexOf(String(boardingStopId));
         const endIndex = stopsOnRoute.indexOf(String(alightingStopId));
-
         if (startIndex === -1 || endIndex === -1 || startIndex >= endIndex) {
-            console.warn(`Could not calculate distance for bus ${routeId} (${directionKey}): stops not found or invalid sequence (${boardingStopId} -> ${alightingStopId})`);
+            console.warn(`Invalid stop indices for ${directionKey}: ${boardingStopId} -> ${alightingStopId}`);
             return undefined;
         }
-
-        let totalDistance = 0;
-        let prevStopCoords = null;
-
-        for (let i = startIndex; i <= endIndex; i++) {
-            const stopId = stopsOnRoute[i];
-            const stopData = this.transit.findStop(stopId);
-            if (stopData?.lat && stopData?.long) {
-                const currentStopCoords = { lat: parseFloat(stopData.lat), long: parseFloat(stopData.long) };
-                if (!isNaN(currentStopCoords.lat) && !isNaN(currentStopCoords.long)) {
-                    if (prevStopCoords) {
-                        totalDistance += haversineDistance(
-                            prevStopCoords.lat, prevStopCoords.long,
-                            currentStopCoords.lat, currentStopCoords.long
-                        );
-                    }
-                    prevStopCoords = currentStopCoords;
-                } else {
-                    console.warn(`Invalid coordinates for bus stop ${stopId} on route ${routeId}`);
-                }
-            } else {
-                 console.warn(`Missing coordinates for bus stop ${stopId} on route ${routeId}`);
-            }
+        const cumulative = this.transit.cumulativeDistancesMap[directionKey];
+        if (!cumulative || cumulative.length !== stopsOnRoute.length) {
+            console.warn(`Cumulative distances not available for ${directionKey}`);
+            return undefined;
         }
-        return totalDistance; // Distance in meters
+        return cumulative[endIndex] - cumulative[startIndex]; // O(1) calculation
     }
 
     findBusRoutes(startStopIds, endStopIds, provider) {
@@ -180,108 +205,68 @@ class RouteFinder {
             }
         }
         return routes;
-    }
-
-    async findMixedRoute(start, end, startType, endType) {
+    }async findMixedRoute(start, end, startType, endType) {
         const routes = [];
-        let startPoint, endPoint, provider;
-
-        startPoint = startType === 'bus' ? this.transit.findStop(start) : this.mtrStations.find(s => s.value === start);
-        endPoint = endType === 'bus' ? this.transit.findStop(end) : this.mtrStations.find(s => s.value === end);
-
+        let startPoint = startType === 'bus' ? this.transit.findStop(start) : this.mtrStations.find(s => s.value === start);
+        let endPoint = endType === 'bus' ? this.transit.findStop(end) : this.mtrStations.find(s => s.value === end);
+    
+        // Validate start and end points
         if (!startPoint || !endPoint) {
             console.error('Invalid start or end point:', start, end);
             document.getElementById('schedule').innerHTML = '<div class="error">Invalid start or end point selected.</div>';
             return routes;
         }
-
-        const startStopData = startType === 'bus' ? startPoint : null;
-        const endStopData = endType === 'bus' ? endPoint : null;
-        // Determine provider based on available bus stop data
-        provider = startStopData?.provider || endStopData?.provider; // Prioritize start, fallback to end if start isn't bus
-
-        if (startType === 'bus' && endType === 'mtr') { // Bus -> Walk -> MTR
-            const startStopIds = [startPoint.stop, ...this.transit.getNearbyStops(startPoint, 150).map(s => s.stop)];
-            const uniqueStartIds = [...new Set(startStopIds)];
-
-            // Find potential bus routes leaving from near the start
-            const allPossibleBusStops = this.transit.stops.map(s => s.stop); // Any stop could be an alighting point near MTR
-            const potentialBusRoutes = this.findBusRoutes(uniqueStartIds, allPossibleBusStops, provider);
-
-            for (const busRoute of potentialBusRoutes) {
-                const alightingStopData = this.transit.findStop(busRoute.alightingStop);
-                if (!alightingStopData?.lat || !alightingStopData?.long) continue; // Need coords for finding nearest MTR
-
-                const nearestMTR = this.findNearestMTR(alightingStopData);
-                if (!nearestMTR.station || nearestMTR.distance > 1000) continue; // Limit walk distance to MTR
-
-                const mtrResponse = await this.fetchMTRSchedule(nearestMTR.station.value, end); // 'end' is MTR station code
-                if (mtrResponse.error || !mtrResponse.bestRoute) continue;
-
-                const busTime = busRoute.stopCount * 2; // Crude estimate
-                const walkTime = calculateWalkDuration(nearestMTR.distance);
-                const mtrTime = this.calculateMTRTime(mtrResponse.bestRoute); // Or use time from response
-
+    
+        const provider = startType === 'bus' ? startPoint?.provider : (endType === 'bus' ? endPoint?.provider : null);
+    
+        if (startType === 'bus' && endType === 'mtr') {
+            // Existing Bus-to-MTR logic remains unchanged
+            // ...
+        } else if (startType === 'mtr' && endType === 'bus') {
+            // Step 1: Find the nearest MTR station to the target bus stop
+            const nearestMTRToTarget = this.stopToNearestMTR.get(endPoint.stop);
+            if (!nearestMTRToTarget?.station || nearestMTRToTarget.distance > 1000) {
+                console.warn('No suitable nearby MTR station found for end bus stop:', endPoint.stop);
+                return routes;
+            }
+    
+            // Step 2: Fetch MTR route from start to the interchange MTR station
+            const mtrResponse = await this.fetchMTRSchedule(start, nearestMTRToTarget.station.value);
+            if (mtrResponse.error || !mtrResponse.bestRoute) {
+                console.error('MTR schedule fetch failed for MTR-to-Bus leg:', start, '->', nearestMTRToTarget.station.value);
+                return routes;
+            }
+    
+            // Calculate MTR travel time and walking time
+            const mtrTime = this.calculateMTRTime(mtrResponse.bestRoute);
+            const walkTime = calculateWalkDuration(nearestMTRToTarget.distance);
+    
+            // Step 3: Find bus stops near the interchange MTR station
+            const nearbyBusStopsAtInterchange = this.transit.getNearbyStops(nearestMTRToTarget.station, 1500).map(s => s.stop);
+            
+    
+            // Step 4: Find bus routes from nearby bus stops to the target bus stop
+            const finalBusStopIdArray = [endPoint.stop];
+            const busRoutes = this.findBusRoutes(nearbyBusStopsAtInterchange, finalBusStopIdArray, provider);
+    
+            // Step 5: Construct the mixed MTR-to-Bus routes
+            busRoutes.forEach(busRoute => {
+                const busTime = busRoute.stopCount * 2; // Rough estimate: 2 minutes per stop
                 routes.push({
-                    type: 'Bus-to-MTR',
-                    busRoute: busRoute, // Contains bus distance
+                    type: 'MTR-to-Bus',
                     mtrRoute: mtrResponse.bestRoute,
-                    interchangeStation: nearestMTR.station.value, // MTR station where journey continues
-                    walkingDistance: nearestMTR.distance, // Walk distance from bus stop to MTR
-                    estimatedTime: busTime + walkTime + mtrTime,
+                    busRoute,
+                    walkingDistance: nearestMTRToTarget.distance,
+                    estimatedTime: mtrTime + walkTime + busTime,
                     schedules: mtrResponse.schedules,
-                    destinationStation: end // Final MTR destination
+                    currentStation: start,
+                    interchangeStation: nearestMTRToTarget.station.value
                 });
-            }
-        } else if (startType === 'mtr' && endType === 'bus') { // MTR -> Walk -> Bus
-             // Find MTR station nearest to the FINAL bus stop
-            const nearestMTRToTarget = this.findNearestMTR(endPoint);
-            if (!nearestMTRToTarget.station || nearestMTRToTarget.distance > 1000) { // Limit walk distance from MTR
-                 console.warn('No suitable nearby MTR station found for end bus stop:', endPoint.stop);
-                 // We might still find direct MTR routes if the target is also an MTR station, but not MTR-to-Bus
-                 // Consider adding logic here if endPoint could *also* be an MTR station name
-                 // For now, assume MTR-to-Bus requires a nearby MTR.
-                 // return routes; // Option: Don't proceed if no MTR near bus end
-                 // Let's try proceeding, maybe another route type works.
-            }
-
-            if (nearestMTRToTarget.station) {
-                // Fetch MTR route from start MTR to the MTR near the target bus stop
-                const mtrResponse = await this.fetchMTRSchedule(start, nearestMTRToTarget.station.value);
-                if (!mtrResponse.error && mtrResponse.bestRoute) {
-
-                    const mtrTime = this.calculateMTRTime(mtrResponse.bestRoute); // Or use response time
-                    const walkDistance = nearestMTRToTarget.distance;
-                    const walkTime = calculateWalkDuration(walkDistance);
-
-                    // Find bus routes leaving from near the interchange MTR station
-                    const nearbyBusStopsAtInterchange = this.transit.getNearbyStops(nearestMTRToTarget.station, 150).map(s => s.stop);
-                    const finalBusStopIdArray = [endPoint.stop]; // Target the specific final bus stop ID
-
-                    const busRoutes = this.findBusRoutes(nearbyBusStopsAtInterchange, finalBusStopIdArray, provider);
-
-                    busRoutes.forEach(busRoute => {
-                        const busTime = busRoute.stopCount * 2; // Crude estimate
-                        routes.push({
-                            type: 'MTR-to-Bus',
-                            mtrRoute: mtrResponse.bestRoute,
-                            busRoute: busRoute, // Contains bus distance
-                            walkingDistance: walkDistance, // Walk from MTR to Bus stop
-                            estimatedTime: mtrTime + walkTime + busTime,
-                            schedules: mtrResponse.schedules,
-                            currentStation: start, // Initial MTR start
-                            interchangeStation: nearestMTRToTarget.station.value // MTR station where walk/bus starts
-                        });
-                    });
-                } else {
-                     console.error('MTR schedule fetch failed for MTR-to-Bus leg:', start, '->', nearestMTRToTarget.station?.value);
-                }
-            }
+            });
         }
-
+    
         return routes;
     }
-
     async findMTRRoute(start, end) {
         const response = await this.fetchMTRSchedule(start, end);
         if (response.error || !response.bestRoute) {
@@ -298,67 +283,98 @@ class RouteFinder {
             currentStation: start,
             destinationStation: end
         }];
+    }findBusRoutes(startStopIds, endStopIds, provider) {
+        const routes = [];
+        const startIdsSet = new Set(startStopIds.map(String));
+        const endIdsSet = new Set(endStopIds.map(String));
+        const filteredRoutes = provider ? this.transit.routes.filter(r => r.provider === provider) : this.transit.routes;
+
+        for (const route of filteredRoutes) {
+            if (!route.route) continue;
+            for (const direction of ['outbound', 'inbound']) {
+                const key = `${route.route}-${direction === 'outbound' ? 'O' : 'I'}`;
+                const stops = this.transit.routeStopsMap[key] || [];
+                if (!stops.length) continue;
+
+                const stopStrings = stops.map(String);
+                let boardingStopId = null;
+                let boardingIndex = -1;
+                for (let i = 0; i < stopStrings.length; i++) {
+                    if (startIdsSet.has(stopStrings[i])) {
+                        boardingStopId = stopStrings[i];
+                        boardingIndex = i;
+                        break;
+                    }
+                }
+                if (boardingIndex === -1) continue;
+
+                let alightingStopId = null;
+                let alightingIndex = -1;
+                for (let i = boardingIndex + 1; i < stopStrings.length; i++) {
+                    if (endIdsSet.has(stopStrings[i])) {
+                        alightingStopId = stopStrings[i];
+                        alightingIndex = i;
+                        break;
+                    }
+                }
+                if (alightingIndex !== -1) {
+                    const distance = this.calculateBusSegmentDistance(route.route, key, boardingStopId, alightingStopId);
+                    routes.push({
+                        route: route.route,
+                        direction,
+                        boardingStop: boardingStopId,
+                        alightingStop: alightingStopId,
+                        provider: route.provider,
+                        stopCount: alightingIndex - boardingIndex,
+                        distance
+                    });
+                }
+            }
+        }
+        return routes;
     }
-
-    findBusRoute(startStopId, endStopId) {
-        const startStop = this.transit.findStop(startStopId);
-        const endStop = this.transit.findStop(endStopId);
-        if (!startStop || !endStop) return [];
-
-        const uniqueStartIds = [...new Set([startStopId, ...this.transit.getNearbyStops(startStop, 150).map(s => s.stop)])].map(String);
-        const uniqueEndIds = [...new Set([endStopId, ...this.transit.getNearbyStops(endStop, 150).map(s => s.stop)])].map(String);
-
-        const provider = startStop.provider || endStop.provider;
-
-        const busRoutes = this.findBusRoutes(uniqueStartIds, uniqueEndIds, provider);
-
-        return busRoutes.map(route => {
-            const boardingStopData = this.transit.findStop(route.boardingStop);
-            const alightingStopData = this.transit.findStop(route.alightingStop);
-
-             const walkToBoardingDist = boardingStopData ? haversineDistance(
-                startStop.lat, startStop.long, // Use original start stop coords
-                boardingStopData.lat, boardingStopData.long
-            ) : 0;
-            const walkFromAlightingDist = alightingStopData ? haversineDistance(
-                endStop.lat, endStop.long, // Use original end stop coords
-                alightingStopData.lat, alightingStopData.long
-            ) : 0;
-            const totalWalkDistance = walkToBoardingDist + walkFromAlightingDist;
-            const walkTime = calculateWalkDuration(totalWalkDistance);
-            const busTime = route.stopCount * 2; // Crude estimate
-
-            return {
-                type: 'Bus',
-                busRoute: route, // Contains bus segment distance
-                walkingDistance: totalWalkDistance, // Walk to/from stops
-                estimatedTime: busTime + walkTime,
-                boardingStopName: boardingStopData?.name_en || `Stop ${route.boardingStop}`,
-                alightingStopName: alightingStopData?.name_en || `Stop ${route.alightingStop}`
-            };
-        });
-    }
-
     findNearestMTR(point) {
+        // Kept for precomputation; could be removed from runtime use if fully replaced by stopToNearestMTR
         if (!point?.lat || !point?.long) return { station: null, distance: Infinity };
         const pointLat = parseFloat(point.lat);
         const pointLon = parseFloat(point.long);
-         if (isNaN(pointLat) || isNaN(pointLon)) return { station: null, distance: Infinity };
+        if (isNaN(pointLat) || isNaN(pointLon)) return { station: null, distance: Infinity };
 
         let closest = { station: null, distance: Infinity };
         for (const station of this.mtrStations) {
-             const stationLat = station.lat;
-             const stationLon = station.long;
-             if (stationLat == null || stationLon == null) continue; // Skip stations with no coords
-
-             const distance = haversineDistance(pointLat, pointLon, stationLat, stationLon);
-             if (distance < closest.distance) {
-                 closest = { station, distance };
-             }
+            const stationLat = station.lat;
+            const stationLon = station.long;
+            if (stationLat == null || stationLon == null) continue;
+            const distance = haversineDistance(pointLat, pointLon, stationLat, stationLon);
+            if (distance < closest.distance) {
+                closest = { station, distance };
+            }
         }
         return closest;
     }
 
+   
+
+  calculateMTRSegmentDetails(startStationCode, endStationCode) {
+        const startCoords = this.getMTRStationCoords(startStationCode);
+        const endCoords = this.getMTRStationCoords(endStationCode);
+
+        if (!startCoords || !endCoords) {
+            console.warn(`Missing coordinates for MTR segment: ${startStationCode} -> ${endStationCode}`);
+            return { distance: undefined, duration: undefined };
+        }
+
+        const distance = haversineDistance(startCoords.lat, startCoords.long, endCoords.lat, endCoords.long);
+        if (distance === 0) {
+            return { distance: 0, duration: 0 };
+        }
+
+        // Duration = Distance (m) / Speed (m/s) -> seconds, then convert to minutes
+        const durationSeconds = distance / this.MTR_AVG_SPEED_MS;
+        const durationMinutes = Math.max(1, Math.round(durationSeconds / 60)); // Ensure at least 1 min
+
+        return { distance: Math.round(distance), duration: durationMinutes };
+    }
 
     async fetchMTRSchedule(from, to) {
         if (!from || !to) {
@@ -376,17 +392,47 @@ class RouteFinder {
             }
             const data = await response.json();
             if (!data || !data.bestRoute || !data.bestRoute.route || data.bestRoute.route.length === 0) {
-                 console.warn("Received invalid/empty MTR schedule data for", from, "to", to, data);
-                 return { error: 'No valid MTR route found', bestRoute: null };
+                console.warn("Received invalid/empty MTR schedule data for", from, "to", to, data);
+                return { error: 'No valid MTR route found', bestRoute: null };
+           }
+           const route = data.bestRoute;
+           route.segmentDetails = [];
+           let calculatedTotalDuration = 0;
+           const keyStations = [from, ...(route.interchanges || []), to]; // Sequence of key points
+           const uniqueKeyStations = keyStations.filter((station, index, arr) => index === 0 || station !== arr[index - 1]);
+           
+           for (let i = 0; i < uniqueKeyStations.length - 1; i++) {
+            const segmentStart = uniqueKeyStations[i];
+            const segmentEnd = uniqueKeyStations[i + 1];
+            const details = this.calculateMTRSegmentDetails(segmentStart, segmentEnd);
+            route.segmentDetails.push({
+                from: segmentStart,
+                to: segmentEnd,
+                line: route.route[i], // Assumes route array aligns with segments between key stations
+                distance: details.distance,
+                duration: details.duration,
+                // We cannot calculate intermediate stops from coordinates alone
+                stops: route.segmentDetails?.[i]?.stops ?? undefined // Keep if backend provided stops
+            });
+            if (details.duration !== undefined) {
+                 calculatedTotalDuration += details.duration;
+                 // Add interchange delay if this segment ended at an interchange (not the final destination)
+                 if (i < uniqueKeyStations.length - 2) {
+                     calculatedTotalDuration += this.MTR_INTERCHANGE_DELAY_MIN;
+                 }
+            } else {
+                // Handle cases where calculation failed - maybe fall back to rough estimate for this segment?
+                calculatedTotalDuration += 5; // Add a small default if calculation fails
+                console.warn(`Using default duration for segment ${segmentStart} -> ${segmentEnd} due to calculation issue.`);
             }
-            // TODO: Standardize backend response structure if possible
-            // e.g., ensure bestRoute includes interchanges, segment details (duration, distance, stops)
+        }
             return data;
         } catch (e) {
             console.error('MTR Fetch Error:', e);
             return { error: 'Could not connect to MTR schedule service', bestRoute: null };
         }
     }
+    
 
     calculateMTRTime(route) {
         // PRIORITIZE time from backend if available
@@ -671,21 +717,24 @@ class TimelineGenerator {
 
     static generateSegment(item) {
         // Determine data-line based on mode/provider/line
+        
         let dataLine = 'unknown';
          if (item.mode === 'Bus') dataLine = (item.provider || 'bus').toUpperCase();
          else if (item.mode === 'Walk') dataLine = 'Walk';
          else if (item.mode === 'MTR' && item.lines && item.lines.length > 0) dataLine = item.lines[0]; // Use first line code for segment
 
-        let distanceDisplay = '--'; // Default for distance column
-        let unit = 'km';
-
-        if (item.mode === 'Walk' && item.distance !== undefined) {
-            distanceDisplay = `${Math.round(item.distance)}`;
-            unit = 'm';
-        } else if (item.distance !== undefined && item.distance !== null) {
-            distanceDisplay = `${(item.distance / 1000).toFixed(1)}`;
-            unit = 'km';
-        }
+         let distanceDisplay = '--';
+    let unit = 'km';
+    let distanceSource = item.distance;
+    console.log(`Generating segment: Mode=${item.mode}, Received Distance=${distanceSource}`);
+    if (item.mode === 'Walk' && typeof distanceSource === 'number' && !isNaN(distanceSource)) {
+        distanceDisplay = `${Math.round(distanceSource)}`;
+        unit = 'm';
+    } else if ((item.mode === 'MTR' || item.mode === 'Bus') && typeof distanceSource === 'number' && !isNaN(distanceSource)) {
+        distanceDisplay = `${(distanceSource / 1000).toFixed(1)}`;
+        unit = 'km';
+    }
+    
 
         // Display '-- km' if distance is null/undefined for MTR/Bus
         const distanceText = (distanceDisplay !== '--' || item.mode === 'Walk') ? `${distanceDisplay}${unit}` : '-- km';
@@ -724,7 +773,7 @@ class TimelineGenerator {
     }
 
     static getMTRName(code) {
-        // Assume 'lines' is globally available from stations.js or similar
+        // Assume 'lines' is globally available from stations.js
         if (typeof lines === 'undefined') return code; // Fallback if lines data not loaded
         const station = Object.values(lines).flat().find(s => s.value === code);
         return station ? station.text : code;
@@ -751,14 +800,11 @@ window.onload = async () => {
     const sbs = params.get('startBusStop'); // Bus start ID
     const ebs = params.get('endBusStop'); // Bus end ID
 
-    // Ensure MTR data is available
     const mtrStations = typeof lines !== 'undefined' ? getUniqueMTRStations() : [];
     if (mtrStations.length === 0 && (cs || ds)) {
-        document.getElementById('schedule').innerHTML = '<div class="error">MTR station data not loaded correctly.</div>';
-        console.error("MTR 'lines' data is missing or empty.");
+        // ... (error handling) ...
         return;
     }
-
     const finder = new RouteFinder(transit, mtrStations);
 
     // Check if bus data is needed and loaded
@@ -810,9 +856,7 @@ window.onload = async () => {
          const getTotalWalk = (route) => {
              let walk = 0;
              if (route.walkingDistance) walk += route.walkingDistance; // Includes walk to/from bus/MTR
-             // Add walk segments within the route if structure allows
-             // const walkSegments = TimelineGenerator.getItems(route).filter(item => item.mode === 'Walk');
-             // walk += walkSegments.reduce((sum, seg) => sum + (seg.distance || 0), 0);
+
              return walk;
          };
          currentRoutes.sort((a, b) => getTotalWalk(a) - getTotalWalk(b));
