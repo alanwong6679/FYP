@@ -139,6 +139,7 @@ form {
 .searchable-select .options div {
     padding: 10px;
     cursor: pointer;
+    color: #000000;
 }
 
 :where([data-theme="dark"]) .searchable-select .options div {
@@ -147,10 +148,12 @@ form {
 
 .searchable-select .options div:hover {
     background-color: #f0f0f0;
+    color: #000000;
 }
 
 :where([data-theme="dark"]) .searchable-select .options div:hover {
     background-color: #555;
+    color: #000000;
 }
 
 .input-change {
