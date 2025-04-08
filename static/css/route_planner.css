@@ -458,3 +458,63 @@ button:hover {
     50% { opacity: 0.6; }
     100% { opacity: 1; }
 }
+.search-history {
+    position: fixed;
+    bottom: 50px; /* Above bottom bar */
+    right: 20px;
+    width: 300px;
+    max-height: 200px;
+    background-color: var(--container-bg);
+    border-radius: 8px;
+    box-shadow: var(--container-shadow);
+    padding: 15px;
+    z-index: 1500; /* Above bottom bar, below modal */
+    overflow-y: auto;
+}
+
+.search-history h3 {
+    font-size: 1.1rem;
+    margin: 0 0 10px 0;
+    color: var(--heading-color);
+}
+
+.history-item {
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    background-color: var(--options-bg);
+    transition: background-color 0.2s ease;
+}
+
+.history-item:hover {
+    background-color: var(--options-hover-bg);
+}
+
+.history-item span {
+    display: block;
+    font-size: 0.95rem;
+    color: var(--text-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.history-item small {
+    font-size: 0.8rem;
+    color: var(--loading-color);
+    display: block;
+    margin-top: 2px;
+}
+
+:where([data-theme="dark"]) .search-history {
+    background-color: var(--container-bg);
+}
+
+:where([data-theme="dark"]) .history-item {
+    background-color: var(--options-bg);
+}
+
+:where([data-theme="dark"]) .history-item:hover {
+    background-color: var(--options-hover-bg);
+}

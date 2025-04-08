@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="/static/css/temperature.css">
     <link rel="stylesheet" href="/static/css/route_planner.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
 </head>
 <body>
     <nav class="sidebar">
@@ -32,7 +33,10 @@
              <em>Dark Mode</em>
          </div>
     </nav>
-
+    <div class="search-history" id="searchHistory">
+        <h3>Recent Searches</h3>
+        <p>No recent searches.</p>
+    </div>
     <div class="main-page-area">
         <div class="container" id="main-content">
             <h1>General Planner</h1>
@@ -452,21 +456,178 @@
             });
         }
 
+// Global variables (ensure these are at the top with your other variables)
+const SEARCH_HISTORY_KEY = 'routeSearchHistory';
+let searchHistory = [];
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            if (typeof initializeNavbar === 'function') {
-                initializeNavbar();
-            } else {
-                console.warn('initializeNavbar function not found from navbar.js');
-            }
-            await initializeData();
-            if (typeof getTemperature === 'function') {
-                 getTemperature();
-             } else {
-                 console.warn('getTemperature function not found from temperature.js');
-             }
-        });
+// Load history from localStorage
+function loadSearchHistory() {
+    const saved = localStorage.getItem(SEARCH_HISTORY_KEY);
+    if (saved) {
+        try {
+            searchHistory = JSON.parse(saved).slice(0, 3);
+            console.log("Loaded search history:", searchHistory);
+        } catch (e) {
+            console.error("Failed to load search history:", e);
+            searchHistory = [];
+        }
+    } else {
+        console.log("No search history found in localStorage.");
+    }
+    displaySearchHistory();
+}
 
+// Save a new search
+function saveSearch(currentId, currentType, currentCompany, destinationId, destinationType, destinationCompany) {
+    console.log("Saving search with:", { currentId, currentType, currentCompany, destinationId, destinationType, destinationCompany });
+    
+    if (!currentId || !destinationId || !currentType || !destinationType) {
+        console.error("Invalid search data, skipping save.");
+        return;
+    }
+
+    const currentText = currentStationInput.value || 'Unknown Start';
+    const destText = destinationStationInput.value || 'Unknown Dest';
+    const searchEntry = {
+        currentId,
+        currentType,
+        currentCompany: currentCompany || '',
+        currentText,
+        destinationId,
+        destinationType,
+        destinationCompany: destinationCompany || '',
+        destinationText: destText,
+        timestamp: Date.now()
+    };
+    
+    // Remove duplicates
+    searchHistory = searchHistory.filter(entry => 
+        !(entry.currentId === currentId && entry.destinationId === destinationId && 
+          entry.currentType === currentType && entry.destinationType === destinationType &&
+          entry.currentCompany === currentCompany && entry.destinationCompany === destinationCompany)
+    );
+    
+    // Add new entry at the start and limit to 3
+    searchHistory.unshift(searchEntry);
+    searchHistory = searchHistory.slice(0, 3);
+    
+    try {
+        localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(searchHistory));
+        console.log("Saved search history:", searchHistory);
+    } catch (e) {
+        console.error("Failed to save search history to localStorage:", e);
+    }
+    displaySearchHistory();
+}
+
+// Display search history
+function displaySearchHistory() {
+    const historyContainer = document.getElementById('searchHistory');
+    if (!historyContainer) {
+        console.error("Search history container not found in DOM.");
+        return;
+    }
+
+    historyContainer.innerHTML = '<h3>Recent Searches</h3>';
+    if (searchHistory.length === 0) {
+        historyContainer.innerHTML += '<p>No recent searches.</p>';
+        return;
+    }
+
+    searchHistory.forEach((entry, index) => {
+        const historyItem = document.createElement('div');
+        historyItem.className = 'history-item';
+        historyItem.dataset.index = index;
+        historyItem.innerHTML = `
+            <span>${entry.currentText} → ${entry.destinationText}</span>
+            <small>(${entry.currentType}${entry.currentCompany ? '-' + entry.currentCompany : ''} to ${entry.destinationType}${entry.destinationCompany ? '-' + entry.destinationCompany : ''})</small>
+        `;
+        historyItem.addEventListener('click', () => repeatSearch(entry));
+        historyContainer.appendChild(historyItem);
+    });
+    console.log("Displayed search history with", searchHistory.length, "entries.");
+}
+
+// Repeat a search
+function repeatSearch(entry) {
+    console.log("Repeating search:", entry);
+    let url = '/general_schedule.html?';
+    if (entry.currentType === 'MTR' && entry.destinationType === 'MTR') {
+        url += `currentStation=${entry.currentId}&destinationStation=${entry.destinationId}`;
+    } else if (entry.currentType === 'Bus' && entry.destinationType === 'MTR') {
+        url += `startBusStop=${entry.currentId}&startCompany=${entry.currentCompany}&destinationStation=${entry.destinationId}`;
+    } else if (entry.currentType === 'MTR' && entry.destinationType === 'Bus') {
+        url += `currentStation=${entry.currentId}&endBusStop=${entry.destinationId}&endCompany=${entry.destinationCompany}`;
+    } else if (entry.currentType === 'Bus' && entry.destinationType === 'Bus') {
+        url += `startBusStop=${entry.currentId}&startCompany=${entry.currentCompany}&endBusStop=${entry.destinationId}&endCompany=${entry.destinationCompany}`;
+    } else {
+        console.error("Invalid search history entry:", entry);
+        return;
+    }
+    window.location.href = url;
+}
+
+// Update the routeForm submit listener
+if (routeForm) {
+    routeForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (!currentStationInput || !destinationStationInput) {
+            console.error("Form inputs not found.");
+            return;
+        }
+
+        const currentType = currentStationInput.dataset.type;
+        const destinationType = destinationStationInput.dataset.type;
+        const currentId = currentStationInput.dataset.value;
+        const destinationId = destinationStationInput.dataset.value;
+        const currentCompany = currentStationInput.dataset.company;
+        const destinationCompany = destinationStationInput.dataset.company;
+
+        console.log("Form submitted with:", { currentId, currentType, currentCompany, destinationId, destinationType, destinationCompany });
+
+        if (!currentId || !destinationId) {
+            alert("Please select both a starting and destination station.");
+            console.warn("Missing start or destination ID.");
+            return;
+        }
+
+        // Save the search before redirecting
+        saveSearch(currentId, currentType, currentCompany, destinationId, destinationType, destinationCompany);
+
+        let url = '/general_schedule.html?';
+        if (currentType === 'MTR' && destinationType === 'MTR') {
+            url += `currentStation=${currentId}&destinationStation=${destinationId}`;
+        } else if (currentType === 'Bus' && destinationType === 'MTR') {
+            url += `startBusStop=${currentId}&startCompany=${currentCompany}&destinationStation=${destinationId}`;
+        } else if (currentType === 'MTR' && destinationType === 'Bus') {
+            url += `currentStation=${currentId}&endBusStop=${destinationId}&endCompany=${destinationCompany}`;
+        } else if (currentType === 'Bus' && destinationType === 'Bus') {
+            url += `startBusStop=${currentId}&startCompany=${currentCompany}&endBusStop=${destinationId}&endCompany=${destinationCompany}`;
+        } else {
+            alert("Invalid combination selected.");
+            console.warn("Invalid route combination.");
+            return;
+        }
+        window.location.href = url;
+    });
+}
+
+
+// Add to DOMContentLoaded event listener
+document.addEventListener('DOMContentLoaded', async () => {
+    if (typeof initializeNavbar === 'function') {
+        initializeNavbar();
+    } else {
+        console.warn('initializeNavbar function not found from navbar.js');
+    }
+    await initializeData();
+    loadSearchHistory(); // Load history on page load
+    if (typeof getTemperature === 'function') {
+        getTemperature();
+    } else {
+        console.warn('getTemperature function not found from temperature.js');
+    }
+});
     </script>
 </body>
 </html>
