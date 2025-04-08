@@ -4,9 +4,9 @@ document.addEventListener('DOMContentLoaded', () => {
     navbar.classList.add('nav-bar');
 
     const title = document.createElement('a');
-    title.href = '/index.html';
+    title.href = '/home.html';
     title.classList.add('nav-title');
-    title.textContent = 'Route Planner';
+    title.textContent = 'HK Transit Edge';
     navbar.appendChild(title);
 
     const buttons = [
@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'news-btn', text: 'News', href: '#', icon: '/static/images/news_icon.png' },
     ];
 
-    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+    const currentPage = window.location.pathname.split('/').pop() || 'home.html';
     let newsModal, newsContent, originalContent = '';
 
     buttons.forEach(buttonData => {
