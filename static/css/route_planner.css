@@ -1,117 +1,202 @@
-/* /static/css/tram_schedule.css */
+/* /static/css/route_planner.css */
+:root {
+    --container-bg: #fff;
+    --container-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    --text-color: #333;
+    --input-border: #ccc;
+    --input-bg: #fff;
+    --input-text: #333;
+    --options-bg: #fff;
+    --options-border: #ccc;
+    --options-hover-bg: #f0f0f0;
+    --options-hover-text: #000;
+    --button-bg: #007bff;
+    --button-hover-bg: #0056b3;
+    --button-text: #fff;
+    --heading-color: #007dc5;
+    --status-button-bg: #28a745;
+    --status-button-hover-bg: #218838;
+    --modal-content-bg: #fff;
+    --modal-text-color: #333;
+    --status-row-border: #eee;
+    --link-color: #007bff;
+    --boarding-color: #007bff;
+    --alighting-color: #dc3545;
+    --bottom-bar-bg: rgba(51, 51, 51, 0.9);
+    --bottom-bar-text: white;
+    --loading-color: #666;
+    --swap-button-bg: var(--container-bg);
+    --swap-button-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    /* Add accent color for active mode */
+    --primary-accent-color: #007bff;
+    --mode-button-text: #555;
+    --mode-button-active-text: var(--primary-accent-color);
+    --mode-button-active-border: var(--primary-accent-color);
+}
+
+:where([data-theme="dark"]) {
+    --container-bg: #333;
+    --container-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    --text-color: #e0e0e0;
+    --input-border: #666;
+    --input-bg: #444;
+    --input-text: #e0e0e0;
+    --options-bg: #444;
+    --options-border: #666;
+    --options-hover-bg: #555;
+    --options-hover-text: #e0e0e0;
+    --button-bg: #1e90ff;
+    --button-hover-bg: #4169e1;
+    --button-text: #fff;
+    --heading-color: #1e90ff;
+    --status-button-bg: #2ecc71;
+    --status-button-hover-bg: #27ae60;
+    --modal-content-bg: #333;
+    --modal-text-color: #e0e0e0;
+    --status-row-border: #555;
+    --link-color: #1e90ff;
+    --boarding-color: #1e90ff;
+    --alighting-color: #ff5555;
+    --bottom-bar-bg: rgba(80, 80, 80, 0.9);
+    --bottom-bar-text: #e0e0e0;
+    --loading-color: #bbb;
+    --swap-button-bg: var(--container-bg);
+    --swap-button-shadow: 0 1px 4px rgba(0,0,0,0.5);
+     /* Add accent color for active mode */
+    --primary-accent-color: #1e90ff;
+    --mode-button-text: #aaa;
+    --mode-button-active-text: var(--primary-accent-color);
+    --mode-button-active-border: var(--primary-accent-color);
+}
 
 body {
     font-family: 'Roboto', sans-serif;
     margin: 0;
-    padding: 0;
-    background-color: #f4f4f9;
-    color: #333;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    padding: 0; /* Remove body padding if page structure handles it */
+    background-color: #f4f4f9; /* Fallback */
+    color: var(--text-color);
+    /* Changed: Setup main layout context if body is the direct parent */
+    /* display: flex; */ /* Remove flex from body if sidebar exists */
     min-height: 100vh;
-    flex-direction: column;
     background-size: cover;
     background-repeat: no-repeat;
+    box-sizing: border-box;
 }
+
 
 :where([data-theme="dark"]) body {
     background-color: #1a1a1a;
-    color: #e0e0e0;
 }
-
+.main-page-area { /* Hypothetical class for area next to sidebar */
+    display: flex;
+    justify-content: center; /* Center container HORIZONTALLY */
+    align-items: center;    /* Center container VERTICALLY */
+    min-height: calc(100vh - 40px); /* Adjust based on header/footer height */
+    padding: 20px; /* Padding for the content area */
+    box-sizing: border-box;
+    margin-left: 250px; /* Adjust based on actual sidebar width */
+    /* If using CSS Grid for overall layout, this margin isn't needed */
+}
+:where([data-theme="dark"]) body {
+    background-color: #1a1a1a;
+}
 @media (prefers-color-scheme: dark) {
     body:not([data-theme="light"]) {
-        background: linear-gradient(135deg, #1e293b, #334155) !important;
-        color: #e0e0e0 !important;
+        background: linear-gradient(135deg, #1e293b, #334155);
+        color: var(--text-color);
     }
 }
-
 .container {
-    background-color: #fff;
-    padding: 20px;
+    background-color: var(--container-bg);
+    padding: 25px 30px;
     border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: var(--container-shadow);
     width: 100%;
-    max-width: 500px;
-    margin-bottom: 60px;
-    margin-left: 160px;
+    max-width: 600px;
+    margin: 0 auto; /* Horizontal centering within its parent */
     position: relative;
+    box-sizing: border-box;
 }
 
-:where([data-theme="dark"]) .container {
-    background-color: #333;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
-}
 
 h1 {
     text-align: center;
     font-size: 2rem;
-    margin-bottom: 20px;
-    color: #007dc5;
-}
-
-:where([data-theme="dark"]) h1 {
-    color: #1e90ff;
+    margin-top: 0; /* Remove top margin if already centered */
+    margin-bottom: 20px; /* Reduced margin */
+    color: var(--heading-color);
 }
 
 form {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 0;
 }
-
+.mode-selection-bar {
+    display: flex;
+    justify-content: center; /* Center buttons */
+    gap: 10px;
+    margin-bottom: 25px; /* Space below the bar */
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--input-border); /* Separator line */
+}
+.mode-button {
+    background: none;
+    border: none;
+    padding: 8px 12px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--mode-button-text);
+    cursor: pointer;
+    border-radius: 4px;
+    border-bottom: 3px solid transparent; /* Placeholder for active border */
+    transition: color 0.2s ease, border-color 0.2s ease;
+}
+.mode-button:hover {
+    color: var(--mode-button-active-text); /* Use active text color on hover */
+}
+.mode-button.active {
+    color: var(--mode-button-active-text);
+    font-weight: 700; /* Bolder active text */
+    border-bottom-color: var(--mode-button-active-border); /* Highlight active */
+}
 .place-container {
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    position: relative;
+    gap: 15px; /* Gap between form groups */
+    position: relative; /* For swap button positioning */
+    margin-bottom: 25px; /* Space before Find Route button */
 }
 
-.station-row {
-    display: flex;
-    align-items: center;
+.form-group {
+    display: grid;
+    grid-template-columns: 140px 1fr; /* Label column, Input column */
     gap: 10px;
-    width: 100%;
+    align-items: center; /* Vertically align label and input */
 }
 
-.station-row dt {
-    flex-shrink: 0;
+.station-label { /* Replaces dt styling */
+    font-weight: 500;
+    color: var(--text-color);
+    text-align: left; /* Or 'right' if preferred */
+    grid-column: 1 / 2; /* Explicitly place in first column */
 }
 
-.station-row .starting-station,
-.station-row .destination-station {
-    color: #000000; /* Darker text in light mode */
-}
-
-:where([data-theme="dark"]) .station-row .starting-station,
-:where([data-theme="dark"]) .station-row .destination-station {
-    color: #e0e0e0;
-}
-
-.station-row dd {
-    flex: 1;
-    margin: 0;
-}
-
-.searchable-select {
+.searchable-select { /* Container for input and options */
     position: relative;
     width: 100%;
+    grid-column: 2 / 3; /* Explicitly place in second column */
 }
 
 .searchable-select input {
     width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
+    padding: 10px 12px;
+    border: 1px solid var(--input-border);
     border-radius: 4px;
     box-sizing: border-box;
-    color: #000000;
-}
-
-:where([data-theme="dark"]) .searchable-select input {
-    border-color: #666;
-    background-color: #444;
-    color: #e0e0e0;
+    color: var(--input-text);
+    background-color: var(--input-bg);
+    font-size: 1rem;
 }
 
 .searchable-select .options {
@@ -119,102 +204,98 @@ form {
     top: 100%;
     left: 0;
     right: 0;
-    border: 1px solid #ccc;
-    background-color: #fff;
+    border: 1px solid var(--options-border);
+    border-top: none; /* Remove top border as it connects to input */
+    background-color: var(--options-bg);
     z-index: 1000;
     max-height: 200px;
     overflow-y: auto;
     display: none;
-    border-radius: 4px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
-
 :where([data-theme="dark"]) .searchable-select .options {
-    border-color: #666;
-    background-color: #444;
-    color: #e0e0e0;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
-
 .searchable-select .options div {
-    padding: 10px;
+    padding: 10px 12px;
     cursor: pointer;
-    color: #000000;
-}
-
-:where([data-theme="dark"]) .searchable-select .options div {
-    color: #e0e0e0;
+    color: var(--input-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .searchable-select .options div:hover {
-    background-color: #f0f0f0;
-    color: #000000;
+    background-color: var(--options-hover-bg);
+    color: var(--options-hover-text);
 }
-
-:where([data-theme="dark"]) .searchable-select .options div:hover {
-    background-color: #555;
-    color: #000000;
-}
-
 .input-change {
     position: absolute;
-    top: 50%;
     left: 50%;
+    /* Adjust based on label width + gap + half input (approx) */
+    /* Or more dynamically calc(140px + 10px - 15px); label+gap-half_btn_width */
+    top: 52px; /* Approximate vertical center between inputs */
     transform: translate(-50%, -50%);
     cursor: pointer;
     padding: 5px;
     z-index: 10;
+    background: var(--swap-button-bg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--swap-button-shadow);
+    border: 1px solid var(--input-border);
 }
 
 .input-change img {
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
+    display: block;
 }
-
-button {
-    padding: 10px;
+button[type="submit"] { /* Be more specific for the submit button */
+    padding: 12px 15px;
     border: none;
     border-radius: 4px;
-    background-color: #007bff;
-    color: #fff;
-    font-size: 16px;
+    background-color: var(--button-bg);
+    color: var(--button-text);
+    font-size: 1.05rem; /* Slightly larger */
+    font-weight: 500;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: background-color 0.2s ease-in-out;
+    width: 100%;
+    margin-top: 5px;
 }
-
-:where([data-theme="dark"]) button {
-    background-color: #1e90ff;
+button[type="submit"]:hover {
+    background-color: var(--button-hover-bg);
 }
 
 button:hover {
-    background-color: #0056b3;
-}
-
-:where([data-theme="dark"]) button:hover {
-    background-color: #4169e1;
+    background-color: var(--button-hover-bg);
 }
 
 .status-button {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 20px;
+    right: 20px;
     padding: 8px 12px;
-    font-size: 14px;
-    background-color: #28a745;
+    font-size: 0.875rem;
+    background-color: var(--status-button-bg);
+    color: var(--button-text);
+    width: auto;
+    margin-top: 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
 }
-
-:where([data-theme="dark"]) .status-button {
-    background-color: #2ecc71;
-}
-
 .status-button:hover {
-    background-color: #218838;
+    background-color: var(--status-button-hover-bg);
 }
 
-:where([data-theme="dark"]) .status-button:hover {
-    background-color: #27ae60;
-}
 
+/* --- Modal Styles --- */
 .modal {
     display: none;
     position: fixed;
@@ -222,55 +303,61 @@ button:hover {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.6); /* Slightly darker overlay */
     z-index: 2000;
     justify-content: center;
     align-items: center;
+    padding: 20px; /* Add padding for small screens */
+    box-sizing: border-box;
 }
 
 :where([data-theme="dark"]) .modal {
-    background-color: rgba(0, 0, 0, 0.7);
+    background-color: rgba(0, 0, 0, 0.8);
 }
 
 .modal-content {
-    background-color: #fff;
-    padding: 20px;
+    background-color: var(--modal-content-bg);
+    padding: 25px;
     border-radius: 8px;
-    width: 80%;
-    max-width: 400px;
-    max-height: 80vh;
+    width: 100%;
+    max-width: 450px; /* Slightly wider modal */
+    max-height: 85vh; /* Adjust max height */
     overflow-y: auto;
     position: relative;
-    color: #000000; /* Darker text in light mode */
+    color: var(--modal-text-color);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
 
-:where([data-theme="dark"]) .modal-content {
-    background-color: #333;
-    color: #e0e0e0;
+.modal-content h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    text-align: center;
+    color: var(--heading-color); /* Use heading color */
 }
+
 
 .close-button {
     position: absolute;
     top: 10px;
-    right: 10px;
-    font-size: 24px;
+    right: 15px;
+    font-size: 28px; /* Larger close button */
+    font-weight: bold;
+    line-height: 1;
     cursor: pointer;
-    color: #333;
+    color: var(--text-color);
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+.close-button:hover {
+    opacity: 1;
 }
 
-:where([data-theme="dark"]) .close-button {
-    color: #e0e0e0;
-}
 
 .status-row {
     display: flex;
     align-items: center;
-    padding: 10px 0;
-    border-bottom: 1px solid #eee;
-}
-
-:where([data-theme="dark"]) .status-row {
-    border-bottom-color: #555;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--status-row-border);
 }
 
 .status-row:last-child {
@@ -278,9 +365,10 @@ button:hover {
 }
 
 .color-bar {
-    width: 8px;
-    height: 40px;
-    margin-right: 10px;
+    width: 6px; /* Slightly thinner */
+    height: 36px; /* Adjusted height */
+    margin-right: 12px;
+    border-radius: 3px; /* Rounded bar */
     flex-shrink: 0;
 }
 
@@ -289,34 +377,27 @@ button:hover {
 }
 
 .line-name {
-    font-weight: bold;
-    font-size: 16px;
-}
-
-:where([data-theme="dark"]) .line-name {
-    color: #e0e0e0;
+    font-weight: 500; /* Medium weight */
+    font-size: 1rem; /* 16px */
+    color: var(--modal-text-color); /* Use modal text color */
 }
 
 .line-status {
-    font-size: 14px;
-    color: #666;
-}
-
-:where([data-theme="dark"]) .line-status {
-    color: #bbb;
+    font-size: 0.875rem; /* 14px */
+    color: var(--loading-color); /* Use loading/subtle color */
+    margin-top: 2px;
 }
 
 .update-time {
-    font-size: 14px;
-    color: #999;
-    margin-left: 20px;
+    font-size: 0.8125rem; /* 13px */
+    color: var(--loading-color); /* Use loading/subtle color */
+    margin-left: 15px;
     white-space: nowrap;
+    text-align: right;
+    flex-shrink: 0;
 }
 
-:where([data-theme="dark"]) .update-time {
-    color: #aaa;
-}
-
+/* --- Line Colors (Keep as is) --- */
 .color-ael { background-color: #009688; }
 .color-tcl { background-color: #ff9800; }
 .color-tml { background-color: #8b4513; }
@@ -327,106 +408,53 @@ button:hover {
 .color-isl { background-color: #2196f3; }
 .color-ktl { background-color: #4caf50; }
 
+/* --- Bottom Bar --- */
 .bottom-bar {
-    background-color: rgba(51, 51, 51, 0.8);
-    color: white;
-    padding: 10px;
+    background-color: var(--bottom-bar-bg);
+    color: var(--bottom-bar-text);
+    padding: 10px 20px; /* Adjusted padding */
     position: fixed;
     bottom: 0;
+    left: 0; /* Ensure it spans full width */
     width: 100%;
     display: flex;
     align-items: center;
     justify-content: flex-start;
     z-index: 1000;
-}
-
-:where([data-theme="dark"]) .bottom-bar {
-    background-color: rgba(80, 80, 80, 0.8);
+    box-sizing: border-box;
 }
 
 #temperature {
-    font-size: 16px;
-    margin-left: 20px;
+    font-size: 0.9375rem; /* 15px */
+    margin-left: 0; /* Remove default margin if navbar handles spacing */
 }
 
-:where([data-theme="dark"]) #temperature {
-    color: #e0e0e0;
-}
-
+/* --- Loading / Route (Keep as is, route display handled on next page) --- */
 #loading {
     text-align: center;
-    color: #666;
-    margin-top: 10px;
+    color: var(--loading-color);
+    margin-top: 20px; /* Add space */
+    font-style: italic;
 }
 
-:where([data-theme="dark"]) #loading {
-    color: #bbb;
-}
-
-#route {
-    margin-top: 20px;
-    position: relative;
-    z-index: 500;
-}
-
-.route-option {
-    padding: 10px;
-    border-bottom: 1px solid #eee;
-    cursor: pointer;
-    color: #007bff;
-}
-
-:where([data-theme="dark"]) .route-option {
-    border-bottom-color: #555;
-    color: #1e90ff;
-}
-
-.route-details {
-    display: none;
-    margin-left: 20px;
-    padding: 10px;
-}
-
-:where([data-theme="dark"]) .route-details {
-    color: #e0e0e0;
-}
-
-.stop-list {
-    list-style-type: none;
-    padding: 0;
-}
-
-.stop-list li {
-    padding: 8px 0;
-    border-bottom: 1px solid #eee;
-}
-
-:where([data-theme="dark"]) .stop-list li {
-    border-bottom-color: #555;
-}
+/* Route Option/Details styles might be needed on general_schedule.html */
+/* Styles for .route-option, .route-details, .stop-list etc. */
+/* ... (Can be moved primarily to general_schedule.css) ... */
 
 .boarding-stop {
-    color: blue;
+    color: var(--boarding-color);
     font-weight: bold;
     animation: pulse 1.5s infinite;
-}
-
-:where([data-theme="dark"]) .boarding-stop {
-    color: #1e90ff;
 }
 
 .alighting-stop {
-    color: red;
+    color: var(--alighting-color);
     font-weight: bold;
     animation: pulse 1.5s infinite;
-}
-
-:where([data-theme="dark"]) .alighting-stop {
-    color: #ff5555;
 }
 
 @keyframes pulse {
     0% { opacity: 1; }
-    50% { opacity: 0.5; }
+    50% { opacity: 0.6; }
     100% { opacity: 1; }
 }

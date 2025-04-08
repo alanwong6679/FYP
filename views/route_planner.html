@@ -8,54 +8,102 @@
     <link rel="stylesheet" href="/static/css/navbar.css">
     <link rel="stylesheet" href="/static/css/temperature.css">
     <link rel="stylesheet" href="/static/css/route_planner.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <div class="container" id="main-content">
-        <h1>General Planner</h1>
-        <button class="status-button" id="statusButton">Train Service Status</button>
-        <form id="routeForm">
-            <div class="place-container">
-                <div class="station-row">
-                    <dl><dt class="starting-station">Starting Station</dt></dl>
-                    <dd>
+    <nav class="sidebar">
+         <div class="sidebar-header">
+             <h3>HK Transit Edge</h3>
+         </div>
+         <ul class="nav-links">
+            <li><a href="/"><i class="fas fa-home"></i> Home</a></li>
+            <li><a href="/search"><i class="fas fa-search"></i> Search</a></li>
+            <li class="active"><a href="/planner"><i class="fas fa-route"></i> Planning</a></li>
+            <li><a href="/train_schedule"><i class="fas fa-train"></i> Train</a></li>
+            <li><a href="/tram_schedule"><i class="fas fa-tram"></i> Tram</a></li>
+             <li><a href="/ferry"><i class="fas fa-ship"></i> Ferry</a></li>
+            <li><a href="/news"><i class="fas fa-newspaper"></i> News</a></li>
+         </ul>
+         <div class="theme-switch-wrapper">
+             <label class="theme-switch" for="checkbox">
+                 <input type="checkbox" id="checkbox" />
+                 <div class="slider round"></div>
+             </label>
+             <em>Dark Mode</em>
+         </div>
+    </nav>
+
+    <div class="main-page-area">
+        <div class="container" id="main-content">
+            <h1>General Planner</h1>
+            <button class="status-button" id="statusButton">Train Service Status</button>
+
+            <form id="routeForm">
+                <div class="mode-selection-bar" id="modeSelectionBar">
+                    <button type="button" class="mode-button active" data-mode="all">General</button>
+                    <button type="button" class="mode-button" data-mode="MTR">Train</button>
+                    <button type="button" class="mode-button" data-mode="Bus">Bus</button>
+                </div>
+
+                <div class="place-container">
+                    <div class="form-group">
+                        <label for="currentStationInput" class="station-label">Starting Station</label>
                         <div class="searchable-select" id="currentStationContainer">
-                            <input type="text" id="currentStationInput" placeholder="Type to search..." autocomplete="off">
-                            <div class="options" id="currentStationOptions"></div>
+                            <input type="text" id="currentStationInput" placeholder="Type to search..." autocomplete="off"
+                                   role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="currentStationOptions">
+                            <div class="options" id="currentStationOptions" role="listbox"></div>
                         </div>
-                    </dd>
-                </div>
-                <div class="input-change">
-                    <img src="/static/images/switch.png" alt="Swap Starting and Destination Stations" id="swapStations">
-                </div>
-                <div class="station-row">
-                    <dl class="condition-item"><dt class="destination-station">Destination Station</dt></dl>
-                    <dd>
+                    </div>
+
+                    <div class="input-change" title="Swap Starting and Destination Stations">
+                        <img src="/static/images/switch.png" alt="Swap Stations" id="swapStations">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="destinationStationInput" class="station-label">Destination Station</label>
                         <div class="searchable-select" id="destinationStationContainer">
-                            <input type="text" id="destinationStationInput" placeholder="Type to search..." autocomplete="off">
-                            <div class="options" id="destinationStationOptions"></div>
+                            <input type="text" id="destinationStationInput" placeholder="Type to search..." autocomplete="off"
+                                   role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="destinationStationOptions">
+                            <div class="options" id="destinationStationOptions" role="listbox"></div>
                         </div>
-                    </dd>
+                    </div>
                 </div>
-            </div>
-            <button type="submit">Find Route</button>
-        </form>
-        <div id="loading">Loading data...</div>
-        <div id="route"></div>
+                <button type="submit">Find Route</button>
+            </form>
+            <div id="loading" style="display: none;">Loading data...</div>
+        </div>
     </div>
+
     <div class="modal" id="statusModal">
         <div class="modal-content">
-            <span class="close-button" id="closeModal">×</span>
+            <span class="close-button" id="closeModal" title="Close">×</span>
             <h2>Train Service Status</h2>
             <div id="statusList"></div>
         </div>
     </div>
+
     <div class="bottom-bar">
-        <div id="temperature">Fetching your location...</div>
+        <div id="temperature">Fetching weather...</div>
     </div>
+
     <script src="/static/js/stations.js"></script>
     <script src="/static/js/navbar.js"></script>
     <script src="/static/js/temperature.js"></script>
     <script>
+        let citybusRoutes = [], citybusStops = [], citybusRouteStopsMap = {};
+        let kmbRoutes = [], kmbStops = [], kmbRouteStopsMap = {};
+        let mtrStations = [];
+        let citybusOptions = [];
+        let kmbOptions = [];
+        let currentMode = 'all';
+
+        const loadingDiv = document.getElementById('loading');
+        const currentStationInput = document.getElementById('currentStationInput');
+        const currentStationOptionsContainer = document.getElementById('currentStationOptions');
+        const destinationStationInput = document.getElementById('destinationStationInput');
+        const destinationStationOptionsContainer = document.getElementById('destinationStationOptions');
+        const modeSelectionBar = document.getElementById('modeSelectionBar');
+
         const trainLines = [
             { fullName: "Airport Express Line (AEL)", lineId: "AEL", stationId: "HOK", colorClass: "color-ael" },
             { fullName: "Tung Chung Line (TCL)", lineId: "TCL", stationId: "HOK", colorClass: "color-tcl" },
@@ -72,6 +120,10 @@
             try {
                 const url = `https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=${lineId}&sta=${stationId}&lang=en`;
                 const response = await fetch(url);
+                 if (!response.ok) {
+                    console.error(`HTTP error! status: ${response.status} for line ${lineId}`);
+                    return "0";
+                }
                 const data = await response.json();
                 if (data.status === 1 && data.data && data.data[`${lineId}-${stationId}`]) {
                     const schedule = data.data[`${lineId}-${stationId}`];
@@ -82,7 +134,7 @@
                 }
                 return "0";
             } catch (error) {
-                console.error('Fetch Error:', error);
+                console.error(`Fetch Error for line ${lineId}:`, error);
                 return "0";
             }
         }
@@ -90,34 +142,26 @@
         async function displayTrainStatus() {
             const statusList = document.getElementById('statusList');
             statusList.innerHTML = '';
-
             for (const line of trainLines) {
                 const status = await fetchLineStatus(line.lineId, line.stationId);
                 const isNormal = status === "1";
                 const now = new Date();
                 const updateTime = `${now.getMonth() + 1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
-
                 const statusRow = document.createElement('div');
                 statusRow.className = 'status-row';
-
                 const colorBar = document.createElement('div');
                 colorBar.className = `color-bar ${line.colorClass}`;
-
                 const lineInfo = document.createElement('div');
                 lineInfo.className = 'line-info';
-
                 const lineName = document.createElement('div');
                 lineName.className = 'line-name';
                 lineName.textContent = line.fullName;
-
                 const lineStatus = document.createElement('div');
                 lineStatus.className = 'line-status';
                 lineStatus.textContent = isNormal ? 'Normal Service' : 'Service Disruption';
-
                 const updateTimeDiv = document.createElement('div');
                 updateTimeDiv.className = 'update-time';
                 updateTimeDiv.textContent = updateTime;
-
                 lineInfo.appendChild(lineName);
                 lineInfo.appendChild(lineStatus);
                 statusRow.appendChild(colorBar);
@@ -131,27 +175,27 @@
         const statusModal = document.getElementById('statusModal');
         const closeModal = document.getElementById('closeModal');
 
-        statusButton.addEventListener('click', () => {
-            statusModal.style.display = 'flex';
-            displayTrainStatus();
-        });
+        if (statusButton) {
+            statusButton.addEventListener('click', () => {
+                if (statusModal) statusModal.style.display = 'flex';
+                displayTrainStatus();
+            });
+        }
 
-        closeModal.addEventListener('click', () => {
-            statusModal.style.display = 'none';
-        });
+       if (closeModal) {
+            closeModal.addEventListener('click', () => {
+                if (statusModal) statusModal.style.display = 'none';
+            });
+       }
 
         window.addEventListener('click', (event) => {
             if (event.target === statusModal) {
-                statusModal.style.display = 'none';
+                if (statusModal) statusModal.style.display = 'none';
             }
         });
 
-        let citybusRoutes = [], citybusStops = [], citybusRouteStopsMap = {};
-        let kmbRoutes = [], kmbStops = [], kmbRouteStopsMap = {};
-
         async function initializeData() {
-            const loadingDiv = document.getElementById('loading');
-            loadingDiv.style.display = 'block';
+            if (loadingDiv) loadingDiv.style.display = 'block';
             try {
                 const [routeResponse, stopResponse, routeStopResponse] = await Promise.all([
                     fetch('/static/data/route_data.json'),
@@ -164,34 +208,30 @@
                 citybusRoutes = routeData.ctb_routes || [];
 
                 const stopData = await stopResponse.json();
-                kmbStops = Object.entries(stopData.kmb_stops || {}).map(([stop, details]) => ({
-                    stop,
-                    name_en: details.name_en,
-                    lat: details.lat,
-                    long: details.long
+                kmbStops = Object.entries(stopData.kmb_stops || {}).map(([stop, details]) => ({ stop, ...details }));
+                citybusStops = Object.entries(stopData.ctb_stops || {}).map(([stop, details]) => ({ stop, ...details }));
+
+                kmbOptions = kmbStops.map(stop => ({
+                    value: stop.stop, text: stop.name_en, type: 'Bus', company: 'KMB'
                 }));
-                citybusStops = Object.entries(stopData.ctb_stops || {}).map(([stop, details]) => ({
-                    stop,
-                    name_en: details.name_en,
-                    lat: details.lat,
-                    long: details.long
+                citybusOptions = citybusStops.map(stop => ({
+                    value: stop.stop, text: stop.name_en, type: 'Bus', company: 'Citybus'
                 }));
+
+                mtrStations = getUniqueMTRStations();
 
                 const routeStopData = await routeStopResponse.json();
                 kmbRouteStopsMap = Object.fromEntries(
                     Object.entries(routeStopData.kmb_route_stops || {}).map(([key, stops]) => [
-                        key,
-                        stops.map(stop => stop.stop_id)
+                        key, stops.map(stop => stop.stop_id)
                     ])
                 );
                 citybusRouteStopsMap = Object.fromEntries(
                     Object.entries(routeStopData.ctb_route_stops || {}).map(([key, stops]) => [
-                        key,
-                        stops.map(stop => stop.stop_id)
+                        key, stops.map(stop => stop.stop_id)
                     ])
                 );
 
-                // Store all data in localStorage for general_schedule.html
                 localStorage.setItem('kmb_allRoutes', JSON.stringify(kmbRoutes));
                 localStorage.setItem('kmb_allStops', JSON.stringify(kmbStops));
                 localStorage.setItem('kmb_routeStopsMap', JSON.stringify(kmbRouteStopsMap));
@@ -199,150 +239,234 @@
                 localStorage.setItem('citybus_allStops', JSON.stringify(citybusStops));
                 localStorage.setItem('citybus_routeStopsMap', JSON.stringify(citybusRouteStopsMap));
 
-                if (citybusStops.length === 0 && kmbStops.length === 0) {
-                    loadingDiv.textContent = 'No bus data available. Some features may not work.';
+                if (citybusStops.length === 0 && kmbStops.length === 0 && mtrStations.length === 0) {
+                    if (loadingDiv) loadingDiv.textContent = 'No transit data available.';
                 } else {
-                    loadingDiv.style.display = 'none';
+                    if (loadingDiv) loadingDiv.style.display = 'none';
+                     console.log("Data initialized.");
+                     updateSearchableOptions();
                 }
             } catch (error) {
-                loadingDiv.textContent = 'Error loading data. Check console for details.';
+                if (loadingDiv) loadingDiv.textContent = 'Error loading data. Please refresh.';
                 console.error('Initialization failed:', error);
             }
         }
 
-       
-       
-
-       
-
         function getUniqueMTRStations() {
-            const stationSet = new Set();
-            const stations = [];
-            for (let line in lines) {
-                lines[line].forEach(station => {
-                    if (!stationSet.has(station.value)) {
-                        stationSet.add(station.value);
-                        stations.push({
-                            value: station.value,
-                            text: station.text,
-                            type: 'MTR'
-                        });
-                    }
-                });
-            }
-            return stations;
-        }
+             const stationSet = new Set();
+             const stationsFormatted = [];
+             if (typeof lines === 'undefined') {
+                 console.error("'lines' variable not found. Ensure stations.js is loaded before this script.");
+                 return [];
+             }
+             for (let line in lines) {
+                 lines[line].forEach(station => {
+                     if (!stationSet.has(station.value)) {
+                         stationSet.add(station.value);
+                         stationsFormatted.push({
+                             value: station.value,
+                             text: station.text,
+                             type: 'MTR'
+                         });
+                     }
+                 });
+             }
+             stationsFormatted.sort((a, b) => a.text.localeCompare(b.text));
+             return stationsFormatted;
+         }
 
-        function makeSearchable(inputId, optionsId, options) {
+        function setupSearchable(inputId, optionsId) {
             const input = document.getElementById(inputId);
             const optionsContainer = document.getElementById(optionsId);
+            if (!input || !optionsContainer) return;
 
-            input.addEventListener('input', function() {
+            const filterAndDisplayOptions = () => {
                 const filter = input.value.toLowerCase();
                 optionsContainer.innerHTML = '';
-                const filteredOptions = options.filter(option => 
+                const currentSource = JSON.parse(input.dataset.optionsSource || '[]');
+
+                const filteredOptions = currentSource.filter(option =>
                     option.text.toLowerCase().includes(filter)
                 );
+
                 filteredOptions.forEach(option => {
                     const div = document.createElement('div');
                     div.textContent = `${option.text} (${option.type}${option.type === 'Bus' ? ' - ' + option.company : ''})`;
+                    div.setAttribute('role', 'option');
+                    div.dataset.value = option.value;
+                    div.dataset.text = option.text;
+                    div.dataset.type = option.type;
+                    div.dataset.company = option.company || '';
+
                     div.addEventListener('click', function() {
                         input.value = option.text;
                         input.dataset.value = option.value;
                         input.dataset.type = option.type;
                         input.dataset.company = option.company || '';
                         optionsContainer.style.display = 'none';
+                        optionsContainer.setAttribute('aria-hidden', 'true');
+                        input.setAttribute('aria-expanded', 'false');
                     });
                     optionsContainer.appendChild(div);
                 });
-                optionsContainer.style.display = filteredOptions.length > 0 ? 'block' : 'none';
-            });
 
-            input.addEventListener('focus', function() {
-                optionsContainer.style.display = 'block';
-            });
+                optionsContainer.style.display = filteredOptions.length > 0 ? 'block' : 'none';
+                optionsContainer.setAttribute('aria-hidden', String(filteredOptions.length === 0));
+                input.setAttribute('aria-expanded', String(filteredOptions.length > 0));
+            };
+
+            input.addEventListener('input', filterAndDisplayOptions);
+            input.addEventListener('focus', filterAndDisplayOptions);
 
             document.addEventListener('click', function(event) {
                 if (!input.contains(event.target) && !optionsContainer.contains(event.target)) {
                     optionsContainer.style.display = 'none';
+                    optionsContainer.setAttribute('aria-hidden', 'true');
+                     if(document.activeElement !== input){
+                         input.setAttribute('aria-expanded', 'false');
+                     }
                 }
             });
         }
 
-        document.getElementById('swapStations').addEventListener('click', function() {
-            const currentInput = document.getElementById('currentStationInput');
-            const destinationInput = document.getElementById('destinationStationInput');
-
-            const tempValue = currentInput.value;
-            const tempDataValue = currentInput.dataset.value;
-            const tempDataType = currentInput.dataset.type;
-            const tempDataCompany = currentInput.dataset.company;
-
-            currentInput.value = destinationInput.value;
-            currentInput.dataset.value = destinationInput.dataset.value || '';
-            currentInput.dataset.type = destinationInput.dataset.type || '';
-            currentInput.dataset.company = destinationInput.dataset.company || '';
-
-            destinationInput.value = tempValue;
-            destinationInput.dataset.value = tempDataValue || '';
-            destinationInput.dataset.type = tempDataType || '';
-            destinationInput.dataset.company = tempDataCompany || '';
-        });
-
-        document.getElementById('routeForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const currentInput = document.getElementById('currentStationInput');
-            const destinationInput = document.getElementById('destinationStationInput');
-            const currentType = currentInput.dataset.type;
-            const destinationType = destinationInput.dataset.type;
-            const currentId = currentInput.dataset.value;
-            const destinationId = destinationInput.dataset.value;
-            const currentCompany = currentInput.dataset.company;
-            const destinationCompany = destinationInput.dataset.company;
-        
-            if (!currentId || !destinationId) {
-                alert("Please select both a starting and destination station.");
-                return;
+         function updateSearchableOptions() {
+            let optionsToShow = [];
+            switch(currentMode) {
+                case 'MTR':
+                    optionsToShow = [...mtrStations];
+                    break;
+                case 'Bus':
+                    optionsToShow = [...citybusOptions, ...kmbOptions].sort((a,b) => a.text.localeCompare(b.text));
+                    break;
+                case 'all':
+                default:
+                    optionsToShow = [...mtrStations, ...citybusOptions, ...kmbOptions].sort((a,b) => a.text.localeCompare(b.text));
+                    break;
             }
-        
-            let url = '/general_schedule.html?';
-            if (currentType === 'MTR' && destinationType === 'MTR') {
-                url += `currentStation=${currentId}&destinationStation=${destinationId}`;
-            } else if (currentType === 'Bus' && destinationType === 'MTR') {
-                url += `startBusStop=${currentId}&destinationStation=${destinationId}&company=${currentCompany}`;
-            } else if (currentType === 'MTR' && destinationType === 'Bus') {
-                url += `currentStation=${currentId}&endBusStop=${destinationId}&company=${destinationCompany}`;
-            } else if (currentType === 'Bus' && destinationType === 'Bus') {
-                url += `startBusStop=${currentId}&endBusStop=${destinationId}`;
-                if (currentCompany) url += `&startCompany=${currentCompany}`;
-                if (destinationCompany) url += `&endCompany=${destinationCompany}`;
+
+            if(currentStationInput){
+                currentStationInput.dataset.optionsSource = JSON.stringify(optionsToShow);
+                setupSearchable('currentStationInput', 'currentStationOptions');
             }
-            window.location.href = url;
-        });
+             if(destinationStationInput){
+                 destinationStationInput.dataset.optionsSource = JSON.stringify(optionsToShow);
+                setupSearchable('destinationStationInput', 'destinationStationOptions');
+            }
+        }
+
+        if (modeSelectionBar) {
+            modeSelectionBar.addEventListener('click', (event) => {
+                const targetButton = event.target.closest('.mode-button');
+                if (!targetButton) return;
+
+                const selectedMode = targetButton.dataset.mode;
+                if (selectedMode === currentMode) return;
+
+                modeSelectionBar.querySelectorAll('.mode-button').forEach(button => {
+                    button.classList.remove('active');
+                });
+                targetButton.classList.add('active');
+
+                currentMode = selectedMode;
+                updateSearchableOptions();
+
+                if(currentStationInput){
+                    currentStationInput.value = '';
+                    currentStationInput.dataset.value = '';
+                     currentStationInput.dataset.type = '';
+                    currentStationInput.dataset.company = '';
+                     currentStationOptionsContainer.innerHTML = '';
+                    currentStationOptionsContainer.style.display = 'none';
+                     currentStationInput.setAttribute('aria-expanded','false')
+                }
+                if(destinationStationInput){
+                    destinationStationInput.value = '';
+                    destinationStationInput.dataset.value = '';
+                    destinationStationInput.dataset.type = '';
+                    destinationStationInput.dataset.company = '';
+                    destinationStationOptionsContainer.innerHTML = '';
+                    destinationStationOptionsContainer.style.display = 'none';
+                     destinationStationInput.setAttribute('aria-expanded','false')
+                }
+            });
+        }
+
+        const swapButton = document.getElementById('swapStations');
+        if(swapButton){
+            swapButton.addEventListener('click', function() {
+                 if (!currentStationInput || !destinationStationInput) return;
+
+                const tempValue = currentStationInput.value;
+                const tempDataValue = currentStationInput.dataset.value;
+                const tempDataType = currentStationInput.dataset.type;
+                const tempDataCompany = currentStationInput.dataset.company;
+
+                currentStationInput.value = destinationStationInput.value;
+                currentStationInput.dataset.value = destinationStationInput.dataset.value || '';
+                currentStationInput.dataset.type = destinationStationInput.dataset.type || '';
+                currentStationInput.dataset.company = destinationStationInput.dataset.company || '';
+
+                destinationStationInput.value = tempValue;
+                destinationStationInput.dataset.value = tempDataValue || '';
+                destinationStationInput.dataset.type = tempDataType || '';
+                destinationStationInput.dataset.company = tempDataCompany || '';
+
+                // Optionally trigger redisplay of options if needed after swap
+                 // updateSearchableOptions(); // Re-filtering might not be desired on swap
+            });
+        }
 
 
+        const routeForm = document.getElementById('routeForm');
+        if(routeForm){
+            routeForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                if (!currentStationInput || !destinationStationInput) return;
+
+                const currentType = currentStationInput.dataset.type;
+                const destinationType = destinationStationInput.dataset.type;
+                const currentId = currentStationInput.dataset.value;
+                const destinationId = destinationStationInput.dataset.value;
+                const currentCompany = currentStationInput.dataset.company;
+                const destinationCompany = destinationStationInput.dataset.company;
+
+                if (!currentId || !destinationId) {
+                    alert("Please select both a starting and destination station.");
+                    return;
+                }
+
+                let url = '/general_schedule.html?';
+                if (currentType === 'MTR' && destinationType === 'MTR') {
+                    url += `currentStation=${currentId}&destinationStation=${destinationId}`;
+                } else if (currentType === 'Bus' && destinationType === 'MTR') {
+                     url += `startBusStop=${currentId}&startCompany=${currentCompany}&destinationStation=${destinationId}`;
+                } else if (currentType === 'MTR' && destinationType === 'Bus') {
+                    url += `currentStation=${currentId}&endBusStop=${destinationId}&endCompany=${destinationCompany}`;
+                } else if (currentType === 'Bus' && destinationType === 'Bus') {
+                    url += `startBusStop=${currentId}&startCompany=${currentCompany}&endBusStop=${destinationId}&endCompany=${destinationCompany}`;
+                } else {
+                    alert("Invalid combination selected.");
+                    return;
+                }
+                window.location.href = url;
+            });
+        }
 
 
-        window.onload = async function() {
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (typeof initializeNavbar === 'function') {
+                initializeNavbar();
+            } else {
+                console.warn('initializeNavbar function not found from navbar.js');
+            }
             await initializeData();
-            const mtrStations = getUniqueMTRStations();
-            const citybusOptions = citybusStops.map(stop => ({
-                value: stop.stop,
-                text: stop.name_en,
-                type: 'Bus',
-                company: 'Citybus'
-            }));
-            const kmbOptions = kmbStops.map(stop => ({
-                value: stop.stop,
-                text: stop.name_en,
-                type: 'Bus',
-                company: 'KMB'
-            }));
-            const allOptions = [...mtrStations, ...citybusOptions, ...kmbOptions];
-            makeSearchable('currentStationInput', 'currentStationOptions', allOptions);
-            makeSearchable('destinationStationInput', 'destinationStationOptions', allOptions);
-            getTemperature();
-        };
+            if (typeof getTemperature === 'function') {
+                 getTemperature();
+             } else {
+                 console.warn('getTemperature function not found from temperature.js');
+             }
+        });
+
     </script>
 </body>
 </html>
