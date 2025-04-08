@@ -109,6 +109,7 @@ class RouteFinder {
         );
         this.MTR_AVG_SPEED_MS = (70 * 1000) / 3600;
         this.MTR_INTERCHANGE_DELAY_MIN = 5;
+        this.BUS_WAIT_TIME_MIN = 5;
 
         this.stopToNearestMTR = new Map();
         for (const stop of this.transit.stops) {
@@ -117,8 +118,118 @@ class RouteFinder {
                 this.stopToNearestMTR.set(stop.stop, nearest);
             }
         }
-        console.log("Initialized stopToNearestMTR with", this.stopToNearestMTR.size, "entries");
     }
+
+    async findBusToBusRoute(startStopId, endStopId) {
+        const routes = [];
+        const startStop = this.transit.findStop(startStopId);
+        const endStop = this.transit.findStop(endStopId);
+        if (!startStop || !endStop) {
+            return routes;
+        }
+        const busRoutes = this.findBusRoutes([startStopId], [endStopId]);
+        routes.push(...busRoutes.map(br => {
+            if (br.type === 'direct') {
+                const walkDist = 300;
+                const walkTime = calculateWalkDuration(walkDist);
+                const busTime = (br.stopCount || 1) * 2 + this.BUS_WAIT_TIME_MIN;
+                return {
+                    type: 'Bus',
+                    busRoute: br,
+                    estimatedTime: walkTime + busTime,
+                    walkingDistance: walkDist,
+                    boardingStopName: startStop.name_en || `Stop ${br.boardingStop}`,
+                    alightingStopName: endStop.name_en || `Stop ${br.alightingStop}`,
+                    score: this.evaluateRouteScore({ estimatedTime: walkTime + busTime, walkingDistance: walkDist, transfers: 0 })
+                };
+            } else if (br.type === 'transfer') {
+                return { ...br, score: this.evaluateRouteScore(br) };
+            }
+            return null;
+        }).filter(route => route));
+        const MAX_INTERCHANGE_DISTANCE = 2000;
+        const nearbyStartMTRs = this.mtrStations
+            .map(station => ({
+                station,
+                distance: haversineDistance(
+                    parseFloat(startStop.lat), parseFloat(startStop.long),
+                    parseFloat(station.lat), parseFloat(station.long)
+                )
+            }))
+            .filter(m => m.distance <= MAX_INTERCHANGE_DISTANCE)
+            .sort((a, b) => a.distance - b.distance)
+            .slice(0, 2);
+        const nearbyEndMTRs = this.mtrStations
+            .map(station => ({
+                station,
+                distance: haversineDistance(
+                    parseFloat(endStop.lat), parseFloat(endStop.long),
+                    parseFloat(station.lat), parseFloat(station.long)
+                )
+            }))
+            .filter(m => m.distance <= MAX_INTERCHANGE_DISTANCE)
+            .sort((a, b) => a.distance - b.distance)
+            .slice(0, 2);
+        for (const startMTR of nearbyStartMTRs) {
+            for (const endMTR of nearbyEndMTRs) {
+                const firstLegBus = this.findBusRoutes([startStopId], this.transit.getNearbyStops(startMTR.station, MAX_INTERCHANGE_DISTANCE).map(s => s.stop));
+                const mtrRoute = await this.findMTRRoute(startMTR.station.value, endMTR.station.value);
+                const secondLegBus = this.findBusRoutes(this.transit.getNearbyStops(endMTR.station, MAX_INTERCHANGE_DISTANCE).map(s => s.stop), [endStopId]);
+                for (const firstBus of firstLegBus) {
+                    for (const mtr of mtrRoute) {
+                        for (const secondBus of secondLegBus) {
+                            const firstWalk = startMTR.distance;
+                            const secondWalk = endMTR.distance;
+                            const firstBusTime = (firstBus.stopCount || 1) * 2 + this.BUS_WAIT_TIME_MIN;
+                            const mtrTime = mtr.estimatedTime;
+                            const secondBusTime = (secondBus.stopCount || 1) * 2 + this.BUS_WAIT_TIME_MIN;
+                            const totalWalkTime = calculateWalkDuration(firstWalk) + calculateWalkDuration(secondWalk);
+                            const totalTime = firstBusTime + totalWalkTime + mtrTime + secondBusTime;
+                            const route = {
+                                type: 'Bus-MTR-Bus',
+                                firstBusRoute: firstBus,
+                                mtrRoute: mtr.mtrRoute,
+                                secondBusRoute: secondBus,
+                                estimatedTime: totalTime,
+                                walkingDistance: firstWalk + secondWalk,
+                                boardingStopName: startStop.name_en || `Stop ${startStopId}`,
+                                firstInterchange: startMTR.station.value,
+                                secondInterchange: endMTR.station.value,
+                                alightingStopName: endStop.name_en || `Stop ${endStopId}`,
+                                schedules: mtr.schedules,
+                                score: this.evaluateRouteScore({ estimatedTime: totalTime, walkingDistance: firstWalk + secondWalk, transfers: 2 })
+                            };
+                            routes.push(route);
+                        }
+                    }
+                }
+            }
+        }
+        if (!routes.length) {
+            const taxiRoute = this.calculateTaxiRoute(startStop, endStop);
+            if (taxiRoute) {
+                taxiRoute.score = this.evaluateRouteScore({ estimatedTime: taxiRoute.estimatedTime, walkingDistance: 0, transfers: 0 });
+                routes.push(taxiRoute);
+            }
+        }
+        return routes.sort((a, b) => a.score - b.score).slice(0, 5);
+    }
+
+    evaluateRouteScore(route) {
+        const timeWeight = 0.7;
+        const transferWeight = 0.2;
+        const walkWeight = 0.1;
+        const normalizedTime = route.estimatedTime / 60;
+        const transfers = route.type === 'transfer' ? 1 : route.type === 'Bus-MTR-Bus' ? 2 : 0;
+        const walkDistance = (route.walkingDistance || 0) / 1000;
+        return (timeWeight * normalizedTime) + (transferWeight * transfers) + (walkWeight * walkDistance);
+    }
+
+
+
+
+
+    
 
     calculateTaxiRoute(startPoint, endPoint) {
         if (!startPoint?.lat || !startPoint?.long || !endPoint?.lat || !endPoint?.long) {
@@ -283,6 +394,18 @@ class RouteFinder {
         return routes;
     }
 
+
+
+
+
+
+
+
+
+
+
+
+    
     async findMixedRoute(start, end, startType, endType) {
         const routes = [];
         let startPoint = startType === 'bus' ? this.transit.findStop(start) : this.mtrStations.find(s => s.value === start);
@@ -548,66 +671,37 @@ class RouteFinder {
         return lineTimeEstimate + interchangeTimeEstimate;
     }
 }
-
 class TimelineGenerator {
-    static generate(route) {
-        const items = this.getItems(route);
-        let html = '<div class="timeline">';
-        items.forEach(item => {
-            html += item.type === 'point' ? this.generatePoint(item) : this.generateSegment(item);
-        });
-        html += '</div>';
-        return html;
-    }
-
     static getItems(route) {
         const now = route.startTime || new Date();
         let currentTime = new Date(now);
         const items = [];
         const formatTime = dateObj => dateObj.toTimeString().slice(0, 5);
         const interchangeDelay = 5;
-
-        const getSegmentDuration = (segmentData, defaultEstimate) => segmentData?.duration || defaultEstimate;
-        const getMtrTotalTime = (mtrRouteData, estimate) => {
-            if (mtrRouteData?.totalDuration) return mtrRouteData.totalDuration;
-            if (mtrRouteData?.segmentDetails) {
-                return mtrRouteData.segmentDetails.reduce((sum, seg) => sum + (seg.duration || 0), 0) +
-                       (mtrRouteData.interchanges?.length || 0) * interchangeDelay;
-            }
-            return estimate;
-        };
-
         if (route.type === 'Taxi') {
-            return [
-                { type: 'point', mode: 'Taxi', name: route.startPoint, time: formatTime(currentTime), isStart: true },
-                { type: 'segment', mode: 'Taxi', duration: route.estimatedTime, distance: route.distance, to: route.endPoint },
-                { type: 'point', mode: 'Taxi', name: route.endPoint, time: formatTime(new Date(currentTime.getTime() + route.estimatedTime * 60000)), isEnd: true }
-            ];
+            items.push({ type: 'point', mode: 'Taxi', name: route.startPoint, time: formatTime(currentTime), isStart: true });
+            items.push({ type: 'segment', mode: 'Taxi', duration: route.estimatedTime, distance: route.distance, to: route.endPoint });
+            items.push({ type: 'point', mode: 'Taxi', name: route.endPoint, time: formatTime(new Date(currentTime.getTime() + route.estimatedTime * 60000)), isEnd: true });
         }
         if (route.type === 'MTR') {
             const mtrRoute = route.mtrRoute;
-            const totalMtrTime = getMtrTotalTime(mtrRoute, route.estimatedTime);
+            const totalMtrTime = mtrRoute.totalDuration || route.estimatedTime;
             let remainingMtrTime = totalMtrTime;
-
             items.push({ type: 'point', mode: 'MTR', name: this.getMTRName(route.currentStation), time: formatTime(currentTime), isStart: true, line: mtrRoute.route[0] });
-
             for (let i = 0; i < mtrRoute.route.length; i++) {
                 const currentLine = mtrRoute.route[i];
                 const segmentDetail = mtrRoute.segmentDetails?.[i];
                 const estimatedSegmentDuration = Math.max(1, Math.round(remainingMtrTime / (mtrRoute.route.length - i)));
-                const segmentDuration = getSegmentDuration(segmentDetail, estimatedSegmentDuration);
+                const segmentDuration = segmentDetail?.duration || estimatedSegmentDuration;
                 const segmentDistance = segmentDetail?.distance;
                 const segmentStops = segmentDetail?.stops;
-
                 if (i < mtrRoute.route.length - 1) {
                     const nextLine = mtrRoute.route[i + 1];
                     const interchangeStationValue = mtrRoute.interchanges?.[i] || this.getDefaultInterchange(currentLine, nextLine);
                     const interchangeStationName = this.getMTRName(interchangeStationValue);
-
                     items.push({ type: 'segment', mode: 'MTR', lines: [currentLine], duration: segmentDuration, distance: segmentDistance, stops: segmentStops, to: interchangeStationName });
                     currentTime.setMinutes(currentTime.getMinutes() + segmentDuration);
                     remainingMtrTime -= segmentDuration;
-
                     items.push({ type: 'point', mode: 'MTR', name: interchangeStationName, time: formatTime(currentTime), interchange: true, fromLine: currentLine, toLine: nextLine, line: nextLine });
                     currentTime.setMinutes(currentTime.getMinutes() + interchangeDelay);
                     remainingMtrTime -= interchangeDelay;
@@ -618,43 +712,38 @@ class TimelineGenerator {
                 }
             }
             items.push({ type: 'point', mode: 'MTR', name: this.getMTRName(route.destinationStation), time: formatTime(currentTime), isEnd: true, line: mtrRoute.route[mtrRoute.route.length - 1] });
-        } else if (route.type === 'Bus-to-MTR') {
+        }
+        if (route.type === 'Bus-to-MTR') {
             const busRoute = route.busRoute;
             const mtrRoute = route.mtrRoute;
             const boardingStopInfo = transit.findStop(busRoute.boardingStop);
             const alightingStopInfo = transit.findStop(busRoute.alightingStop);
             const boardingStopName = boardingStopInfo?.name_en || `Stop ${busRoute.boardingStop}`;
             const alightingStopName = alightingStopInfo?.name_en || `Stop ${busRoute.alightingStop}`;
-
-            const busTime = busRoute.stopCount * 2;
+            const busTime = busRoute.stopCount * 2 + (route.busWaitTime || 0);
             const walkTime = calculateWalkDuration(route.walkingDistance);
             const mtrEstimate = route.estimatedTime - busTime - walkTime;
-            const mtrTotalTime = getMtrTotalTime(mtrRoute, mtrEstimate);
+            const mtrTotalTime = mtrRoute.totalDuration || mtrEstimate;
             let remainingMtrTime = mtrTotalTime;
-
             items.push({ type: 'point', mode: 'Bus', name: boardingStopName, time: formatTime(currentTime), isStart: true, provider: busRoute.provider });
             items.push({ type: 'segment', mode: 'Bus', route: busRoute.route, direction: busRoute.direction, stops: busRoute.stopCount, duration: busTime, distance: busRoute.distance, alightingStopName: alightingStopName, provider: busRoute.provider });
             currentTime.setMinutes(currentTime.getMinutes() + busTime);
             items.push({ type: 'point', mode: 'Bus', name: alightingStopName, time: formatTime(currentTime), provider: busRoute.provider });
-
             const interchangeMTRStationName = this.getMTRName(route.interchangeStation);
             items.push({ type: 'segment', mode: 'Walk', duration: walkTime, distance: route.walkingDistance, to: interchangeMTRStationName });
             currentTime.setMinutes(currentTime.getMinutes() + walkTime);
             items.push({ type: 'point', mode: 'MTR', name: interchangeMTRStationName, time: formatTime(currentTime), line: mtrRoute.route[0] });
-
             for (let i = 0; i < mtrRoute.route.length; i++) {
                 const currentLine = mtrRoute.route[i];
                 const segmentDetail = mtrRoute.segmentDetails?.[i];
                 const estimatedSegmentDuration = Math.max(1, Math.round(remainingMtrTime / (mtrRoute.route.length - i)));
-                const segmentDuration = getSegmentDuration(segmentDetail, estimatedSegmentDuration);
+                const segmentDuration = segmentDetail?.duration || estimatedSegmentDuration;
                 const segmentDistance = segmentDetail?.distance;
                 const segmentStops = segmentDetail?.stops;
-
                 if (i < mtrRoute.route.length - 1) {
                     const nextLine = mtrRoute.route[i + 1];
                     const nextInterchangeValue = mtrRoute.interchanges?.[i] || this.getDefaultInterchange(currentLine, nextLine);
                     const nextInterchangeName = this.getMTRName(nextInterchangeValue);
-
                     items.push({ type: 'segment', mode: 'MTR', lines: [currentLine], duration: segmentDuration, distance: segmentDistance, stops: segmentStops, to: nextInterchangeName });
                     currentTime.setMinutes(currentTime.getMinutes() + segmentDuration);
                     remainingMtrTime -= segmentDuration;
@@ -668,35 +757,31 @@ class TimelineGenerator {
                 }
             }
             items.push({ type: 'point', mode: 'MTR', name: this.getMTRName(route.destinationStation), time: formatTime(currentTime), isEnd: true, line: mtrRoute.route[mtrRoute.route.length - 1] });
-        } else if (route.type === 'MTR-to-Bus') {
+        }
+        if (route.type === 'MTR-to-Bus') {
             const mtrRoute = route.mtrRoute;
             const busRoute = route.busRoute;
             const boardingStopInfo = transit.findStop(busRoute.boardingStop);
             const alightingStopInfo = transit.findStop(busRoute.alightingStop);
             const boardingStopName = boardingStopInfo?.name_en || `Stop ${busRoute.boardingStop}`;
             const alightingStopName = alightingStopInfo?.name_en || `Stop ${busRoute.alightingStop}`;
-
-            const busTime = busRoute.stopCount * 2;
+            const busTime = busRoute.stopCount * 2 + (route.busWaitTime || 0);
             const walkTime = calculateWalkDuration(route.walkingDistance);
             const mtrEstimate = route.estimatedTime - busTime - walkTime;
-            const mtrTotalTime = getMtrTotalTime(mtrRoute, mtrEstimate);
+            const mtrTotalTime = mtrRoute.totalDuration || mtrEstimate;
             let remainingMtrTime = mtrTotalTime;
-
             items.push({ type: 'point', mode: 'MTR', name: this.getMTRName(route.currentStation), time: formatTime(currentTime), isStart: true, line: mtrRoute.route[0] });
-
             for (let i = 0; i < mtrRoute.route.length; i++) {
                 const currentLine = mtrRoute.route[i];
                 const segmentDetail = mtrRoute.segmentDetails?.[i];
                 const estimatedSegmentDuration = Math.max(1, Math.round(remainingMtrTime / (mtrRoute.route.length - i)));
-                const segmentDuration = getSegmentDuration(segmentDetail, estimatedSegmentDuration);
+                const segmentDuration = segmentDetail?.duration || estimatedSegmentDuration;
                 const segmentDistance = segmentDetail?.distance;
                 const segmentStops = segmentDetail?.stops;
-
                 if (i < mtrRoute.route.length - 1) {
                     const nextLine = mtrRoute.route[i + 1];
                     const nextInterchangeValue = mtrRoute.interchanges?.[i] || this.getDefaultInterchange(currentLine, nextLine);
                     const nextInterchangeName = this.getMTRName(nextInterchangeValue);
-
                     items.push({ type: 'segment', mode: 'MTR', lines: [currentLine], duration: segmentDuration, distance: segmentDistance, stops: segmentStops, to: nextInterchangeName });
                     currentTime.setMinutes(currentTime.getMinutes() + segmentDuration);
                     remainingMtrTime -= segmentDuration;
@@ -711,33 +796,29 @@ class TimelineGenerator {
                     items.push({ type: 'point', mode: 'MTR', name: interchangeMTRStationName, time: formatTime(currentTime), line: currentLine });
                 }
             }
-
             items.push({ type: 'segment', mode: 'Walk', duration: walkTime, distance: route.walkingDistance, to: boardingStopName });
             currentTime.setMinutes(currentTime.getMinutes() + walkTime);
             items.push({ type: 'point', mode: 'Bus', name: boardingStopName, time: formatTime(currentTime), provider: busRoute.provider });
             items.push({ type: 'segment', mode: 'Bus', route: busRoute.route, direction: busRoute.direction, stops: busRoute.stopCount, duration: busTime, distance: busRoute.distance, alightingStopName: alightingStopName, provider: busRoute.provider });
             currentTime.setMinutes(currentTime.getMinutes() + busTime);
             items.push({ type: 'point', mode: 'Bus', name: alightingStopName, time: formatTime(currentTime), isEnd: true, provider: busRoute.provider });
-        } else if (route.type === 'Bus') {
+        }
+        if (route.type === 'Bus') {
             const busRoute = route.busRoute;
             const walkToBusDist = route.walkingDistance / 2;
             const walkFromBusDist = route.walkingDistance / 2;
             const walkToBusTime = calculateWalkDuration(walkToBusDist);
             const walkFromBusTime = calculateWalkDuration(walkFromBusDist);
             const busTime = Math.max(1, route.estimatedTime - walkToBusTime - walkFromBusTime);
-
             items.push({ type: 'point', mode: 'Bus', name: route.boardingStopName, time: formatTime(currentTime), isStart: true, provider: busRoute.provider });
-
             if (walkToBusTime > 0 && walkToBusDist > 10) {
                 items.push({ type: 'segment', mode: 'Walk', duration: walkToBusTime, distance: walkToBusDist, to: route.boardingStopName });
                 currentTime.setMinutes(currentTime.getMinutes() + walkToBusTime);
                 items.push({ type: 'point', mode: 'Bus', name: route.boardingStopName, time: formatTime(currentTime), provider: busRoute.provider });
             }
-
             items.push({ type: 'segment', mode: 'Bus', route: busRoute.route, direction: busRoute.direction, stops: busRoute.stopCount, duration: busTime, distance: busRoute.distance, alightingStopName: route.alightingStopName, provider: busRoute.provider });
             currentTime.setMinutes(currentTime.getMinutes() + busTime);
             items.push({ type: 'point', mode: 'Bus', name: route.alightingStopName, time: formatTime(currentTime), provider: busRoute.provider });
-
             if (walkFromBusTime > 0 && walkFromBusDist > 10) {
                 const finalDestName = "Destination Area";
                 items.push({ type: 'segment', mode: 'Walk', duration: walkFromBusTime, distance: walkFromBusDist, to: finalDestName });
@@ -748,30 +829,75 @@ class TimelineGenerator {
                 lastPoint.isEnd = true;
                 lastPoint.time = formatTime(currentTime);
             }
-        } else if (route.type === 'transfer') {
+        }
+        if (route.type === 'transfer') {
             const firstLeg = route.firstLeg;
             const secondLeg = route.secondLeg;
             const boardingStopFirst = transit.findStop(firstLeg.boardingStop)?.name_en || `Stop ${firstLeg.boardingStop}`;
             const alightingStopFirst = transit.findStop(firstLeg.alightingStop)?.name_en || `Stop ${firstLeg.alightingStop}`;
             const boardingStopSecond = transit.findStop(secondLeg.boardingStop)?.name_en || `Stop ${secondLeg.boardingStop}`;
             const alightingStopSecond = transit.findStop(secondLeg.alightingStop)?.name_en || `Stop ${secondLeg.alightingStop}`;
-
             const firstBusTime = firstLeg.stopCount * 2;
             const walkTime = calculateWalkDuration(route.walkingDistance);
             const secondBusTime = secondLeg.stopCount * 2;
-
             items.push({ type: 'point', mode: 'Bus', name: boardingStopFirst, time: formatTime(currentTime), isStart: true, provider: firstLeg.provider });
             items.push({ type: 'segment', mode: 'Bus', route: firstLeg.route, direction: firstLeg.direction, stops: firstLeg.stopCount, duration: firstBusTime, distance: firstLeg.distance, alightingStopName: alightingStopFirst, provider: firstLeg.provider });
             currentTime.setMinutes(currentTime.getMinutes() + firstBusTime);
             items.push({ type: 'point', mode: 'Bus', name: alightingStopFirst, time: formatTime(currentTime), provider: firstLeg.provider });
-
             items.push({ type: 'segment', mode: 'Walk', duration: walkTime, distance: route.walkingDistance, to: boardingStopSecond });
             currentTime.setMinutes(currentTime.getMinutes() + walkTime);
             items.push({ type: 'point', mode: 'Bus', name: boardingStopSecond, time: formatTime(currentTime), provider: secondLeg.provider });
-
             items.push({ type: 'segment', mode: 'Bus', route: secondLeg.route, direction: secondLeg.direction, stops: secondLeg.stopCount, duration: secondBusTime, distance: secondLeg.distance, alightingStopName: alightingStopSecond, provider: secondLeg.provider });
             currentTime.setMinutes(currentTime.getMinutes() + secondBusTime);
             items.push({ type: 'point', mode: 'Bus', name: alightingStopSecond, time: formatTime(currentTime), isEnd: true, provider: secondLeg.provider });
+        }
+        if (route.type === 'Bus-MTR-Bus') {
+            const firstBus = route.firstBusRoute;
+            const mtrRoute = route.mtrRoute;
+            const secondBus = route.secondBusRoute;
+            const boardingFirst = transit.findStop(firstBus.boardingStop)?.name_en || `Stop ${firstBus.boardingStop}`;
+            const alightingFirst = transit.findStop(firstBus.alightingStop)?.name_en || `Stop ${firstBus.alightingStop}`;
+            const boardingSecond = transit.findStop(secondBus.boardingStop)?.name_en || `Stop ${secondBus.boardingStop}`;
+            const alightingSecond = transit.findStop(secondBus.alightingStop)?.name_en || `Stop ${secondBus.alightingStop}`;
+            const firstInterchangeName = this.getMTRName(route.firstInterchange);
+            const secondInterchangeName = this.getMTRName(route.secondInterchange);
+            const firstBusTime = (firstBus.stopCount || 1) * 2 + 5;
+            const firstWalkTime = calculateWalkDuration(route.walkingDistance / 2);
+            const mtrTotalTime = mtrRoute.totalDuration || route.estimatedTime - firstBusTime - firstWalkTime - ((secondBus.stopCount || 1) * 2 + 5) - calculateWalkDuration(route.walkingDistance / 2);
+            const secondWalkTime = calculateWalkDuration(route.walkingDistance / 2);
+            const secondBusTime = (secondBus.stopCount || 1) * 2 + 5;
+            items.push({ type: 'point', mode: 'Bus', name: boardingFirst, time: formatTime(currentTime), isStart: true, provider: firstBus.provider });
+            items.push({ type: 'segment', mode: 'Bus', route: firstBus.route, direction: firstBus.direction, stops: firstBus.stopCount, duration: firstBusTime, distance: firstBus.distance, alightingStopName: alightingFirst, provider: firstBus.provider });
+            currentTime.setMinutes(currentTime.getMinutes() + firstBusTime);
+            items.push({ type: 'point', mode: 'Bus', name: alightingFirst, time: formatTime(currentTime), provider: firstBus.provider });
+            items.push({ type: 'segment', mode: 'Walk', duration: firstWalkTime, distance: route.walkingDistance / 2, to: firstInterchangeName });
+            currentTime.setMinutes(currentTime.getMinutes() + firstWalkTime);
+            items.push({ type: 'point', mode: 'MTR', name: firstInterchangeName, time: formatTime(currentTime), line: mtrRoute.route[0] });
+            let remainingMtrTime = mtrTotalTime;
+            for (let i = 0; i < mtrRoute.route.length; i++) {
+                const currentLine = mtrRoute.route[i];
+                const segmentDuration = Math.max(1, Math.round(remainingMtrTime / (mtrRoute.route.length - i)));
+                if (i < mtrRoute.route.length - 1) {
+                    const nextLine = mtrRoute.route[i + 1];
+                    const nextInterchange = mtrRoute.interchanges?.[i] || this.getDefaultInterchange(currentLine, nextLine);
+                    items.push({ type: 'segment', mode: 'MTR', lines: [currentLine], duration: segmentDuration, to: this.getMTRName(nextInterchange) });
+                    currentTime.setMinutes(currentTime.getMinutes() + segmentDuration);
+                    remainingMtrTime -= segmentDuration;
+                    items.push({ type: 'point', mode: 'MTR', name: this.getMTRName(nextInterchange), time: formatTime(currentTime), interchange: true, fromLine: currentLine, toLine: nextLine, line: nextLine });
+                    currentTime.setMinutes(currentTime.getMinutes() + interchangeDelay);
+                    remainingMtrTime -= interchangeDelay;
+                } else {
+                    items.push({ type: 'segment', mode: 'MTR', lines: [currentLine], duration: remainingMtrTime, to: secondInterchangeName });
+                    currentTime.setMinutes(currentTime.getMinutes() + remainingMtrTime);
+                }
+            }
+            items.push({ type: 'point', mode: 'MTR', name: secondInterchangeName, time: formatTime(currentTime), line: mtrRoute.route[mtrRoute.route.length - 1] });
+            items.push({ type: 'segment', mode: 'Walk', duration: secondWalkTime, distance: route.walkingDistance / 2, to: boardingSecond });
+            currentTime.setMinutes(currentTime.getMinutes() + secondWalkTime);
+            items.push({ type: 'point', mode: 'Bus', name: boardingSecond, time: formatTime(currentTime), provider: secondBus.provider });
+            items.push({ type: 'segment', mode: 'Bus', route: secondBus.route, direction: secondBus.direction, stops: secondBus.stopCount, duration: secondBusTime, distance: secondBus.distance, alightingStopName: alightingSecond, provider: secondBus.provider });
+            currentTime.setMinutes(currentTime.getMinutes() + secondBusTime);
+            items.push({ type: 'point', mode: 'Bus', name: alightingSecond, time: formatTime(currentTime), isEnd: true, provider: secondBus.provider });
         }
         return items;
     }
@@ -1151,7 +1277,6 @@ function getUniqueMTRStations() {
     console.log("Loaded MTR stations:", uniqueStations.length);
     return uniqueStations;
 }
-
 window.onload = async () => {
     const params = new URLSearchParams(window.location.search);
     const cs = params.get('currentStation');
@@ -1159,21 +1284,9 @@ window.onload = async () => {
     const sbs = params.get('startBusStop');
     const ebs = params.get('endBusStop');
     const MAX_ACCEPTABLE_INTERCHANGES = 2;
-
     if (mtrStations.length === 0) {
         mtrStations = getUniqueMTRStations();
     }
-
-    if (mtrStations.length === 0 && (cs || ds)) {
-        document.getElementById('route-options').innerHTML = `
-            <div class="no-routes-container">
-                <h2>No Routes Available</h2>
-                <p>MTR station data could not be loaded. Please ensure the application is properly initialized.</p>
-                <button class="back-button" onclick="window.location.href='route_planner.html'">Try Again</button>
-            </div>`;
-        return;
-    }
-
     const finder = new RouteFinder(transit, mtrStations);
     const requiresBusData = sbs || ebs;
     if (requiresBusData && transit.stops.length === 0) {
@@ -1185,43 +1298,17 @@ window.onload = async () => {
             </div>`;
         return;
     }
-
     document.getElementById('route-options').innerHTML = '<div class="loading">Finding routes...</div>';
-    document.getElementById('schedule').innerHTML = '';
     document.getElementById('schedule').style.display = 'none';
     document.getElementById('route-options').style.display = 'block';
-
     try {
         if (cs && ds && !sbs && !ebs) {
-            console.log("Searching MTR-only:", cs, "to", ds);
             currentRoutes = await finder.findMTRRoute(cs, ds);
         } else if (sbs && ebs && !cs && !ds) {
-            console.log("Searching Bus-only:", sbs, "to", ebs);
-            const busRouteOptions = finder.findBusRoutes([sbs], [ebs]);
-            currentRoutes = busRouteOptions.map(br => {
-                if (br.type === 'direct') {
-                    const boardingStop = transit.findStop(br.boardingStop);
-                    const alightingStop = transit.findStop(br.alightingStop);
-                    const walkDist = 300;
-                    const walkTime = calculateWalkDuration(walkDist);
-                    const busTime = (br.stopCount || 1) * 2;
-                    return {
-                        type: 'Bus',
-                        busRoute: br,
-                        estimatedTime: walkTime + busTime,
-                        walkingDistance: walkDist,
-                        boardingStopName: boardingStop?.name_en || `Stop ${br.boardingStop}`,
-                        alightingStopName: alightingStop?.name_en || `Stop ${br.alightingStop}`
-                    };
-                } else if (br.type === 'transfer') {
-                    return br;
-                }
-            }).filter(route => route);
+            currentRoutes = await finder.findBusToBusRoute(sbs, ebs);
         } else if (sbs && ds && !cs && !ebs) {
-            console.log("Searching Bus-to-MTR:", sbs, "to", ds);
             currentRoutes = await finder.findMixedRoute(sbs, ds, 'bus', 'mtr');
         } else if (cs && ebs && !sbs && !ds) {
-            console.log("Searching MTR-to-Bus:", cs, "to", ebs);
             currentRoutes = await finder.findMixedRoute(cs, ebs, 'mtr', 'bus');
         } else {
             document.getElementById('route-options').innerHTML = `
@@ -1232,14 +1319,6 @@ window.onload = async () => {
                 </div>`;
             return;
         }
-        console.log("Routes found:", currentRoutes);
-
-        let startPoint, endPoint;
-        if (cs) startPoint = mtrStations.find(s => s.value === cs);
-        else if (sbs) startPoint = transit.findStop(sbs);
-        if (ds) endPoint = mtrStations.find(s => s.value === ds);
-        else if (ebs) endPoint = transit.findStop(ebs);
-
         const validRoutes = currentRoutes.filter(route => {
             const items = TimelineGenerator.getItems(route);
             let transfers = 0;
@@ -1248,17 +1327,8 @@ window.onload = async () => {
             });
             return transfers <= MAX_ACCEPTABLE_INTERCHANGES;
         });
-
-        if (!currentRoutes.length || !validRoutes.length) {
-            if (startPoint && endPoint) {
-                const taxiRoute = finder.calculateTaxiRoute(startPoint, endPoint);
-                if (taxiRoute) {
-                    currentRoutes = [taxiRoute];
-                }
-            }
-        }
+        currentRoutes = validRoutes.length > 0 ? validRoutes : currentRoutes;
     } catch (error) {
-        console.error("Error finding routes:", error);
         document.getElementById('route-options').innerHTML = `
             <div class="no-routes-container">
                 <h2>Error Finding Routes</h2>
@@ -1267,7 +1337,6 @@ window.onload = async () => {
             </div>`;
         return;
     }
-
     if (!currentRoutes.length) {
         const startStop = sbs ? transit.findStop(sbs)?.name_en || `Stop ${sbs}` : cs;
         const endStop = ebs ? transit.findStop(ebs)?.name_en || `Stop ${ebs}` : ds;
@@ -1279,10 +1348,8 @@ window.onload = async () => {
             </div>`;
         return;
     }
-
-    currentRoutes.sort((a, b) => (a.estimatedTime || Infinity) - (b.estimatedTime || Infinity));
+    currentRoutes.sort((a, b) => (a.score || Infinity) - (b.score || Infinity));
     displayRouteSummaries();
-
     document.getElementById('sortByTime')?.addEventListener('click', () => {
         currentRoutes.sort((a, b) => (a.estimatedTime || Infinity) - (b.estimatedTime || Infinity));
         displayRouteSummaries();
@@ -1292,7 +1359,6 @@ window.onload = async () => {
         currentRoutes.sort((a, b) => getTotalWalk(a) - getTotalWalk(b));
         displayRouteSummaries();
     });
-
     document.getElementById('route-options').addEventListener('click', (event) => {
         const summaryElement = event.target.closest('.route-summary-option');
         if (summaryElement) {
@@ -1302,7 +1368,6 @@ window.onload = async () => {
             }
         }
     });
-
     const backdrop = document.getElementById('details-backdrop');
     if (backdrop) {
         backdrop.addEventListener('click', showSummaries);
