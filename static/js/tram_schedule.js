@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Navigate to train page
     if (trainBtn) {
         trainBtn.addEventListener('click', () => {
-            window.location.href = 'index.html';
+            window.location.href = 'mtr.html';
         });
     }
 

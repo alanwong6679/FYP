@@ -21,6 +21,7 @@ let debounceTimeout;
 let nearbyStops = [];
 let radiusOptionsVisible = false;
 let favoriteRoutes = JSON.parse(localStorage.getItem('favoriteRoutes')) || [];
+let stopMarkers = {};
 
 function initMap() {
     map = new google.maps.Map(document.getElementById('map'), { zoom: 12 });
@@ -362,6 +363,22 @@ function displayFavoriteRoutes() {
     });
 }
 
+function getFormattedStops(stopsForRoute) {
+    return stopsForRoute.map((item, index) => {
+        const stop = getStopDetails(selectedProvider, item.stop || item.stop_id);
+        if (!stop) return null;
+        const coords = { lat: stop.lat, lng: stop.long };
+        if (isNaN(coords.lat) || isNaN(coords.lng)) return null;
+        return {
+            name: stop.name_en,
+            lat: coords.lat,
+            lng: coords.lng,
+            stopId: item.stop || item.stop_id,
+            index: index + 1
+        };
+    }).filter(s => s !== null);
+}
+
 function selectRoute(route) {
     if (!stopData || !routeStopData) {
         showError("Route data not loaded yet. Please wait...");
@@ -379,6 +396,7 @@ function selectRoute(route) {
 
     routeMarkers.forEach(marker => marker.setMap(null));
     routeMarkers = [];
+    stopMarkers = {};
     if (routePolyline) {
         routePolyline.setMap(null);
         console.log("Cleared previous routePolyline");
@@ -394,33 +412,39 @@ function selectRoute(route) {
             showError(`No stops found for route ${selectedRoute} (${selectedProvider.toUpperCase()}).`);
             return;
         }
-        displayRouteOnMap(stopsForRoute);
+        const stops = getFormattedStops(stopsForRoute);
+        if (stops.length < 2) {
+            showError("Not enough valid stops to draw a route.");
+            return;
+        }
+        displayRouteOnMap(stops);
+        displayStopList(stops);
     }).catch(err => {
         console.error("Error selecting route:", err);
         showError("Failed to load route details.");
     });
 }
 
-async function displayRouteOnMap(stopsForRoute) {
-    const stops = stopsForRoute.map((item, index) => {
-        const stop = getStopDetails(selectedProvider, item.stop || item.stop_id);
-        if (!stop) return null;
-        const coords = { lat: stop.lat, lng: stop.long };
-        if (isNaN(coords.lat) || isNaN(coords.lng)) return null;
-        return {
-            name: stop.name_en,
-            lat: coords.lat,
-            lng: coords.lng,
-            stopId: item.stop || item.stop_id,
-            index: index + 1
-        };
-    }).filter(s => s !== null);
+function displayStopList(stops) {
+    const stopListUl = document.getElementById("stopList");
+    if (!stopListUl) return;
+    stopListUl.innerHTML = ''; // Clear existing content
+    stops.forEach(stop => {
+        const li = document.createElement('li');
+        li.textContent = `${stop.index}. ${stop.name}`;
+        li.addEventListener('click', () => {
+            const marker = stopMarkers[stop.stopId];
+            if (marker) {
+                google.maps.event.trigger(marker, 'click');
+            } else {
+                console.error("Marker not found for stopId:", stop.stopId);
+            }
+        });
+        stopListUl.appendChild(li);
+    });
+}
 
-    if (stops.length < 2) {
-        showError("Not enough valid stops to draw a route.");
-        return;
-    }
-
+async function displayRouteOnMap(stops) {
     const etaPromises = stops.map(stop => 
         fetchETA(stop.stopId, selectedProvider, selectedRoute, selectedRouteId, selectedBound)
     );
@@ -491,17 +515,19 @@ async function displayRouteOnMap(stopsForRoute) {
             label: `${stop.index}`
         });
 
+        marker.stopId = stop.stopId;
         const infoWindow = new google.maps.InfoWindow({
             content: `<strong>${stop.name}</strong><br/>Loading ETA...`
         });
 
+        marker.infoWindow = infoWindow;
         marker.addListener('click', async () => {
             if (currentInfoWindow) currentInfoWindow.close();
             infoWindow.open(map, marker);
             currentInfoWindow = infoWindow;
 
             const etaData = await fetchETA(stop.stopId, selectedProvider, selectedRoute, selectedRouteId, selectedBound);
-            const etaInfo = etaData.data.length
+            let etaInfo = etaData.data.length
                 ? etaData.data.map(bus => {
                     const etaField = bus.eta;
                     const arriveTime = etaField ? new Date(etaField) : null;
@@ -512,11 +538,12 @@ async function displayRouteOnMap(stopsForRoute) {
                     }
                     const providerShort = selectedProvider.toUpperCase();
                     return `${providerShort} ${bus.route}: ${displayTime}${bus.remark_en ? ' - ' + bus.remark_en : ''}`;
-                }).join('<br/>')
+                }).join('<br>')
                 : "No ETA available.";
             infoWindow.setContent(`<strong>${stop.name}</strong><br/>${etaInfo}`);
         });
 
+        stopMarkers[stop.stopId] = marker;
         return marker;
     });
 
@@ -843,7 +870,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         inputDisplay.value = "Enter Route Number";
                         filterRoutes();
                     } else {
-                        if (currentInput === '' && inputDisplay.value === "Enter Route Number") { // Fixed typo: heure=== to ===
+                        if (currentInput === '' && inputDisplay.value === "Enter Route Number") {
                             inputDisplay.value = '';
                         }
                         currentInput += button.dataset.value;

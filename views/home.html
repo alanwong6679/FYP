@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/navbar.css">
     <link rel="stylesheet" href="/static/css/transit.css">
+    <link rel="stylesheet" href="/static/css/temperature.css">
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBBY8WRPKMG0sPNFkHAYNcCwkwTn4T5jGw&libraries=routes" defer></script>
 </head>
 <body>
@@ -18,8 +19,11 @@
         <ul id="favoriteRouteList" class="route-list" role="listbox" aria-label="Routes and Stops"></ul>
         <p id="selectedRouteDisplay" class="route-info">Selected Route: None</p>
         <div id="map" role="region" aria-label="Route Map"></div>
+        <ul id="stopList" class="stop-list" role="listbox" aria-label="Route Stops"></ul>
     </div>
+
     <script src="/static/js/transit.js"></script>
+    <script src="/static/js/temperature.js"></script>
     <script src="/static/js/navbar.js"></script>
 </body>
 </html>

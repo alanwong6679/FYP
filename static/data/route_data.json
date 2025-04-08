@@ -8856,6 +8856,13 @@
             "provider": "kmb"
         },
         {
+            "route": "SP12",
+            "bound": "O",
+            "orig_en": "KAI TAK SPORTS PARK",
+            "dest_en": "LOK MA CHAU",
+            "provider": "kmb"
+        },
+        {
             "route": "SP3",
             "bound": "O",
             "orig_en": "KAI TAK SPORTS PARK",
@@ -11182,6 +11189,13 @@
             "provider": "ctb"
         },
         {
+            "route": "A25S",
+            "bound": "O",
+            "orig_en": "Kai Tak Sports Park",
+            "dest_en": "Airport (via HZMB Hong Kong Port)",
+            "provider": "ctb"
+        },
+        {
             "route": "A26",
             "bound": "O",
             "orig_en": "Yau Tong",
@@ -11725,6 +11739,13 @@
             "bound": "O",
             "orig_en": "Kai Tak Sports Park",
             "dest_en": "Siu Sai Wan (Island Resort)",
+            "provider": "ctb"
+        },
+        {
+            "route": "SP12",
+            "bound": "O",
+            "orig_en": "Kai Tak Sports Park",
+            "dest_en": "Lok Ma Chau (San Tin)",
             "provider": "ctb"
         },
         {
@@ -18834,5 +18855,5 @@
             "provider": "minibus"
         }
     ],
-    "timestamp": 1744027581115
+    "timestamp": 1744131461858
 }

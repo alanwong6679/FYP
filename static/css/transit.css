@@ -574,3 +574,46 @@ button:active {
 .radius-btn:active {
     transform: scale(0.97);
 }
+
+#stopList.stop-list {
+    margin-top: 20px;
+    max-height: 200px;
+    overflow-y: auto;
+    list-style: none;
+    padding: 0;
+    border: 1px solid #cbd5e0;
+    border-radius: var(--border-radius);
+    transition: border-color var(--transition-default), background var(--transition-default);
+}
+
+:where([data-theme="dark"]) #stopList.stop-list {
+    border-color: #666666;
+    background: #2a2a2a;
+}
+
+#stopList.stop-list li {
+    padding: 12px;
+    border-bottom: 1px solid #e2e8f0;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color var(--transition-default);
+    color: #000000;
+    display: flex;
+    justify-content: space-between; 
+}
+
+:where([data-theme="dark"]) #stopList.stop-list li {
+    border-bottom: 1px solid #444444;
+    color: #e0e0e0;
+}
+
+#stopList.stop-list li:last-child {
+    border-bottom: none;
+}
+
+#stopList.stop-list li:hover {
+    background-color: #edf2f7;
+}
+
+:where([data-theme="dark"]) #stopList.stop-list li:hover {
+    background-color: #3a3a3a;
+}

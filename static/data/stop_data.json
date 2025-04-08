@@ -33165,12 +33165,12 @@
             "lat": "22.281520",
             "long": "114.158043"
         },
-        "CF2AA9B99A043548": {
+        "414AD39F5040C30F": {
             "name_en": "KAI TAK SPORTS PARK",
             "lat": "22.322875",
             "long": "114.193579"
         },
-        "414AD39F5040C30F": {
+        "CF2AA9B99A043548": {
             "name_en": "KAI TAK SPORTS PARK",
             "lat": "22.322875",
             "long": "114.193579"
@@ -38927,170 +38927,15 @@
             "lat": "22.253517212091",
             "long": "114.13564735053"
         },
-        "001139": {
-            "name_en": "Admiralty - MTR Exit B",
-            "lat": "22.279768672091",
-            "long": "114.16383960053"
-        },
-        "001165": {
-            "name_en": "Serene Court, Victoria Road",
-            "lat": "22.281063612091",
-            "long": "114.12080737053"
-        },
-        "001166": {
-            "name_en": "Island West Transfer Station, Victoria Road",
-            "lat": "22.280253272091",
-            "long": "114.11868249053"
-        },
-        "001167": {
-            "name_en": "Caritas Jockey Club Hostel, Victoria Road",
-            "lat": "22.278603752091",
-            "long": "114.11778908053"
-        },
-        "001168": {
-            "name_en": "Mount Davis Path, Victoria Road",
-            "lat": "22.275760642091",
-            "long": "114.11752426053"
-        },
-        "002384": {
-            "name_en": "Mount Davis Road, Victoria Road",
-            "lat": "22.274017992091",
-            "long": "114.11853701053"
-        },
-        "002307": {
-            "name_en": "Villa Cecil, Victoria Road",
-            "lat": "22.272909692091",
-            "long": "114.12020697053"
-        },
-        "002308": {
-            "name_en": "Bayview Court, Victoria Road",
-            "lat": "22.272584662091",
-            "long": "114.12439291053"
-        },
-        "002309": {
-            "name_en": "West Island School, Victoria Road",
-            "lat": "22.273204742091",
-            "long": "114.12627389053"
-        },
-        "002310": {
-            "name_en": "HKCCCU Pok Fu Lam Road Cemetery, Victoria Road",
-            "lat": "22.272365942091",
-            "long": "114.12777663053"
-        },
-        "002327": {
-            "name_en": "Scenic Villas, Victoria Road",
-            "lat": "22.270093092091",
-            "long": "114.12552732053"
-        },
-        "002311": {
-            "name_en": "Sha Wan Drive, Victoria Road",
-            "lat": "22.268131782091",
-            "long": "114.12716217053"
-        },
-        "002312": {
-            "name_en": "Sassoon Road, Victoria Road",
-            "lat": "22.266569262091",
-            "long": "114.12795148053"
-        },
-        "002313": {
-            "name_en": "HKU Li Ka Shing Faculty of Medicine, Victoria Road",
-            "lat": "22.267142282091",
-            "long": "114.12945192053"
-        },
-        "002314": {
-            "name_en": "Lower Baguio Villa, Victoria Road",
-            "lat": "22.263659832091",
-            "long": "114.13224890053"
-        },
-        "002315": {
-            "name_en": "Upper Baguio Villa, Victoria Road",
-            "lat": "22.261642702091",
-            "long": "114.13374007053"
+        "002186": {
+            "name_en": "Chi Fu",
+            "lat": "22.257522932091",
+            "long": "114.13911822053"
         },
         "002259": {
             "name_en": "Tin Wan Street, Shek Pai Wan Road",
             "lat": "22.249420192091",
             "long": "114.14841511053"
-        },
-        "002321": {
-            "name_en": "Victoria Road Sitting-out Area, Victoria Road",
-            "lat": "22.259979912091",
-            "long": "114.13342839053"
-        },
-        "002322": {
-            "name_en": "Upper Baguio Villa, Victoria Road",
-            "lat": "22.262056762091",
-            "long": "114.13293330053"
-        },
-        "002665": {
-            "name_en": "Lower Baguio Villa, Victoria Road",
-            "lat": "22.263931012091",
-            "long": "114.13152407053"
-        },
-        "002330": {
-            "name_en": "HKU Li Ka Shing Faculty of Medicine, Victoria Road",
-            "lat": "22.266852632091",
-            "long": "114.12929998053"
-        },
-        "002324": {
-            "name_en": "Sassoon Road, Victoria Road",
-            "lat": "22.267312992091",
-            "long": "114.12747267053"
-        },
-        "002325": {
-            "name_en": "Bisney Road, Victoria Road",
-            "lat": "22.268929922091",
-            "long": "114.12623525053"
-        },
-        "002332": {
-            "name_en": "Scenic Villas, Victoria Road",
-            "lat": "22.270355812091",
-            "long": "114.12545522053"
-        },
-        "002331": {
-            "name_en": "HKCCCU Pok Fu Lam Road Cemetery, Victoria Road",
-            "lat": "22.271322722091",
-            "long": "114.12693412053"
-        },
-        "002306": {
-            "name_en": "West Island School, Victoria Road",
-            "lat": "22.272834062091",
-            "long": "114.12532081053"
-        },
-        "002326": {
-            "name_en": "Blarney Stone Villas, Victoria Road",
-            "lat": "22.272249972091",
-            "long": "114.12078745053"
-        },
-        "001159": {
-            "name_en": "Mount Davis Path, Victoria Road",
-            "lat": "22.275971142091",
-            "long": "114.11742984053"
-        },
-        "001160": {
-            "name_en": "Caritas Jockey Club Hostel, Victoria Road",
-            "lat": "22.279145082091",
-            "long": "114.11783921053"
-        },
-        "001161": {
-            "name_en": "Island West Transfer Station, Victoria Road",
-            "lat": "22.280930762091",
-            "long": "114.11960259053"
-        },
-        "001162": {
-            "name_en": "Sai Ning Street, Victoria Road",
-            "lat": "22.281730232091",
-            "long": "114.12264206053"
-        },
-        "001180": {
-            "name_en": "General Post Office, Connaught Place",
-            "lat": "22.283258052091",
-            "long": "114.15961761053"
-        },
-        "002186": {
-            "name_en": "Chi Fu",
-            "lat": "22.257522932091",
-            "long": "114.13911822053"
         },
         "002344": {
             "name_en": "Yan's Tower, Wong Chuk Hang Road",
@@ -39387,15 +39232,160 @@
             "lat": "22.249915342091",
             "long": "114.17331087053"
         },
+        "002321": {
+            "name_en": "Victoria Road Sitting-out Area, Victoria Road",
+            "lat": "22.259979912091",
+            "long": "114.13342839053"
+        },
+        "002322": {
+            "name_en": "Upper Baguio Villa, Victoria Road",
+            "lat": "22.262056762091",
+            "long": "114.13293330053"
+        },
+        "002665": {
+            "name_en": "Lower Baguio Villa, Victoria Road",
+            "lat": "22.263931012091",
+            "long": "114.13152407053"
+        },
+        "002330": {
+            "name_en": "HKU Li Ka Shing Faculty of Medicine, Victoria Road",
+            "lat": "22.266852632091",
+            "long": "114.12929998053"
+        },
+        "002324": {
+            "name_en": "Sassoon Road, Victoria Road",
+            "lat": "22.267312992091",
+            "long": "114.12747267053"
+        },
+        "002325": {
+            "name_en": "Bisney Road, Victoria Road",
+            "lat": "22.268929922091",
+            "long": "114.12623525053"
+        },
+        "002332": {
+            "name_en": "Scenic Villas, Victoria Road",
+            "lat": "22.270355812091",
+            "long": "114.12545522053"
+        },
+        "002331": {
+            "name_en": "HKCCCU Pok Fu Lam Road Cemetery, Victoria Road",
+            "lat": "22.271322722091",
+            "long": "114.12693412053"
+        },
         "002395": {
             "name_en": "Sandy Bay Road, Victoria Road",
             "lat": "22.272764882091",
             "long": "114.12750132053"
         },
+        "002306": {
+            "name_en": "West Island School, Victoria Road",
+            "lat": "22.272834062091",
+            "long": "114.12532081053"
+        },
+        "002326": {
+            "name_en": "Blarney Stone Villas, Victoria Road",
+            "lat": "22.272249972091",
+            "long": "114.12078745053"
+        },
+        "001159": {
+            "name_en": "Mount Davis Path, Victoria Road",
+            "lat": "22.275971142091",
+            "long": "114.11742984053"
+        },
+        "001160": {
+            "name_en": "Caritas Jockey Club Hostel, Victoria Road",
+            "lat": "22.279145082091",
+            "long": "114.11783921053"
+        },
+        "001161": {
+            "name_en": "Island West Transfer Station, Victoria Road",
+            "lat": "22.280930762091",
+            "long": "114.11960259053"
+        },
+        "001162": {
+            "name_en": "Sai Ning Street, Victoria Road",
+            "lat": "22.281730232091",
+            "long": "114.12264206053"
+        },
         "003407": {
             "name_en": "Kennedy Town Station, Forbes Street",
             "lat": "22.281379752091",
             "long": "114.12784452053"
+        },
+        "001165": {
+            "name_en": "Serene Court, Victoria Road",
+            "lat": "22.281063612091",
+            "long": "114.12080737053"
+        },
+        "001166": {
+            "name_en": "Island West Transfer Station, Victoria Road",
+            "lat": "22.280253272091",
+            "long": "114.11868249053"
+        },
+        "001167": {
+            "name_en": "Caritas Jockey Club Hostel, Victoria Road",
+            "lat": "22.278603752091",
+            "long": "114.11778908053"
+        },
+        "001168": {
+            "name_en": "Mount Davis Path, Victoria Road",
+            "lat": "22.275760642091",
+            "long": "114.11752426053"
+        },
+        "002384": {
+            "name_en": "Mount Davis Road, Victoria Road",
+            "lat": "22.274017992091",
+            "long": "114.11853701053"
+        },
+        "002307": {
+            "name_en": "Villa Cecil, Victoria Road",
+            "lat": "22.272909692091",
+            "long": "114.12020697053"
+        },
+        "002308": {
+            "name_en": "Bayview Court, Victoria Road",
+            "lat": "22.272584662091",
+            "long": "114.12439291053"
+        },
+        "002309": {
+            "name_en": "West Island School, Victoria Road",
+            "lat": "22.273204742091",
+            "long": "114.12627389053"
+        },
+        "002310": {
+            "name_en": "HKCCCU Pok Fu Lam Road Cemetery, Victoria Road",
+            "lat": "22.272365942091",
+            "long": "114.12777663053"
+        },
+        "002327": {
+            "name_en": "Scenic Villas, Victoria Road",
+            "lat": "22.270093092091",
+            "long": "114.12552732053"
+        },
+        "002311": {
+            "name_en": "Sha Wan Drive, Victoria Road",
+            "lat": "22.268131782091",
+            "long": "114.12716217053"
+        },
+        "002312": {
+            "name_en": "Sassoon Road, Victoria Road",
+            "lat": "22.266569262091",
+            "long": "114.12795148053"
+        },
+        "002313": {
+            "name_en": "HKU Li Ka Shing Faculty of Medicine, Victoria Road",
+            "lat": "22.267142282091",
+            "long": "114.12945192053"
+        },
+        "002314": {
+            "name_en": "Lower Baguio Villa, Victoria Road",
+            "lat": "22.263659832091",
+            "long": "114.13224890053"
+        },
+        "002315": {
+            "name_en": "Upper Baguio Villa, Victoria Road",
+            "lat": "22.261642702091",
+            "long": "114.13374007053"
         },
         "001183": {
             "name_en": "Sai Cheung Street",
@@ -40177,6 +40167,11 @@
             "lat": "22.287790952091",
             "long": "114.13863698053"
         },
+        "001180": {
+            "name_en": "General Post Office, Connaught Place",
+            "lat": "22.283258052091",
+            "long": "114.15961761053"
+        },
         "001342": {
             "name_en": "Causeway Bay (Whitfield Road)",
             "lat": "22.286037612091",
@@ -40741,6 +40736,11 @@
             "name_en": "Laguna Plaza, Cha Kwo Ling Road",
             "lat": "22.306791852091",
             "long": "114.22837709053"
+        },
+        "001139": {
+            "name_en": "Admiralty - MTR Exit B",
+            "lat": "22.279768672091",
+            "long": "114.16383960053"
         },
         "002654": {
             "name_en": "Water World",
@@ -44802,6 +44802,11 @@
             "lat": "22.304443302091",
             "long": "114.18222671053"
         },
+        "003874": {
+            "name_en": "Kai Tak Sports Park, Sung Wong Toi Road",
+            "lat": "22.323294602091",
+            "long": "114.19286007053"
+        },
         "001792": {
             "name_en": "Yau Tong",
             "lat": "22.295703062091",
@@ -45986,11 +45991,6 @@
             "name_en": "Aviation Fuel Tank Farm, Scenic Road",
             "lat": "22.293103912091",
             "long": "113.93217964053"
-        },
-        "003874": {
-            "name_en": "Kai Tak Sports Park, Sung Wong Toi Road",
-            "lat": "22.323294602091",
-            "long": "114.19286007053"
         },
         "003444": {
             "name_en": "Fire and Ambulance Services Academy",
@@ -66865,5 +66865,5 @@
             "long": 113.97700801491739
         }
     },
-    "timestamp": 1744027885980
+    "timestamp": 1744131559385
 }
