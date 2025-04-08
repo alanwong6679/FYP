@@ -12,7 +12,7 @@ html, body {
     padding: 0;
     width: 100%;
     overflow-x: hidden;
-    overflow-y: auto; /* Ensure vertical scrolling */
+    overflow-y: auto;
 }
 
 /* Default (light theme) body styling */
@@ -24,7 +24,7 @@ body {
     color: #000000;
     background-size: cover;
     background-repeat: no-repeat;
-    min-height: 100vh; /* Allow growth beyond viewport */
+    min-height: 100vh;
     transition: background var(--transition-default), color var(--transition-default);
 }
 
@@ -51,7 +51,7 @@ body {
     width: 90%;
     max-width: 600px;
     text-align: center;
-    margin: 0 auto 20px auto; /* Center horizontally, space below */
+    margin: 0 auto 20px auto;
     transition: transform 0.2s ease, background var(--transition-default), box-shadow var(--transition-default);
 }
 
@@ -123,21 +123,41 @@ body {
 
 /* Google Maps InfoWindow styling with dark mode support */
 #map .gm-style-iw.gm-style-iw-c {
-    color: #000000 !important;
     background-color: #ffffff !important;
+    padding: 10px;
+    border-radius: var(--border-radius);
 }
 
 :where([data-theme="dark"]) #map .gm-style-iw.gm-style-iw-c {
-    color: #e0e0e0 !important;
     background-color: #333333 !important;
 }
 
-#map .gm-style-iw.gm-style-iw-c strong,
-#map .gm-style-iw.gm-style-iw-c br,
-#map .gm-style-iw.gm-style-iw-c div {
-    color: inherit !important;
+#map .gm-style-iw-d {
+    color: #000000 !important;
+    background-color: transparent !important;
+    padding: 0;
 }
 
+:where([data-theme="dark"]) #map .gm-style-iw-d {
+    color: #e0e0e0 !important;
+    background-color: transparent !important;
+}
+
+#map .gm-style-iw-d strong,
+#map .gm-style-iw-d div {
+    color: inherit !important;
+    background: transparent !important;
+}
+
+#map .gm-style-iw-d div {
+    margin: 5px 0;
+    padding: 0;
+}
+
+#map .gm-style-iw-d br {
+    display: block;
+    margin: 0;
+}
 
 .gm-style-iw .eta-info {
     color: #000000 !important;

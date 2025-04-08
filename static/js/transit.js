@@ -5,6 +5,7 @@ let routeMarkers = [];
 let routePolyline = null;
 let userLocationMarker = null;
 let userLocationCircle = null;
+let userLocation = null;
 let kmbRouteList = null;
 let ctbRouteList = null;
 let minibusRouteList = null;
@@ -30,7 +31,7 @@ function initMap() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             position => {
-                const userLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
+                userLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
                 map.setCenter(userLocation);
 
                 if (isHomePage) {
@@ -52,10 +53,11 @@ function initMap() {
             },
             () => {
                 console.warn("Geolocation failed, using default center");
-                map.setCenter({ lat: 22.3193, lng: 114.1694 });
+                userLocation = { lat: 22.3193, lng: 114.1694 };
+                map.setCenter(userLocation);
                 if (isHomePage) {
                     userLocationMarker = new google.maps.Marker({
-                        position: { lat: 22.3193, lng: 114.1694 },
+                        position: userLocation,
                         map: map,
                         icon: { url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png" },
                         title: "Default Location (Hong Kong)"
@@ -66,10 +68,11 @@ function initMap() {
         );
     } else {
         console.warn("Geolocation not supported, using default center");
-        map.setCenter({ lat: 22.3193, lng: 114.1694 });
+        userLocation = { lat: 22.3193, lng: 114.1694 };
+        map.setCenter(userLocation);
         if (isHomePage) {
             userLocationMarker = new google.maps.Marker({
-                position: { lat: 22.3193, lng: 114.1694 },
+                position: userLocation,
                 map: map,
                 icon: { url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png" },
                 title: "Default Location (Hong Kong)"
@@ -437,10 +440,9 @@ async function displayRouteOnMap(stopsForRoute) {
             const etaTime = new Date(eta.eta);
             if (etaTime && !isNaN(etaTime.getTime())) {
                 const timeDiff = (etaTime - now) / 60000; // Minutes until arrival
-                console.log(`ETA for ${eta.route}: timeDiff=${timeDiff.toFixed(2)}, diff=${eta.diff}`); // Debug ETA
-                if (timeDiff < -5) delayedETAs++; // Significant delays only
-                // Only include future or near-future ETAs for avgInterval
-                if (timeDiff >= -1 && eta.diff !== undefined && eta.diff >= 0) { // Allow slight past (-1 min) for freshness
+                console.log(`ETA for ${eta.route}: timeDiff=${timeDiff.toFixed(2)}, diff=${eta.diff}`);
+                if (timeDiff < -5) delayedETAs++;
+                if (timeDiff >= -1 && eta.diff !== undefined && eta.diff >= 0) {
                     avgInterval += eta.diff;
                     validETACount++;
                 }
@@ -508,7 +510,8 @@ async function displayRouteOnMap(stopsForRoute) {
                         const timeDiff = Math.round((new Date() - arriveTime) / 60000);
                         displayTime = timeDiff <= 0 ? `${-timeDiff} mins` : "Arrived";
                     }
-                    return `${bus.route} (${displayTime})${bus.remark_en ? ' - ' + bus.remark_en : ''}`;
+                    const providerShort = selectedProvider.toUpperCase();
+                    return `${providerShort} ${bus.route}: ${displayTime}${bus.remark_en ? ' - ' + bus.remark_en : ''}`;
                 }).join('<br/>')
                 : "No ETA available.";
             infoWindow.setContent(`<strong>${stop.name}</strong><br/>${etaInfo}`);
@@ -597,9 +600,13 @@ async function findNearbyStops(radius) {
         return findNearbyStops(radius);
     }
 
-    const userPos = map.getCenter();
-    const userLat = userPos.lat();
-    const userLng = userPos.lng();
+    if (!userLocation) {
+        showError("User location not available yet. Please wait...");
+        return;
+    }
+
+    const userLat = userLocation.lat;
+    const userLng = userLocation.lng;
 
     routeMarkers.forEach(marker => marker.setMap(null));
     routeMarkers = [];
@@ -608,7 +615,7 @@ async function findNearbyStops(radius) {
 
     if (userLocationCircle) {
         userLocationCircle.setRadius(radius);
-        userLocationCircle.setCenter(userPos);
+        userLocationCircle.setCenter(userLocation);
         userLocationCircle.setMap(map);
     } else {
         userLocationCircle = new google.maps.Circle({
@@ -618,7 +625,7 @@ async function findNearbyStops(radius) {
             fillColor: '#007bff',
             fillOpacity: 0.2,
             map: map,
-            center: userPos,
+            center: userLocation,
             radius: radius
         });
     }
@@ -699,10 +706,11 @@ function displayNearbyStops(stops) {
                                 const timeDiff = Math.round((new Date() - arriveTime) / 60000);
                                 displayTime = timeDiff <= 0 ? `${-timeDiff} mins` : "Arrived";
                             }
-                            return `${bus.route} (${displayTime})${bus.remark_en ? ' - ' + bus.remark_en : ''}`;
+                            const providerShort = stop.provider.toUpperCase();
+                            return `${providerShort} ${bus.route}: ${displayTime}${bus.remark_en ? ' - ' + bus.remark_en : ''}`;
                         }).join('<br>')
                     : "No ETA available";
-                content += `<div>${route.route}: ${etaInfo}</div>`;
+                content += `<div>${etaInfo}</div>`;
             }
             infoWindow.setContent(content);
         });
@@ -835,7 +843,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         inputDisplay.value = "Enter Route Number";
                         filterRoutes();
                     } else {
-                        if (currentInput === '' && inputDisplay.value === "Enter Route Number") {
+                        if (currentInput === '' && inputDisplay.value === "Enter Route Number") { // Fixed typo: heure=== to ===
                             inputDisplay.value = '';
                         }
                         currentInput += button.dataset.value;
