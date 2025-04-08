@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="/static/css/temperature.css">
     <link rel="stylesheet" href="/static/css/route_planner.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
 </head>
 <body>
     <nav class="sidebar">
@@ -34,21 +33,21 @@
          </div>
     </nav>
     <div class="search-history" id="searchHistory">
-        <h3>Recent Searches</h3>
-        <p>No recent searches.</p>
+        <h3>Search History</h3>
+        <p>No Search History</p>
     </div>
     <div class="main-page-area">
         <div class="container" id="main-content">
-            <h1>General Planner</h1>
+            <h1>HK Transit Edge</h1>
             <button class="status-button" id="statusButton">Train Service Status</button>
-
             <form id="routeForm">
                 <div class="mode-selection-bar" id="modeSelectionBar">
                     <button type="button" class="mode-button active" data-mode="all">General</button>
                     <button type="button" class="mode-button" data-mode="MTR">Train</button>
                     <button type="button" class="mode-button" data-mode="Bus">Bus</button>
+                    <!-- <button type="button" id="gpsToggle" class="gps-toggle" title="Toggle Nearby Stations"><i class="fas fa-location-arrow"></i></button> --><!-- Fix later -->
+                     
                 </div>
-
                 <div class="place-container">
                     <div class="form-group">
                         <label for="currentStationInput" class="station-label">Starting Station</label>
@@ -58,11 +57,9 @@
                             <div class="options" id="currentStationOptions" role="listbox"></div>
                         </div>
                     </div>
-
                     <div class="input-change" title="Swap Starting and Destination Stations">
                         <img src="/static/images/switch.png" alt="Swap Stations" id="swapStations">
                     </div>
-
                     <div class="form-group">
                         <label for="destinationStationInput" class="station-label">Destination Station</label>
                         <div class="searchable-select" id="destinationStationContainer">
@@ -77,7 +74,6 @@
             <div id="loading" style="display: none;">Loading data...</div>
         </div>
     </div>
-
     <div class="modal" id="statusModal">
         <div class="modal-content">
             <span class="close-button" id="closeModal" title="Close">×</span>
@@ -85,7 +81,6 @@
             <div id="statusList"></div>
         </div>
     </div>
-
     <div class="bottom-bar">
         <div id="temperature">Fetching weather...</div>
     </div>
@@ -100,6 +95,11 @@
         let citybusOptions = [];
         let kmbOptions = [];
         let currentMode = 'all';
+        let isGpsModeActive = false;
+        let userLocation = null;
+        const NEARBY_RADIUS_METERS = 600;
+        const SEARCH_HISTORY_KEY = 'routeSearchHistory';
+        let searchHistory = [];
 
         const loadingDiv = document.getElementById('loading');
         const currentStationInput = document.getElementById('currentStationInput');
@@ -107,6 +107,7 @@
         const destinationStationInput = document.getElementById('destinationStationInput');
         const destinationStationOptionsContainer = document.getElementById('destinationStationOptions');
         const modeSelectionBar = document.getElementById('modeSelectionBar');
+        const routeForm = document.getElementById('routeForm');
 
         const trainLines = [
             { fullName: "Airport Express Line (AEL)", lineId: "AEL", stationId: "HOK", colorClass: "color-ael" },
@@ -124,17 +125,11 @@
             try {
                 const url = `https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=${lineId}&sta=${stationId}&lang=en`;
                 const response = await fetch(url);
-                 if (!response.ok) {
-                    console.error(`HTTP error! status: ${response.status} for line ${lineId}`);
-                    return "0";
-                }
+                if (!response.ok) return "0";
                 const data = await response.json();
                 if (data.status === 1 && data.data && data.data[`${lineId}-${stationId}`]) {
                     const schedule = data.data[`${lineId}-${stationId}`];
-                    const hasValidSchedule =
-                        (schedule.UP && schedule.UP.length > 0 && schedule.UP[0].valid === "Y") ||
-                        (schedule.DOWN && schedule.DOWN.length > 0 && schedule.DOWN[0].valid === "Y");
-                    return hasValidSchedule ? "1" : "0";
+                    return (schedule.UP?.[0]?.valid === "Y" || schedule.DOWN?.[0]?.valid === "Y") ? "1" : "0";
                 }
                 return "0";
             } catch (error) {
@@ -153,50 +148,17 @@
                 const updateTime = `${now.getMonth() + 1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
                 const statusRow = document.createElement('div');
                 statusRow.className = 'status-row';
-                const colorBar = document.createElement('div');
-                colorBar.className = `color-bar ${line.colorClass}`;
-                const lineInfo = document.createElement('div');
-                lineInfo.className = 'line-info';
-                const lineName = document.createElement('div');
-                lineName.className = 'line-name';
-                lineName.textContent = line.fullName;
-                const lineStatus = document.createElement('div');
-                lineStatus.className = 'line-status';
-                lineStatus.textContent = isNormal ? 'Normal Service' : 'Service Disruption';
-                const updateTimeDiv = document.createElement('div');
-                updateTimeDiv.className = 'update-time';
-                updateTimeDiv.textContent = updateTime;
-                lineInfo.appendChild(lineName);
-                lineInfo.appendChild(lineStatus);
-                statusRow.appendChild(colorBar);
-                statusRow.appendChild(lineInfo);
-                statusRow.appendChild(updateTimeDiv);
+                statusRow.innerHTML = `
+                    <div class="color-bar ${line.colorClass}"></div>
+                    <div class="line-info">
+                        <div class="line-name">${line.fullName}</div>
+                        <div class="line-status">${isNormal ? 'Normal Service' : 'Service Disruption'}</div>
+                    </div>
+                    <div class="update-time">${updateTime}</div>
+                `;
                 statusList.appendChild(statusRow);
             }
         }
-
-        const statusButton = document.getElementById('statusButton');
-        const statusModal = document.getElementById('statusModal');
-        const closeModal = document.getElementById('closeModal');
-
-        if (statusButton) {
-            statusButton.addEventListener('click', () => {
-                if (statusModal) statusModal.style.display = 'flex';
-                displayTrainStatus();
-            });
-        }
-
-       if (closeModal) {
-            closeModal.addEventListener('click', () => {
-                if (statusModal) statusModal.style.display = 'none';
-            });
-       }
-
-        window.addEventListener('click', (event) => {
-            if (event.target === statusModal) {
-                if (statusModal) statusModal.style.display = 'none';
-            }
-        });
 
         async function initializeData() {
             if (loadingDiv) loadingDiv.style.display = 'block';
@@ -216,25 +178,17 @@
                 citybusStops = Object.entries(stopData.ctb_stops || {}).map(([stop, details]) => ({ stop, ...details }));
 
                 kmbOptions = kmbStops.map(stop => ({
-                    value: stop.stop, text: stop.name_en, type: 'Bus', company: 'KMB'
+                    value: stop.stop, text: stop.name_en, type: 'Bus', company: 'KMB', lat: stop.lat, long: stop.long
                 }));
                 citybusOptions = citybusStops.map(stop => ({
-                    value: stop.stop, text: stop.name_en, type: 'Bus', company: 'Citybus'
+                    value: stop.stop, text: stop.name_en, type: 'Bus', company: 'Citybus', lat: stop.lat, long: stop.long
                 }));
 
                 mtrStations = getUniqueMTRStations();
 
                 const routeStopData = await routeStopResponse.json();
-                kmbRouteStopsMap = Object.fromEntries(
-                    Object.entries(routeStopData.kmb_route_stops || {}).map(([key, stops]) => [
-                        key, stops.map(stop => stop.stop_id)
-                    ])
-                );
-                citybusRouteStopsMap = Object.fromEntries(
-                    Object.entries(routeStopData.ctb_route_stops || {}).map(([key, stops]) => [
-                        key, stops.map(stop => stop.stop_id)
-                    ])
-                );
+                kmbRouteStopsMap = Object.fromEntries(Object.entries(routeStopData.kmb_route_stops || {}).map(([key, stops]) => [key, stops.map(stop => stop.stop_id)]));
+                citybusRouteStopsMap = Object.fromEntries(Object.entries(routeStopData.ctb_route_stops || {}).map(([key, stops]) => [key, stops.map(stop => stop.stop_id)]));
 
                 localStorage.setItem('kmb_allRoutes', JSON.stringify(kmbRoutes));
                 localStorage.setItem('kmb_allStops', JSON.stringify(kmbStops));
@@ -242,392 +196,319 @@
                 localStorage.setItem('citybus_allRoutes', JSON.stringify(citybusRoutes));
                 localStorage.setItem('citybus_allStops', JSON.stringify(citybusStops));
                 localStorage.setItem('citybus_routeStopsMap', JSON.stringify(citybusRouteStopsMap));
-
-                if (citybusStops.length === 0 && kmbStops.length === 0 && mtrStations.length === 0) {
-                    if (loadingDiv) loadingDiv.textContent = 'No transit data available.';
-                } else {
-                    if (loadingDiv) loadingDiv.style.display = 'none';
-                     console.log("Data initialized.");
-                     updateSearchableOptions();
-                }
             } catch (error) {
-                if (loadingDiv) loadingDiv.textContent = 'Error loading data. Please refresh.';
                 console.error('Initialization failed:', error);
+                if (loadingDiv) loadingDiv.textContent = 'Error loading data. Please refresh.';
+            } finally {
+                if (loadingDiv) loadingDiv.style.display = 'none';
             }
         }
 
         function getUniqueMTRStations() {
-             const stationSet = new Set();
-             const stationsFormatted = [];
-             if (typeof lines === 'undefined') {
-                 console.error("'lines' variable not found. Ensure stations.js is loaded before this script.");
-                 return [];
-             }
-             for (let line in lines) {
-                 lines[line].forEach(station => {
-                     if (!stationSet.has(station.value)) {
-                         stationSet.add(station.value);
-                         stationsFormatted.push({
-                             value: station.value,
-                             text: station.text,
-                             type: 'MTR'
-                         });
-                     }
-                 });
-             }
-             stationsFormatted.sort((a, b) => a.text.localeCompare(b.text));
-             return stationsFormatted;
-         }
+            if (typeof lines === 'undefined') {
+                console.error("'lines' variable not found.");
+                return [];
+            }
+            const stationSet = new Set();
+            const stationsFormatted = [];
+            for (let line in lines) {
+                lines[line].forEach(station => {
+                    if (!stationSet.has(station.value)) {
+                        stationSet.add(station.value);
+                        stationsFormatted.push({ value: station.value, text: station.text, type: 'MTR' });
+                    }
+                });
+            }
+            return stationsFormatted.sort((a, b) => a.text.localeCompare(b.text));
+        }
 
-        function setupSearchable(inputId, optionsId) {
+        function haversineDistance(lat1, lon1, lat2, lon2) {
+            if (!lat1 || !lon1 || !lat2 || !lon2) return Infinity;
+            const R = 6371e3;
+            const phi1 = lat1 * Math.PI / 180;
+            const phi2 = lat2 * Math.PI / 180;
+            const deltaPhi = (lat2 - lat1) * Math.PI / 180;
+            const deltaLambda = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) + Math.cos(phi1) * Math.cos(phi2) * Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        function getUserLocation() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject(new Error("Geolocation not supported."));
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        userLocation = { latitude: position.coords.latitude, longitude: position.coords.longitude };
+                        console.log("Location obtained:", userLocation);
+                        resolve(userLocation);
+                    },
+                    error => {
+                        userLocation = null;
+                        console.error("Geolocation error:", error);
+                        reject(new Error("Could not get location: " + error.message));
+                    },
+                    { timeout: 10000, maximumAge: 60000 }
+                );
+            });
+        }
+
+        function setupSearchable(inputId, optionsId, isStartingInput = false) {
             const input = document.getElementById(inputId);
             const optionsContainer = document.getElementById(optionsId);
             if (!input || !optionsContainer) return;
 
             const filterAndDisplayOptions = () => {
                 const filter = input.value.toLowerCase();
-                optionsContainer.innerHTML = '';
                 const currentSource = JSON.parse(input.dataset.optionsSource || '[]');
+                const filteredOptions = currentSource.filter(option => option.text.toLowerCase().includes(filter));
 
-                const filteredOptions = currentSource.filter(option =>
-                    option.text.toLowerCase().includes(filter)
-                );
-
-                filteredOptions.forEach(option => {
-                    const div = document.createElement('div');
-                    div.textContent = `${option.text} (${option.type}${option.type === 'Bus' ? ' - ' + option.company : ''})`;
-                    div.setAttribute('role', 'option');
-                    div.dataset.value = option.value;
-                    div.dataset.text = option.text;
-                    div.dataset.type = option.type;
-                    div.dataset.company = option.company || '';
-
-                    div.addEventListener('click', function() {
-                        input.value = option.text;
-                        input.dataset.value = option.value;
-                        input.dataset.type = option.type;
-                        input.dataset.company = option.company || '';
-                        optionsContainer.style.display = 'none';
-                        optionsContainer.setAttribute('aria-hidden', 'true');
-                        input.setAttribute('aria-expanded', 'false');
+                optionsContainer.innerHTML = '';
+                if (filteredOptions.length === 0) {
+                    optionsContainer.innerHTML = '<div style="padding: 10px; font-style: italic; color: #888;">No matches found.</div>';
+                } else {
+                    filteredOptions.forEach(option => {
+                        const div = document.createElement('div');
+                        let displayText = `${option.text} (${option.type}${option.type === 'Bus' ? ' - ' + option.company : ''})`;
+                        if (isStartingInput && isGpsModeActive && option.distance !== undefined && option.distance !== Infinity) {
+                            displayText += ` (${Math.round(option.distance)}m)`;
+                        }
+                        div.textContent = displayText;
+                        div.dataset.value = option.value;
+                        div.dataset.text = option.text;
+                        div.dataset.type = option.type;
+                        div.dataset.company = option.company || '';
+                        div.addEventListener('click', () => {
+                            input.value = option.text;
+                            input.dataset.value = option.value;
+                            input.dataset.type = option.type;
+                            input.dataset.company = option.company || '';
+                            optionsContainer.style.display = 'none';
+                        });
+                        optionsContainer.appendChild(div);
                     });
-                    optionsContainer.appendChild(div);
-                });
-
+                }
                 optionsContainer.style.display = filteredOptions.length > 0 ? 'block' : 'none';
-                optionsContainer.setAttribute('aria-hidden', String(filteredOptions.length === 0));
-                input.setAttribute('aria-expanded', String(filteredOptions.length > 0));
             };
 
             input.addEventListener('input', filterAndDisplayOptions);
             input.addEventListener('focus', filterAndDisplayOptions);
-
-            document.addEventListener('click', function(event) {
+            document.addEventListener('click', event => {
                 if (!input.contains(event.target) && !optionsContainer.contains(event.target)) {
                     optionsContainer.style.display = 'none';
-                    optionsContainer.setAttribute('aria-hidden', 'true');
-                     if(document.activeElement !== input){
-                         input.setAttribute('aria-expanded', 'false');
-                     }
                 }
             });
         }
 
-         function updateSearchableOptions() {
-            let optionsToShow = [];
-            switch(currentMode) {
-                case 'MTR':
-                    optionsToShow = [...mtrStations];
-                    break;
-                case 'Bus':
-                    optionsToShow = [...citybusOptions, ...kmbOptions].sort((a,b) => a.text.localeCompare(b.text));
-                    break;
-                case 'all':
-                default:
-                    optionsToShow = [...mtrStations, ...citybusOptions, ...kmbOptions].sort((a,b) => a.text.localeCompare(b.text));
-                    break;
+        function updateSearchableOptions() {
+            let baseOptions = [];
+            switch (currentMode) {
+                case 'MTR': baseOptions = [...mtrStations]; break;
+                case 'Bus': baseOptions = [...citybusOptions, ...kmbOptions].sort((a, b) => a.text.localeCompare(b.text)); break;
+                case 'all': default: baseOptions = [...mtrStations, ...citybusOptions, ...kmbOptions].sort((a, b) => a.text.localeCompare(b.text)); break;
             }
 
-            if(currentStationInput){
-                currentStationInput.dataset.optionsSource = JSON.stringify(optionsToShow);
-                setupSearchable('currentStationInput', 'currentStationOptions');
+            let startOptions = baseOptions;
+            if (isGpsModeActive && userLocation) {
+                startOptions = baseOptions
+                    .map(option => ({
+                        ...option,
+                        distance: haversineDistance(userLocation.latitude, userLocation.longitude, option.lat, option.long)
+                    }))
+                    .filter(option => option.distance <= NEARBY_RADIUS_METERS)
+                    .sort((a, b) => a.distance - b.distance);
             }
-             if(destinationStationInput){
-                 destinationStationInput.dataset.optionsSource = JSON.stringify(optionsToShow);
-                setupSearchable('destinationStationInput', 'destinationStationOptions');
+
+            if (currentStationInput) {
+                currentStationInput.dataset.optionsSource = JSON.stringify(startOptions);
+                setupSearchable('currentStationInput', 'currentStationOptions', true);
+            }
+            if (destinationStationInput) {
+                destinationStationInput.dataset.optionsSource = JSON.stringify(baseOptions);
+                setupSearchable('destinationStationInput', 'destinationStationOptions', false);
             }
         }
 
-        if (modeSelectionBar) {
-            modeSelectionBar.addEventListener('click', (event) => {
-                const targetButton = event.target.closest('.mode-button');
-                if (!targetButton) return;
+        function loadSearchHistory() {
+            const saved = localStorage.getItem(SEARCH_HISTORY_KEY);
+            if (saved) searchHistory = JSON.parse(saved).slice(0, 3);
+            displaySearchHistory();
+        }
 
-                const selectedMode = targetButton.dataset.mode;
-                if (selectedMode === currentMode) return;
+        function saveSearch(currentId, currentType, currentCompany, destinationId, destinationType, destinationCompany) {
+            const currentText = currentStationInput.value || 'Unknown Start';
+            const destText = destinationStationInput.value || 'Unknown Dest';
+            const searchEntry = {
+                currentId, currentType, currentCompany: currentCompany || '', currentText,
+                destinationId, destinationType, destinationCompany: destinationCompany || '', destinationText: destText,
+                timestamp: Date.now()
+            };
+            searchHistory = searchHistory.filter(entry => 
+                !(entry.currentId === currentId && entry.destinationId === destinationId && 
+                  entry.currentType === currentType && entry.destinationType === destinationType &&
+                  entry.currentCompany === currentCompany && entry.destinationCompany === destinationCompany)
+            );
+            searchHistory.unshift(searchEntry);
+            searchHistory = searchHistory.slice(0, 3);
+            localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(searchHistory));
+            displaySearchHistory();
+        }
 
-                modeSelectionBar.querySelectorAll('.mode-button').forEach(button => {
-                    button.classList.remove('active');
+        function displaySearchHistory() {
+            const historyContainer = document.getElementById('searchHistory');
+            if (!historyContainer) return;
+            historyContainer.innerHTML = '<h3>Search History</h3>';
+            if (searchHistory.length === 0) {
+                historyContainer.innerHTML += '<p>No Search History.</p>';
+                return;
+            }
+            searchHistory.forEach((entry, index) => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                historyItem.dataset.index = index;
+                historyItem.innerHTML = `
+                    <span>${entry.currentText} → ${entry.destinationText}</span>
+                    <small>(${entry.currentType}${entry.currentCompany ? '-' + entry.currentCompany : ''} to ${entry.destinationType}${entry.destinationCompany ? '-' + entry.destinationCompany : ''})</small>
+                `;
+                historyItem.addEventListener('click', () => repeatSearch(entry));
+                historyContainer.appendChild(historyItem);
+            });
+        }
+
+        function repeatSearch(entry) {
+            let url = '/general_schedule.html?';
+            if (entry.currentType === 'MTR' && entry.destinationType === 'MTR') {
+                url += `currentStation=${entry.currentId}&destinationStation=${entry.destinationId}`;
+            } else if (entry.currentType === 'Bus' && entry.destinationType === 'MTR') {
+                url += `startBusStop=${entry.currentId}&startCompany=${entry.currentCompany}&destinationStation=${entry.destinationId}`;
+            } else if (entry.currentType === 'MTR' && entry.destinationType === 'Bus') {
+                url += `currentStation=${entry.currentId}&endBusStop=${entry.destinationId}&endCompany=${entry.destinationCompany}`;
+            } else if (entry.currentType === 'Bus' && entry.destinationType === 'Bus') {
+                url += `startBusStop=${entry.currentId}&startCompany=${entry.currentCompany}&endBusStop=${entry.destinationId}&endCompany=${entry.destinationCompany}`;
+            }
+            window.location.href = url;
+        }
+
+        initializeData().then(() => {
+            loadSearchHistory();
+            updateSearchableOptions();
+
+            if (modeSelectionBar) {
+                modeSelectionBar.addEventListener('click', event => {
+                    const targetButton = event.target.closest('.mode-button');
+                    if (!targetButton) return;
+                    const selectedMode = targetButton.dataset.mode;
+                    if (selectedMode === currentMode) return;
+                    modeSelectionBar.querySelectorAll('.mode-button').forEach(button => button.classList.remove('active'));
+                    targetButton.classList.add('active');
+                    currentMode = selectedMode;
+                    updateSearchableOptions();
+                    [currentStationInput, destinationStationInput].forEach(input => {
+                        if (input) {
+                            input.value = '';
+                            input.dataset.value = input.dataset.type = input.dataset.company = '';
+                            const options = input === currentStationInput ? currentStationOptionsContainer : destinationStationOptionsContainer;
+                            if (options) options.style.display = 'none';
+                        }
+                    });
                 });
-                targetButton.classList.add('active');
+            }
 
-                currentMode = selectedMode;
-                updateSearchableOptions();
+            const swapButton = document.getElementById('swapStations');
+            if (swapButton) {
+                swapButton.addEventListener('click', () => {
+                    if (!currentStationInput || !destinationStationInput) return;
+                    const temp = {
+                        value: currentStationInput.value,
+                        dataValue: currentStationInput.dataset.value,
+                        dataType: currentStationInput.dataset.type,
+                        dataCompany: currentStationInput.dataset.company
+                    };
+                    currentStationInput.value = destinationStationInput.value;
+                    currentStationInput.dataset.value = destinationStationInput.dataset.value || '';
+                    currentStationInput.dataset.type = destinationStationInput.dataset.type || '';
+                    currentStationInput.dataset.company = destinationStationInput.dataset.company || '';
+                    destinationStationInput.value = temp.value;
+                    destinationStationInput.dataset.value = temp.dataValue || '';
+                    destinationStationInput.dataset.type = temp.dataType || '';
+                    destinationStationInput.dataset.company = temp.dataCompany || '';
+                });
+            }
 
-                if(currentStationInput){
-                    currentStationInput.value = '';
-                    currentStationInput.dataset.value = '';
-                     currentStationInput.dataset.type = '';
-                    currentStationInput.dataset.company = '';
-                     currentStationOptionsContainer.innerHTML = '';
-                    currentStationOptionsContainer.style.display = 'none';
-                     currentStationInput.setAttribute('aria-expanded','false')
-                }
-                if(destinationStationInput){
-                    destinationStationInput.value = '';
-                    destinationStationInput.dataset.value = '';
-                    destinationStationInput.dataset.type = '';
-                    destinationStationInput.dataset.company = '';
-                    destinationStationOptionsContainer.innerHTML = '';
-                    destinationStationOptionsContainer.style.display = 'none';
-                     destinationStationInput.setAttribute('aria-expanded','false')
-                }
-            });
-        }
+            if (routeForm) {
+                routeForm.addEventListener('submit', e => {
+                    e.preventDefault();
+                    const currentType = currentStationInput.dataset.type;
+                    const destinationType = destinationStationInput.dataset.type;
+                    const currentId = currentStationInput.dataset.value;
+                    const destinationId = destinationStationInput.dataset.value;
+                    const currentCompany = currentStationInput.dataset.company;
+                    const destinationCompany = destinationStationInput.dataset.company;
+                    if (!currentId || !destinationId) {
+                        alert("Please select both a starting and destination station.");
+                        return;
+                    }
+                    saveSearch(currentId, currentType, currentCompany, destinationId, destinationType, destinationCompany);
+                    let url = '/general_schedule.html?';
+                    if (currentType === 'MTR' && destinationType === 'MTR') {
+                        url += `currentStation=${currentId}&destinationStation=${destinationId}`;
+                    } else if (currentType === 'Bus' && destinationType === 'MTR') {
+                        url += `startBusStop=${currentId}&startCompany=${currentCompany}&destinationStation=${destinationId}`;
+                    } else if (currentType === 'MTR' && destinationType === 'Bus') {
+                        url += `currentStation=${currentId}&endBusStop=${destinationId}&endCompany=${destinationCompany}`;
+                    } else if (currentType === 'Bus' && destinationType === 'Bus') {
+                        url += `startBusStop=${currentId}&startCompany=${currentCompany}&endBusStop=${destinationId}&endCompany=${destinationCompany}`;
+                    }
+                    window.location.href = url;
+                });
+            }
 
-        const swapButton = document.getElementById('swapStations');
-        if(swapButton){
-            swapButton.addEventListener('click', function() {
-                 if (!currentStationInput || !destinationStationInput) return;
+            const statusButton = document.getElementById('statusButton');
+            const statusModal = document.getElementById('statusModal');
+            const closeModal = document.getElementById('closeModal');
+            if (statusButton) statusButton.addEventListener('click', () => { statusModal.style.display = 'flex'; displayTrainStatus(); });
+            if (closeModal) closeModal.addEventListener('click', () => { statusModal.style.display = 'none'; });
+            window.addEventListener('click', event => { if (event.target === statusModal) statusModal.style.display = 'none'; });
 
-                const tempValue = currentStationInput.value;
-                const tempDataValue = currentStationInput.dataset.value;
-                const tempDataType = currentStationInput.dataset.type;
-                const tempDataCompany = currentStationInput.dataset.company;
+            const gpsToggle = document.getElementById('gpsToggle');
+            if (gpsToggle) {
+                gpsToggle.addEventListener('click', async () => {
+                    console.log("GPS toggle clicked, current state:", isGpsModeActive);
+                    isGpsModeActive = !isGpsModeActive;
+                    gpsToggle.classList.toggle('active', isGpsModeActive);
+                    gpsToggle.title = isGpsModeActive ? "Turn off nearby stations filter" : "Show nearby stations within 600m";
+                    if (isGpsModeActive) {
+                        if (loadingDiv) loadingDiv.style.display = 'block';
+                        try {
+                            await getUserLocation();
+                            updateSearchableOptions();
+                        } catch (error) {
+                            alert(error.message);
+                            isGpsModeActive = false;
+                            gpsToggle.classList.remove('active');
+                            userLocation = null;
+                            updateSearchableOptions();
+                        } finally {
+                            if (loadingDiv) loadingDiv.style.display = 'none';
+                        }
+                    } else {
+                        userLocation = null;
+                        updateSearchableOptions();
+                    }
+                    if (currentStationInput) {
+                        currentStationInput.value = '';
+                        currentStationInput.dataset.value = currentStationInput.dataset.type = currentStationInput.dataset.company = '';
+                        currentStationOptionsContainer.style.display = 'none';
+                    }
+                });
+            }
 
-                currentStationInput.value = destinationStationInput.value;
-                currentStationInput.dataset.value = destinationStationInput.dataset.value || '';
-                currentStationInput.dataset.type = destinationStationInput.dataset.type || '';
-                currentStationInput.dataset.company = destinationStationInput.dataset.company || '';
-
-                destinationStationInput.value = tempValue;
-                destinationStationInput.dataset.value = tempDataValue || '';
-                destinationStationInput.dataset.type = tempDataType || '';
-                destinationStationInput.dataset.company = tempDataCompany || '';
-
-                // Optionally trigger redisplay of options if needed after swap
-                 // updateSearchableOptions(); // Re-filtering might not be desired on swap
-            });
-        }
-
-
-        const routeForm = document.getElementById('routeForm');
-        if(routeForm){
-            routeForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                if (!currentStationInput || !destinationStationInput) return;
-
-                const currentType = currentStationInput.dataset.type;
-                const destinationType = destinationStationInput.dataset.type;
-                const currentId = currentStationInput.dataset.value;
-                const destinationId = destinationStationInput.dataset.value;
-                const currentCompany = currentStationInput.dataset.company;
-                const destinationCompany = destinationStationInput.dataset.company;
-
-                if (!currentId || !destinationId) {
-                    alert("Please select both a starting and destination station.");
-                    return;
-                }
-
-                let url = '/general_schedule.html?';
-                if (currentType === 'MTR' && destinationType === 'MTR') {
-                    url += `currentStation=${currentId}&destinationStation=${destinationId}`;
-                } else if (currentType === 'Bus' && destinationType === 'MTR') {
-                     url += `startBusStop=${currentId}&startCompany=${currentCompany}&destinationStation=${destinationId}`;
-                } else if (currentType === 'MTR' && destinationType === 'Bus') {
-                    url += `currentStation=${currentId}&endBusStop=${destinationId}&endCompany=${destinationCompany}`;
-                } else if (currentType === 'Bus' && destinationType === 'Bus') {
-                    url += `startBusStop=${currentId}&startCompany=${currentCompany}&endBusStop=${destinationId}&endCompany=${destinationCompany}`;
-                } else {
-                    alert("Invalid combination selected.");
-                    return;
-                }
-                window.location.href = url;
-            });
-        }
-
-// Global variables (ensure these are at the top with your other variables)
-const SEARCH_HISTORY_KEY = 'routeSearchHistory';
-let searchHistory = [];
-
-// Load history from localStorage
-function loadSearchHistory() {
-    const saved = localStorage.getItem(SEARCH_HISTORY_KEY);
-    if (saved) {
-        try {
-            searchHistory = JSON.parse(saved).slice(0, 3);
-            console.log("Loaded search history:", searchHistory);
-        } catch (e) {
-            console.error("Failed to load search history:", e);
-            searchHistory = [];
-        }
-    } else {
-        console.log("No search history found in localStorage.");
-    }
-    displaySearchHistory();
-}
-
-// Save a new search
-function saveSearch(currentId, currentType, currentCompany, destinationId, destinationType, destinationCompany) {
-    console.log("Saving search with:", { currentId, currentType, currentCompany, destinationId, destinationType, destinationCompany });
-    
-    if (!currentId || !destinationId || !currentType || !destinationType) {
-        console.error("Invalid search data, skipping save.");
-        return;
-    }
-
-    const currentText = currentStationInput.value || 'Unknown Start';
-    const destText = destinationStationInput.value || 'Unknown Dest';
-    const searchEntry = {
-        currentId,
-        currentType,
-        currentCompany: currentCompany || '',
-        currentText,
-        destinationId,
-        destinationType,
-        destinationCompany: destinationCompany || '',
-        destinationText: destText,
-        timestamp: Date.now()
-    };
-    
-    // Remove duplicates
-    searchHistory = searchHistory.filter(entry => 
-        !(entry.currentId === currentId && entry.destinationId === destinationId && 
-          entry.currentType === currentType && entry.destinationType === destinationType &&
-          entry.currentCompany === currentCompany && entry.destinationCompany === destinationCompany)
-    );
-    
-    // Add new entry at the start and limit to 3
-    searchHistory.unshift(searchEntry);
-    searchHistory = searchHistory.slice(0, 3);
-    
-    try {
-        localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(searchHistory));
-        console.log("Saved search history:", searchHistory);
-    } catch (e) {
-        console.error("Failed to save search history to localStorage:", e);
-    }
-    displaySearchHistory();
-}
-
-// Display search history
-function displaySearchHistory() {
-    const historyContainer = document.getElementById('searchHistory');
-    if (!historyContainer) {
-        console.error("Search history container not found in DOM.");
-        return;
-    }
-
-    historyContainer.innerHTML = '<h3>Recent Searches</h3>';
-    if (searchHistory.length === 0) {
-        historyContainer.innerHTML += '<p>No recent searches.</p>';
-        return;
-    }
-
-    searchHistory.forEach((entry, index) => {
-        const historyItem = document.createElement('div');
-        historyItem.className = 'history-item';
-        historyItem.dataset.index = index;
-        historyItem.innerHTML = `
-            <span>${entry.currentText} → ${entry.destinationText}</span>
-            <small>(${entry.currentType}${entry.currentCompany ? '-' + entry.currentCompany : ''} to ${entry.destinationType}${entry.destinationCompany ? '-' + entry.destinationCompany : ''})</small>
-        `;
-        historyItem.addEventListener('click', () => repeatSearch(entry));
-        historyContainer.appendChild(historyItem);
-    });
-    console.log("Displayed search history with", searchHistory.length, "entries.");
-}
-
-// Repeat a search
-function repeatSearch(entry) {
-    console.log("Repeating search:", entry);
-    let url = '/general_schedule.html?';
-    if (entry.currentType === 'MTR' && entry.destinationType === 'MTR') {
-        url += `currentStation=${entry.currentId}&destinationStation=${entry.destinationId}`;
-    } else if (entry.currentType === 'Bus' && entry.destinationType === 'MTR') {
-        url += `startBusStop=${entry.currentId}&startCompany=${entry.currentCompany}&destinationStation=${entry.destinationId}`;
-    } else if (entry.currentType === 'MTR' && entry.destinationType === 'Bus') {
-        url += `currentStation=${entry.currentId}&endBusStop=${entry.destinationId}&endCompany=${entry.destinationCompany}`;
-    } else if (entry.currentType === 'Bus' && entry.destinationType === 'Bus') {
-        url += `startBusStop=${entry.currentId}&startCompany=${entry.currentCompany}&endBusStop=${entry.destinationId}&endCompany=${entry.destinationCompany}`;
-    } else {
-        console.error("Invalid search history entry:", entry);
-        return;
-    }
-    window.location.href = url;
-}
-
-// Update the routeForm submit listener
-if (routeForm) {
-    routeForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        if (!currentStationInput || !destinationStationInput) {
-            console.error("Form inputs not found.");
-            return;
-        }
-
-        const currentType = currentStationInput.dataset.type;
-        const destinationType = destinationStationInput.dataset.type;
-        const currentId = currentStationInput.dataset.value;
-        const destinationId = destinationStationInput.dataset.value;
-        const currentCompany = currentStationInput.dataset.company;
-        const destinationCompany = destinationStationInput.dataset.company;
-
-        console.log("Form submitted with:", { currentId, currentType, currentCompany, destinationId, destinationType, destinationCompany });
-
-        if (!currentId || !destinationId) {
-            alert("Please select both a starting and destination station.");
-            console.warn("Missing start or destination ID.");
-            return;
-        }
-
-        // Save the search before redirecting
-        saveSearch(currentId, currentType, currentCompany, destinationId, destinationType, destinationCompany);
-
-        let url = '/general_schedule.html?';
-        if (currentType === 'MTR' && destinationType === 'MTR') {
-            url += `currentStation=${currentId}&destinationStation=${destinationId}`;
-        } else if (currentType === 'Bus' && destinationType === 'MTR') {
-            url += `startBusStop=${currentId}&startCompany=${currentCompany}&destinationStation=${destinationId}`;
-        } else if (currentType === 'MTR' && destinationType === 'Bus') {
-            url += `currentStation=${currentId}&endBusStop=${destinationId}&endCompany=${destinationCompany}`;
-        } else if (currentType === 'Bus' && destinationType === 'Bus') {
-            url += `startBusStop=${currentId}&startCompany=${currentCompany}&endBusStop=${destinationId}&endCompany=${destinationCompany}`;
-        } else {
-            alert("Invalid combination selected.");
-            console.warn("Invalid route combination.");
-            return;
-        }
-        window.location.href = url;
-    });
-}
-
-
-// Add to DOMContentLoaded event listener
-document.addEventListener('DOMContentLoaded', async () => {
-    if (typeof initializeNavbar === 'function') {
-        initializeNavbar();
-    } else {
-        console.warn('initializeNavbar function not found from navbar.js');
-    }
-    await initializeData();
-    loadSearchHistory(); // Load history on page load
-    if (typeof getTemperature === 'function') {
-        getTemperature();
-    } else {
-        console.warn('getTemperature function not found from temperature.js');
-    }
-});
+            if (typeof initializeNavbar === 'function') initializeNavbar();
+            if (typeof getTemperature === 'function') getTemperature();
+        });
     </script>
 </body>
 </html>

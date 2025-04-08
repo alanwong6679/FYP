@@ -518,3 +518,42 @@ button:hover {
 :where([data-theme="dark"]) .history-item:hover {
     background-color: var(--options-hover-bg);
 }
+.gps-toggle {
+    margin-left: 10px; 
+    padding: 8px 12px; 
+    font-size: 0.95rem; 
+    cursor: pointer;
+    border: 1px solid var(--input-border);
+    border-radius: 4px;
+    background-color: var(--input-bg);
+    color: var(--input-text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.gps-toggle.active {
+    background-color: var(--primary-accent-color);
+    color: var(--button-text);
+    border-color: var(--primary-accent-color);
+}
+
+.gps-toggle:hover {
+    background-color: var(--options-hover-bg);
+    color: var(--options-hover-text);
+}
+
+:where([data-theme="dark"]) .gps-toggle {
+    background-color: var(--input-bg);
+    color: var(--input-text);
+}
+
+:where([data-theme="dark"]) .gps-toggle.active {
+    background-color: var(--primary-accent-color); 
+    color: var(--button-text);
+}
+#gpsToggle.active {
+    background-color: #ff0000 !important; /* Bright red to confirm visibility */
+    color: #fff !important;
+}
