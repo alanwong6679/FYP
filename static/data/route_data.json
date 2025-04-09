@@ -1863,20 +1863,6 @@
             "provider": "kmb"
         },
         {
-            "route": "52S",
-            "bound": "O",
-            "orig_en": "TUEN MUN ROAD BBI",
-            "dest_en": "TSANG TSUI",
-            "provider": "kmb"
-        },
-        {
-            "route": "52S",
-            "bound": "I",
-            "orig_en": "TSANG TSUI",
-            "dest_en": "TUEN MUN ROAD BBI",
-            "provider": "kmb"
-        },
-        {
             "route": "52X",
             "bound": "O",
             "orig_en": "TUEN MUN CENTRAL",
@@ -1909,20 +1895,6 @@
             "bound": "O",
             "orig_en": "YUEN LONG (WEST)",
             "dest_en": "SHEUNG TSUEN (CIRCULAR)",
-            "provider": "kmb"
-        },
-        {
-            "route": "56S",
-            "bound": "O",
-            "orig_en": "TUEN MUN STATION",
-            "dest_en": "TSANG TSUI",
-            "provider": "kmb"
-        },
-        {
-            "route": "56S",
-            "bound": "I",
-            "orig_en": "TSANG TSUI",
-            "dest_en": "TUEN MUN STATION",
             "provider": "kmb"
         },
         {
@@ -2077,20 +2049,6 @@
             "bound": "I",
             "orig_en": "TSUEN WAN STATION",
             "dest_en": "SO KWUN WAT",
-            "provider": "kmb"
-        },
-        {
-            "route": "61S",
-            "bound": "O",
-            "orig_en": "TUEN MUN CENTRAL",
-            "dest_en": "WO HOP SHEK",
-            "provider": "kmb"
-        },
-        {
-            "route": "61S",
-            "bound": "I",
-            "orig_en": "WO HOP SHEK",
-            "dest_en": "TUEN MUN CENTRAL",
             "provider": "kmb"
         },
         {
@@ -2824,7 +2782,7 @@
         {
             "route": "76",
             "bound": "O",
-            "orig_en": "YAU POK ROAD PUBLIC HOUSING (SOUTH) TERMINUS",
+            "orig_en": "YAU POK ROAD PUBLIC HOUSING (SOUTH)",
             "dest_en": "SHEUNG SHUI STATION (CHOI YUEN ROAD) (CIRCULAR)",
             "provider": "kmb"
         },
@@ -5148,7 +5106,7 @@
         {
             "route": "268",
             "bound": "O",
-            "orig_en": "YAU POK ROAD PUBLIC HOUSING (SOUTH) TERMINUS",
+            "orig_en": "YAU POK ROAD PUBLIC HOUSING (SOUTH)",
             "dest_en": "PAT HEUNG ROAD",
             "provider": "kmb"
         },
@@ -5156,7 +5114,7 @@
             "route": "268",
             "bound": "I",
             "orig_en": "PAT HEUNG ROAD",
-            "dest_en": "YAU POK ROAD PUBLIC HOUSING (SOUTH) TERMINUS",
+            "dest_en": "YAU POK ROAD PUBLIC HOUSING (SOUTH)",
             "provider": "kmb"
         },
         {
@@ -11756,20 +11714,6 @@
             "provider": "ctb"
         },
         {
-            "route": "SP2A",
-            "bound": "O",
-            "orig_en": "Kai Tak Sports Park",
-            "dest_en": "Tsim Sha Tsui",
-            "provider": "ctb"
-        },
-        {
-            "route": "SP5B",
-            "bound": "O",
-            "orig_en": "Kai Tak Sports Park",
-            "dest_en": "Tuen Mun (Ching Tin and Wo Tin)",
-            "provider": "ctb"
-        },
-        {
             "route": "SP9",
             "bound": "O",
             "orig_en": "Kai Tak Sports Park",
@@ -11835,6 +11779,42 @@
     ],
     "minibus_routes": [
         {
+            "route": "13",
+            "bound": 1,
+            "route_id": 2002286,
+            "region": "HKI",
+            "orig_en": "Sai Wan Estate",
+            "dest_en": "Sai Ying Pun (Circular)",
+            "provider": "minibus"
+        },
+        {
+            "route": "10P",
+            "bound": 1,
+            "route_id": 2006739,
+            "region": "HKI",
+            "orig_en": "JAFFE ROAD, near Siu On Plaza",
+            "dest_en": "Cyberport Bus Terminus",
+            "provider": "minibus"
+        },
+        {
+            "route": "10P",
+            "bound": 2,
+            "route_id": 2006739,
+            "region": "HKI",
+            "orig_en": "Cyberport Bus Terminus",
+            "dest_en": "JAFFE ROAD, near Siu On Plaza",
+            "provider": "minibus"
+        },
+        {
+            "route": "12",
+            "bound": 1,
+            "route_id": 2002285,
+            "region": "HKI",
+            "orig_en": "Kwun Lung Lau",
+            "dest_en": "Sai Ying Pun (Circular)",
+            "provider": "minibus"
+        },
+        {
             "route": "1",
             "bound": 1,
             "route_id": 2006408,
@@ -11868,51 +11848,6 @@
             "region": "HKI",
             "orig_en": "Cyberport Bus Terminus",
             "dest_en": "JAFFE ROAD, near Siu On Plaza",
-            "provider": "minibus"
-        },
-        {
-            "route": "10P",
-            "bound": 1,
-            "route_id": 2006739,
-            "region": "HKI",
-            "orig_en": "JAFFE ROAD, near Siu On Plaza",
-            "dest_en": "Cyberport Bus Terminus",
-            "provider": "minibus"
-        },
-        {
-            "route": "10P",
-            "bound": 2,
-            "route_id": 2006739,
-            "region": "HKI",
-            "orig_en": "Cyberport Bus Terminus",
-            "dest_en": "JAFFE ROAD, near Siu On Plaza",
-            "provider": "minibus"
-        },
-        {
-            "route": "12",
-            "bound": 1,
-            "route_id": 2002285,
-            "region": "HKI",
-            "orig_en": "Kwun Lung Lau",
-            "dest_en": "Sai Ying Pun (Circular)",
-            "provider": "minibus"
-        },
-        {
-            "route": "13",
-            "bound": 1,
-            "route_id": 2002286,
-            "region": "HKI",
-            "orig_en": "Sai Wan Estate",
-            "dest_en": "Sai Ying Pun (Circular)",
-            "provider": "minibus"
-        },
-        {
-            "route": "14M",
-            "bound": 1,
-            "route_id": 2000970,
-            "region": "HKI",
-            "orig_en": "Causeway Bay Lan Fong Road ",
-            "dest_en": "Moorsom Road",
             "provider": "minibus"
         },
         {
@@ -11970,6 +11905,15 @@
             "provider": "minibus"
         },
         {
+            "route": "2",
+            "bound": 1,
+            "route_id": 2006474,
+            "region": "HKI",
+            "orig_en": "Central (Hong Kong Station)",
+            "dest_en": "Old Peak Road (Circular)",
+            "provider": "minibus"
+        },
+        {
             "route": "18M",
             "bound": 1,
             "route_id": 2002317,
@@ -11997,24 +11941,6 @@
             "provider": "minibus"
         },
         {
-            "route": "2",
-            "bound": 1,
-            "route_id": 2006474,
-            "region": "HKI",
-            "orig_en": "Central (Hong Kong Station)",
-            "dest_en": "Old Peak Road (Circular)",
-            "provider": "minibus"
-        },
-        {
-            "route": "20",
-            "bound": 1,
-            "route_id": 2002319,
-            "region": "HKI",
-            "orig_en": "Sai Wan Ho (Grand Promenade) Public Transport Terminus",
-            "dest_en": "Chai Wan Industrial City(Circular)",
-            "provider": "minibus"
-        },
-        {
             "route": "20M",
             "bound": 1,
             "route_id": 2002415,
@@ -12030,6 +11956,24 @@
             "region": "HKI",
             "orig_en": "Causeway Bay (Lan Fong Road)",
             "dest_en": "Lai Tak Tsuen (Circular)",
+            "provider": "minibus"
+        },
+        {
+            "route": "20",
+            "bound": 1,
+            "route_id": 2002319,
+            "region": "HKI",
+            "orig_en": "Sai Wan Ho (Grand Promenade) Public Transport Terminus",
+            "dest_en": "Chai Wan Industrial City(Circular)",
+            "provider": "minibus"
+        },
+        {
+            "route": "14M",
+            "bound": 1,
+            "route_id": 2000970,
+            "region": "HKI",
+            "orig_en": "Causeway Bay Lan Fong Road ",
+            "dest_en": "Moorsom Road",
             "provider": "minibus"
         },
         {
@@ -12105,6 +12049,24 @@
             "provider": "minibus"
         },
         {
+            "route": "24A",
+            "bound": 1,
+            "route_id": 2002021,
+            "region": "HKI",
+            "orig_en": "Admiralty Station (Drake Street)",
+            "dest_en": "Shiu Fai Terrace (Circular)",
+            "provider": "minibus"
+        },
+        {
+            "route": "25",
+            "bound": 1,
+            "route_id": 2002020,
+            "region": "HKI",
+            "orig_en": "Upper Braemar Hill",
+            "dest_en": "Causeway Bay (Circular)",
+            "provider": "minibus"
+        },
+        {
             "route": "23M",
             "bound": 1,
             "route_id": 2003043,
@@ -12123,15 +12085,6 @@
             "provider": "minibus"
         },
         {
-            "route": "24A",
-            "bound": 1,
-            "route_id": 2002021,
-            "region": "HKI",
-            "orig_en": "Admiralty Station (Drake Street)",
-            "dest_en": "Shiu Fai Terrace (Circular)",
-            "provider": "minibus"
-        },
-        {
             "route": "24M",
             "bound": 1,
             "route_id": 2002052,
@@ -12147,15 +12100,6 @@
             "region": "HKI",
             "orig_en": "Admiralty Station (Drake Street)",
             "dest_en": "Mount Butler ",
-            "provider": "minibus"
-        },
-        {
-            "route": "25",
-            "bound": 1,
-            "route_id": 2002020,
-            "region": "HKI",
-            "orig_en": "Upper Braemar Hill",
-            "dest_en": "Causeway Bay (Circular)",
             "provider": "minibus"
         },
         {
@@ -12186,6 +12130,15 @@
             "provider": "minibus"
         },
         {
+            "route": "28M",
+            "bound": 1,
+            "route_id": 2006509,
+            "region": "HKI",
+            "orig_en": "Baguio Villa (upper)",
+            "dest_en": "HKU Station (Circular)",
+            "provider": "minibus"
+        },
+        {
             "route": "27A",
             "bound": 1,
             "route_id": 2007501,
@@ -12213,15 +12166,6 @@
             "provider": "minibus"
         },
         {
-            "route": "28M",
-            "bound": 1,
-            "route_id": 2006509,
-            "region": "HKI",
-            "orig_en": "Baguio Villa (upper)",
-            "dest_en": "HKU Station (Circular)",
-            "provider": "minibus"
-        },
-        {
             "route": "28S",
             "bound": 1,
             "route_id": 2006508,
@@ -12237,42 +12181,6 @@
             "region": "HKI",
             "orig_en": "Ap Lei Chau Estate",
             "dest_en": "Shum Wan Road Public Transport Terminus (Circular)",
-            "provider": "minibus"
-        },
-        {
-            "route": "29A",
-            "bound": 1,
-            "route_id": 2007530,
-            "region": "HKI",
-            "orig_en": "Ap Lei Chau Estate",
-            "dest_en": "Ocean Park (Water World)",
-            "provider": "minibus"
-        },
-        {
-            "route": "29A",
-            "bound": 2,
-            "route_id": 2007530,
-            "region": "HKI",
-            "orig_en": "Ocean Park (Water World)",
-            "dest_en": "Ap Lei Chau Estate",
-            "provider": "minibus"
-        },
-        {
-            "route": "3",
-            "bound": 1,
-            "route_id": 2006510,
-            "region": "HKI",
-            "orig_en": "Central (Hong Kong Station Public Transport Interchange)",
-            "dest_en": "Po Shan Road",
-            "provider": "minibus"
-        },
-        {
-            "route": "3",
-            "bound": 2,
-            "route_id": 2006510,
-            "region": "HKI",
-            "orig_en": "Po Shan Road",
-            "dest_en": "Central (Hong Kong Station Public Transport Interchange)",
             "provider": "minibus"
         },
         {
@@ -12312,12 +12220,66 @@
             "provider": "minibus"
         },
         {
+            "route": "3",
+            "bound": 1,
+            "route_id": 2006510,
+            "region": "HKI",
+            "orig_en": "Central (Hong Kong Station Public Transport Interchange)",
+            "dest_en": "Po Shan Road",
+            "provider": "minibus"
+        },
+        {
+            "route": "3",
+            "bound": 2,
+            "route_id": 2006510,
+            "region": "HKI",
+            "orig_en": "Po Shan Road",
+            "dest_en": "Central (Hong Kong Station Public Transport Interchange)",
+            "provider": "minibus"
+        },
+        {
+            "route": "29A",
+            "bound": 1,
+            "route_id": 2007530,
+            "region": "HKI",
+            "orig_en": "Ap Lei Chau Estate",
+            "dest_en": "Ocean Park (Water World)",
+            "provider": "minibus"
+        },
+        {
+            "route": "29A",
+            "bound": 2,
+            "route_id": 2007530,
+            "region": "HKI",
+            "orig_en": "Ocean Park (Water World)",
+            "dest_en": "Ap Lei Chau Estate",
+            "provider": "minibus"
+        },
+        {
             "route": "31X",
             "bound": 1,
             "route_id": 2009741,
             "region": "HKI",
             "orig_en": "Tin Wan Estate",
             "dest_en": "Causeway Bay (Jaffe Road)",
+            "provider": "minibus"
+        },
+        {
+            "route": "33",
+            "bound": 1,
+            "route_id": 2005685,
+            "region": "HKI",
+            "orig_en": "Kornhill",
+            "dest_en": "North Point (Marble Road)",
+            "provider": "minibus"
+        },
+        {
+            "route": "33",
+            "bound": 2,
+            "route_id": 2005685,
+            "region": "HKI",
+            "orig_en": "North Point (Marble Road)",
+            "dest_en": "Kornhill",
             "provider": "minibus"
         },
         {
@@ -12348,24 +12310,6 @@
             "provider": "minibus"
         },
         {
-            "route": "33",
-            "bound": 1,
-            "route_id": 2005685,
-            "region": "HKI",
-            "orig_en": "Kornhill",
-            "dest_en": "North Point (Marble Road)",
-            "provider": "minibus"
-        },
-        {
-            "route": "33",
-            "bound": 2,
-            "route_id": 2005685,
-            "region": "HKI",
-            "orig_en": "North Point (Marble Road)",
-            "dest_en": "Kornhill",
-            "provider": "minibus"
-        },
-        {
             "route": "33M",
             "bound": 1,
             "route_id": 2005684,
@@ -12393,24 +12337,6 @@
             "provider": "minibus"
         },
         {
-            "route": "36X",
-            "bound": 1,
-            "route_id": 2005290,
-            "region": "HKI",
-            "orig_en": "Ap Lei Chau (Ping Lan Street)",
-            "dest_en": "Causeway Bay (Jardine's Bazaar )",
-            "provider": "minibus"
-        },
-        {
-            "route": "36X",
-            "bound": 2,
-            "route_id": 2005290,
-            "region": "HKI",
-            "orig_en": "Causeway Bay (Jardine's Bazaar )",
-            "dest_en": "Ap Lei Chau (Ping Lan Street)",
-            "provider": "minibus"
-        },
-        {
             "route": "37",
             "bound": 1,
             "route_id": 2005289,
@@ -12429,21 +12355,21 @@
             "provider": "minibus"
         },
         {
-            "route": "39M",
+            "route": "36X",
             "bound": 1,
-            "route_id": 2001261,
+            "route_id": 2005290,
             "region": "HKI",
-            "orig_en": "YUE ON COURT (AP LEI CHAU) ",
-            "dest_en": "TIN HAU STATION",
+            "orig_en": "Ap Lei Chau (Ping Lan Street)",
+            "dest_en": "Causeway Bay (Jardine's Bazaar )",
             "provider": "minibus"
         },
         {
-            "route": "39M",
+            "route": "36X",
             "bound": 2,
-            "route_id": 2001261,
+            "route_id": 2005290,
             "region": "HKI",
-            "orig_en": "Tin Hau Station",
-            "dest_en": "Yue On Court (Ap Lei Chau)",
+            "orig_en": "Causeway Bay (Jardine's Bazaar )",
+            "dest_en": "Ap Lei Chau (Ping Lan Street)",
             "provider": "minibus"
         },
         {
@@ -12465,6 +12391,24 @@
             "provider": "minibus"
         },
         {
+            "route": "39M",
+            "bound": 1,
+            "route_id": 2001261,
+            "region": "HKI",
+            "orig_en": "YUE ON COURT (AP LEI CHAU) ",
+            "dest_en": "TIN HAU STATION",
+            "provider": "minibus"
+        },
+        {
+            "route": "39M",
+            "bound": 2,
+            "route_id": 2001261,
+            "region": "HKI",
+            "orig_en": "Tin Hau Station",
+            "dest_en": "Yue On Court (Ap Lei Chau)",
+            "provider": "minibus"
+        },
+        {
             "route": "40",
             "bound": 1,
             "route_id": 2001262,
@@ -12480,24 +12424,6 @@
             "region": "HKI",
             "orig_en": "Jardine's Bazaar",
             "dest_en": "Stanley Village",
-            "provider": "minibus"
-        },
-        {
-            "route": "40X",
-            "bound": 1,
-            "route_id": 2001265,
-            "region": "HKI",
-            "orig_en": "Stanley Prison",
-            "dest_en": "Jardine's Bazaar",
-            "provider": "minibus"
-        },
-        {
-            "route": "40X",
-            "bound": 2,
-            "route_id": 2001265,
-            "region": "HKI",
-            "orig_en": "Jardine's Bazaar",
-            "dest_en": "Stanley Prison",
             "provider": "minibus"
         },
         {
@@ -12519,12 +12445,21 @@
             "provider": "minibus"
         },
         {
-            "route": "45A",
+            "route": "40X",
             "bound": 1,
-            "route_id": 2005291,
+            "route_id": 2001265,
             "region": "HKI",
-            "orig_en": "Western District (First Street)",
-            "dest_en": "Conduit Road (Circular)",
+            "orig_en": "Stanley Prison",
+            "dest_en": "Jardine's Bazaar",
+            "provider": "minibus"
+        },
+        {
+            "route": "40X",
+            "bound": 2,
+            "route_id": 2001265,
+            "region": "HKI",
+            "orig_en": "Jardine's Bazaar",
+            "dest_en": "Stanley Prison",
             "provider": "minibus"
         },
         {
@@ -12537,21 +12472,21 @@
             "provider": "minibus"
         },
         {
+            "route": "45A",
+            "bound": 1,
+            "route_id": 2005291,
+            "region": "HKI",
+            "orig_en": "Western District (First Street)",
+            "dest_en": "Conduit Road (Circular)",
+            "provider": "minibus"
+        },
+        {
             "route": "47E",
             "bound": 1,
             "route_id": 2004076,
             "region": "HKI",
             "orig_en": "Pamela Youde Nethersole Eastern Hospital",
             "dest_en": "Siu Sai Wan Estate",
-            "provider": "minibus"
-        },
-        {
-            "route": "47M",
-            "bound": 1,
-            "route_id": 2004068,
-            "region": "HKI",
-            "orig_en": "Chai Wan Station",
-            "dest_en": "Siu Sai Wan Phase III (Circular)",
             "provider": "minibus"
         },
         {
@@ -12579,6 +12514,15 @@
             "region": "HKI",
             "orig_en": "Pamela Youde Nethersole Eastern Hospital",
             "dest_en": "Chai Wan Station (Lee Chung Street)",
+            "provider": "minibus"
+        },
+        {
+            "route": "47M",
+            "bound": 1,
+            "route_id": 2004068,
+            "region": "HKI",
+            "orig_en": "Chai Wan Station",
+            "dest_en": "Siu Sai Wan Phase III (Circular)",
             "provider": "minibus"
         },
         {
@@ -12618,6 +12562,33 @@
             "provider": "minibus"
         },
         {
+            "route": "4S",
+            "bound": 1,
+            "route_id": 2004099,
+            "region": "HKI",
+            "orig_en": "Shek Pai Wan",
+            "dest_en": "Aberdeen (Circular)",
+            "provider": "minibus"
+        },
+        {
+            "route": "5",
+            "bound": 1,
+            "route_id": 2004081,
+            "region": "HKI",
+            "orig_en": "Aberdeen (Nam Ning Street)",
+            "dest_en": "Causeway Bay (Jaffe Road)",
+            "provider": "minibus"
+        },
+        {
+            "route": "5",
+            "bound": 2,
+            "route_id": 2004081,
+            "region": "HKI",
+            "orig_en": "Causeway Bay (Jaffe Road)",
+            "dest_en": "Aberdeen (Nam Ning Street)",
+            "provider": "minibus"
+        },
+        {
             "route": "4C",
             "bound": 1,
             "route_id": 2004097,
@@ -12654,47 +12625,20 @@
             "provider": "minibus"
         },
         {
-            "route": "4S",
-            "bound": 1,
-            "route_id": 2004099,
-            "region": "HKI",
-            "orig_en": "Shek Pai Wan",
-            "dest_en": "Aberdeen (Circular)",
-            "provider": "minibus"
-        },
-        {
-            "route": "5",
-            "bound": 1,
-            "route_id": 2004081,
-            "region": "HKI",
-            "orig_en": "Aberdeen (Nam Ning Street)",
-            "dest_en": "Causeway Bay (Jaffe Road)",
-            "provider": "minibus"
-        },
-        {
-            "route": "5",
-            "bound": 2,
-            "route_id": 2004081,
-            "region": "HKI",
-            "orig_en": "Causeway Bay (Jaffe Road)",
-            "dest_en": "Aberdeen (Nam Ning Street)",
-            "provider": "minibus"
-        },
-        {
-            "route": "50",
-            "bound": 1,
-            "route_id": 2000990,
-            "region": "HKI",
-            "orig_en": "Yiu Tung Estate",
-            "dest_en": "Sai Wan Ho (Circular)",
-            "provider": "minibus"
-        },
-        {
             "route": "51",
             "bound": 1,
             "route_id": 2002813,
             "region": "HKI",
             "orig_en": "Tin Wan Estate",
+            "dest_en": "Aberdeen (Circular)",
+            "provider": "minibus"
+        },
+        {
+            "route": "51S",
+            "bound": 1,
+            "route_id": 2002811,
+            "region": "HKI",
+            "orig_en": "Wah Kwai Estate",
             "dest_en": "Aberdeen (Circular)",
             "provider": "minibus"
         },
@@ -12708,12 +12652,12 @@
             "provider": "minibus"
         },
         {
-            "route": "51S",
+            "route": "50",
             "bound": 1,
-            "route_id": 2002811,
+            "route_id": 2000990,
             "region": "HKI",
-            "orig_en": "Wah Kwai Estate",
-            "dest_en": "Aberdeen (Circular)",
+            "orig_en": "Yiu Tung Estate",
+            "dest_en": "Sai Wan Ho (Circular)",
             "provider": "minibus"
         },
         {
@@ -12735,12 +12679,12 @@
             "provider": "minibus"
         },
         {
-            "route": "54",
+            "route": "54S",
             "bound": 1,
-            "route_id": 2003636,
+            "route_id": 2003735,
             "region": "HKI",
-            "orig_en": "Central (Ferry Piers)",
-            "dest_en": "Queen Mary Hospital (Circular)",
+            "orig_en": "Mt. Davis Road opposite Greenery Garden",
+            "dest_en": "Kennedy Town Station",
             "provider": "minibus"
         },
         {
@@ -12762,21 +12706,21 @@
             "provider": "minibus"
         },
         {
-            "route": "54S",
-            "bound": 1,
-            "route_id": 2003735,
-            "region": "HKI",
-            "orig_en": "Mt. Davis Road opposite Greenery Garden",
-            "dest_en": "Kennedy Town Station",
-            "provider": "minibus"
-        },
-        {
             "route": "55",
             "bound": 1,
             "route_id": 2003771,
             "region": "HKI",
             "orig_en": "Queen Mary Hospital",
             "dest_en": "Central Station (Connaught Road Central)(Circular)",
+            "provider": "minibus"
+        },
+        {
+            "route": "54",
+            "bound": 1,
+            "route_id": 2003636,
+            "region": "HKI",
+            "orig_en": "Central (Ferry Piers)",
+            "dest_en": "Queen Mary Hospital (Circular)",
             "provider": "minibus"
         },
         {
@@ -12798,24 +12742,6 @@
             "provider": "minibus"
         },
         {
-            "route": "56A",
-            "bound": 1,
-            "route_id": 2001130,
-            "region": "HKI",
-            "orig_en": "Mid-Levels (Robinson Road)",
-            "dest_en": "Tin Hau Station",
-            "provider": "minibus"
-        },
-        {
-            "route": "56A",
-            "bound": 2,
-            "route_id": 2001130,
-            "region": "HKI",
-            "orig_en": "Tin Hau Station",
-            "dest_en": "Mid-Levels (Robinson Road)",
-            "provider": "minibus"
-        },
-        {
             "route": "56B",
             "bound": 1,
             "route_id": 2001132,
@@ -12831,6 +12757,24 @@
             "region": "HKI",
             "orig_en": "Tin Hau Station",
             "dest_en": "Mid-Levels Robinson Road",
+            "provider": "minibus"
+        },
+        {
+            "route": "56A",
+            "bound": 1,
+            "route_id": 2001130,
+            "region": "HKI",
+            "orig_en": "Mid-Levels (Robinson Road)",
+            "dest_en": "Tin Hau Station",
+            "provider": "minibus"
+        },
+        {
+            "route": "56A",
+            "bound": 2,
+            "route_id": 2001130,
+            "region": "HKI",
+            "orig_en": "Tin Hau Station",
+            "dest_en": "Mid-Levels (Robinson Road)",
             "provider": "minibus"
         },
         {
@@ -12906,33 +12850,6 @@
             "provider": "minibus"
         },
         {
-            "route": "59A",
-            "bound": 1,
-            "route_id": 2002746,
-            "region": "HKI",
-            "orig_en": "Aberdeen (Tung Sing Road)",
-            "dest_en": "Shum Wan Road Public Transport Terminus",
-            "provider": "minibus"
-        },
-        {
-            "route": "59A",
-            "bound": 2,
-            "route_id": 2002746,
-            "region": "HKI",
-            "orig_en": "Shum Wan Road Public Transport Terminus",
-            "dest_en": "Aberdeen (Tung Sing Road)",
-            "provider": "minibus"
-        },
-        {
-            "route": "59B",
-            "bound": 1,
-            "route_id": 2002714,
-            "region": "HKI",
-            "orig_en": "Aberdeen (Tung Sing Road)",
-            "dest_en": "Shum Wan Road Public Transport Terminus (via Grantham Hospital) (Circular)",
-            "provider": "minibus"
-        },
-        {
             "route": "59S",
             "bound": 1,
             "route_id": 2004230,
@@ -12948,15 +12865,6 @@
             "region": "HKI",
             "orig_en": "OCEAN PARK (WATER WORLD)",
             "dest_en": "ABERDEEN (TUNG SING ROAD)",
-            "provider": "minibus"
-        },
-        {
-            "route": "59X",
-            "bound": 1,
-            "route_id": 2002745,
-            "region": "HKI",
-            "orig_en": "Kennedy Town Station",
-            "dest_en": "Grantham Hospital",
             "provider": "minibus"
         },
         {
@@ -12978,30 +12886,39 @@
             "provider": "minibus"
         },
         {
-            "route": "61",
+            "route": "59X",
             "bound": 1,
-            "route_id": 2004084,
+            "route_id": 2002745,
             "region": "HKI",
-            "orig_en": "Siu Sai Wan (Island Resort)",
-            "dest_en": "Mong Kok (Fife Street)",
+            "orig_en": "Kennedy Town Station",
+            "dest_en": "Grantham Hospital",
             "provider": "minibus"
         },
         {
-            "route": "61",
+            "route": "59B",
+            "bound": 1,
+            "route_id": 2002714,
+            "region": "HKI",
+            "orig_en": "Aberdeen (Tung Sing Road)",
+            "dest_en": "Shum Wan Road Public Transport Terminus (via Grantham Hospital) (Circular)",
+            "provider": "minibus"
+        },
+        {
+            "route": "59A",
+            "bound": 1,
+            "route_id": 2002746,
+            "region": "HKI",
+            "orig_en": "Aberdeen (Tung Sing Road)",
+            "dest_en": "Shum Wan Road Public Transport Terminus",
+            "provider": "minibus"
+        },
+        {
+            "route": "59A",
             "bound": 2,
-            "route_id": 2004084,
+            "route_id": 2002746,
             "region": "HKI",
-            "orig_en": "Mong Kok (Fife Street)",
-            "dest_en": "Siu Sai Wan (Island Resort)",
-            "provider": "minibus"
-        },
-        {
-            "route": "62",
-            "bound": 1,
-            "route_id": 2004090,
-            "region": "HKI",
-            "orig_en": "Heng Fa Chuen Public Transport Interchange",
-            "dest_en": "Siu Sai Wan (Cheerful Garden) (Circular)",
+            "orig_en": "Shum Wan Road Public Transport Terminus",
+            "dest_en": "Aberdeen (Tung Sing Road)",
             "provider": "minibus"
         },
         {
@@ -13020,6 +12937,24 @@
             "region": "HKI",
             "orig_en": "Heng Fa Chuen Public Transport Interchange",
             "dest_en": "Siu Sai Wan (Island Resort) Public Transport Interchange",
+            "provider": "minibus"
+        },
+        {
+            "route": "61",
+            "bound": 1,
+            "route_id": 2004084,
+            "region": "HKI",
+            "orig_en": "Siu Sai Wan (Island Resort)",
+            "dest_en": "Mong Kok (Fife Street)",
+            "provider": "minibus"
+        },
+        {
+            "route": "61",
+            "bound": 2,
+            "route_id": 2004084,
+            "region": "HKI",
+            "orig_en": "Mong Kok (Fife Street)",
+            "dest_en": "Siu Sai Wan (Island Resort)",
             "provider": "minibus"
         },
         {
@@ -13050,6 +12985,33 @@
             "provider": "minibus"
         },
         {
+            "route": "62",
+            "bound": 1,
+            "route_id": 2004090,
+            "region": "HKI",
+            "orig_en": "Heng Fa Chuen Public Transport Interchange",
+            "dest_en": "Siu Sai Wan (Cheerful Garden) (Circular)",
+            "provider": "minibus"
+        },
+        {
+            "route": "65X",
+            "bound": 1,
+            "route_id": 2008092,
+            "region": "HKI",
+            "orig_en": "Pamela Youde Nethersole Eastern Hospital",
+            "dest_en": "North Point Ferry Pier Public Transport Interchange",
+            "provider": "minibus"
+        },
+        {
+            "route": "65X",
+            "bound": 2,
+            "route_id": 2008092,
+            "region": "HKI",
+            "orig_en": "North Point Ferry Pier Public Transport Interchange",
+            "dest_en": "Pamela Youde Nethersole Eastern Hospital",
+            "provider": "minibus"
+        },
+        {
             "route": "65",
             "bound": 1,
             "route_id": 2008025,
@@ -13074,51 +13036,6 @@
             "region": "HKI",
             "orig_en": "Chai Wan (Hong Man Street)",
             "dest_en": "Quarry Bay (via Pamela Youde Nethersole Eastern Hospital)(Circular)",
-            "provider": "minibus"
-        },
-        {
-            "route": "65X",
-            "bound": 1,
-            "route_id": 2008092,
-            "region": "HKI",
-            "orig_en": "Pamela Youde Nethersole Eastern Hospital",
-            "dest_en": "North Point Ferry Pier Public Transport Interchange",
-            "provider": "minibus"
-        },
-        {
-            "route": "65X",
-            "bound": 2,
-            "route_id": 2008092,
-            "region": "HKI",
-            "orig_en": "North Point Ferry Pier Public Transport Interchange",
-            "dest_en": "Pamela Youde Nethersole Eastern Hospital",
-            "provider": "minibus"
-        },
-        {
-            "route": "66",
-            "bound": 1,
-            "route_id": 2005293,
-            "region": "HKI",
-            "orig_en": "Aldrich Bay",
-            "dest_en": "Chai Wan (Wan Tsui Road)",
-            "provider": "minibus"
-        },
-        {
-            "route": "66A",
-            "bound": 1,
-            "route_id": 2005294,
-            "region": "HKI",
-            "orig_en": "Aldrich Bay",
-            "dest_en": "Pamela Youde Nethesole Eastern Hospital",
-            "provider": "minibus"
-        },
-        {
-            "route": "68",
-            "bound": 1,
-            "route_id": 2005295,
-            "region": "HKI",
-            "orig_en": "Aldrich Bay",
-            "dest_en": "Quarry Bay (Hoi Wan Street)",
             "provider": "minibus"
         },
         {
@@ -13149,21 +13066,30 @@
             "provider": "minibus"
         },
         {
-            "route": "69X",
+            "route": "66A",
             "bound": 1,
-            "route_id": 2000511,
+            "route_id": 2005294,
             "region": "HKI",
-            "orig_en": "Cyberport",
-            "dest_en": "Causeway Bay (Lockhart Road)",
+            "orig_en": "Aldrich Bay",
+            "dest_en": "Pamela Youde Nethesole Eastern Hospital",
             "provider": "minibus"
         },
         {
-            "route": "69X",
-            "bound": 2,
-            "route_id": 2000511,
+            "route": "68",
+            "bound": 1,
+            "route_id": 2005295,
             "region": "HKI",
-            "orig_en": "Causeway Bay (Lockhart Road)",
-            "dest_en": "Cyberport",
+            "orig_en": "Aldrich Bay",
+            "dest_en": "Quarry Bay (Hoi Wan Street)",
+            "provider": "minibus"
+        },
+        {
+            "route": "66",
+            "bound": 1,
+            "route_id": 2005293,
+            "region": "HKI",
+            "orig_en": "Aldrich Bay",
+            "dest_en": "Chai Wan (Wan Tsui Road)",
             "provider": "minibus"
         },
         {
@@ -13173,6 +13099,15 @@
             "region": "HKI",
             "orig_en": "Baguio Villas (Lower)",
             "dest_en": "Central (Exchange Square)",
+            "provider": "minibus"
+        },
+        {
+            "route": "N27",
+            "bound": 1,
+            "route_id": 2007502,
+            "region": "HKI",
+            "orig_en": "Aberdeen (Sai On Street)",
+            "dest_en": "Ap Lei Chau (Circular)",
             "provider": "minibus"
         },
         {
@@ -13194,24 +13129,6 @@
             "provider": "minibus"
         },
         {
-            "route": "9",
-            "bound": 1,
-            "route_id": 2002283,
-            "region": "HKI",
-            "orig_en": "Central (Exchange Square)",
-            "dest_en": "Bowen Road (Circular)",
-            "provider": "minibus"
-        },
-        {
-            "route": "N27",
-            "bound": 1,
-            "route_id": 2007502,
-            "region": "HKI",
-            "orig_en": "Aberdeen (Sai On Street)",
-            "dest_en": "Ap Lei Chau (Circular)",
-            "provider": "minibus"
-        },
-        {
             "route": "N31",
             "bound": 1,
             "route_id": 2006772,
@@ -13230,30 +13147,21 @@
             "provider": "minibus"
         },
         {
-            "route": "N40",
+            "route": "69X",
             "bound": 1,
-            "route_id": 2001264,
+            "route_id": 2000511,
             "region": "HKI",
-            "orig_en": "Stanley Village",
-            "dest_en": "Jardine's Bazaar",
+            "orig_en": "Cyberport",
+            "dest_en": "Causeway Bay (Lockhart Road)",
             "provider": "minibus"
         },
         {
-            "route": "N40",
+            "route": "69X",
             "bound": 2,
-            "route_id": 2001264,
+            "route_id": 2000511,
             "region": "HKI",
-            "orig_en": "Jardine's Bazaar",
-            "dest_en": "Stanley Village",
-            "provider": "minibus"
-        },
-        {
-            "route": "N4A",
-            "bound": 1,
-            "route_id": 2004086,
-            "region": "HKI",
-            "orig_en": "Aberdeen (Shek Pai Wan)",
-            "dest_en": "Causeway Bay (Cannon Street)",
+            "orig_en": "Causeway Bay (Lockhart Road)",
+            "dest_en": "Cyberport",
             "provider": "minibus"
         },
         {
@@ -13284,21 +13192,39 @@
             "provider": "minibus"
         },
         {
-            "route": "N51S",
+            "route": "9",
             "bound": 1,
-            "route_id": 2002814,
+            "route_id": 2002283,
             "region": "HKI",
-            "orig_en": "Wah Kwai Estate",
-            "dest_en": "Aberdeen (Circular)",
+            "orig_en": "Central (Exchange Square)",
+            "dest_en": "Bowen Road (Circular)",
             "provider": "minibus"
         },
         {
-            "route": "12",
+            "route": "N40",
+            "bound": 1,
+            "route_id": 2001264,
+            "region": "HKI",
+            "orig_en": "Stanley Village",
+            "dest_en": "Jardine's Bazaar",
+            "provider": "minibus"
+        },
+        {
+            "route": "N40",
             "bound": 2,
-            "route_id": 2002329,
-            "region": "KLN",
-            "orig_en": "Mong Kok East Station",
-            "dest_en": "Pak Tin",
+            "route_id": 2001264,
+            "region": "HKI",
+            "orig_en": "Jardine's Bazaar",
+            "dest_en": "Stanley Village",
+            "provider": "minibus"
+        },
+        {
+            "route": "N4A",
+            "bound": 1,
+            "route_id": 2004086,
+            "region": "HKI",
+            "orig_en": "Aberdeen (Shek Pai Wan)",
+            "dest_en": "Causeway Bay (Cannon Street)",
             "provider": "minibus"
         },
         {
@@ -13320,6 +13246,33 @@
             "provider": "minibus"
         },
         {
+            "route": "N51S",
+            "bound": 1,
+            "route_id": 2002814,
+            "region": "HKI",
+            "orig_en": "Wah Kwai Estate",
+            "dest_en": "Aberdeen (Circular)",
+            "provider": "minibus"
+        },
+        {
+            "route": "12",
+            "bound": 2,
+            "route_id": 2002329,
+            "region": "KLN",
+            "orig_en": "Mong Kok East Station",
+            "dest_en": "Pak Tin",
+            "provider": "minibus"
+        },
+        {
+            "route": "13M",
+            "bound": 1,
+            "route_id": 2003603,
+            "region": "KLN",
+            "orig_en": "Hung Hom (Hung Luen Road)",
+            "dest_en": "Hung Hom Station (Circular)",
+            "provider": "minibus"
+        },
+        {
             "route": "12B",
             "bound": 1,
             "route_id": 2002333,
@@ -13338,21 +13291,30 @@
             "provider": "minibus"
         },
         {
-            "route": "12S",
-            "bound": 1,
-            "route_id": 2002336,
-            "region": "KLN",
-            "orig_en": "Tai Kok Tsui (Cherry Street)",
-            "dest_en": "Mong Kok East Station(Circular)",
-            "provider": "minibus"
-        },
-        {
             "route": "13",
             "bound": 2,
             "route_id": 2003571,
             "region": "KLN",
             "orig_en": "Hung Hom (Hung Luen Road)",
             "dest_en": "Kowloon Tong (Broadcast Drive)",
+            "provider": "minibus"
+        },
+        {
+            "route": "16",
+            "bound": 1,
+            "route_id": 2004629,
+            "region": "KLN",
+            "orig_en": "Jat's Incline (Choi Wan Estate)",
+            "dest_en": "Ping Shek Estate (Circular)",
+            "provider": "minibus"
+        },
+        {
+            "route": "12S",
+            "bound": 1,
+            "route_id": 2002336,
+            "region": "KLN",
+            "orig_en": "Tai Kok Tsui (Cherry Street)",
+            "dest_en": "Mong Kok East Station(Circular)",
             "provider": "minibus"
         },
         {
@@ -13371,24 +13333,6 @@
             "region": "KLN",
             "orig_en": "Lok Fu",
             "dest_en": "Kowloon Tong (Broadcast Drive)",
-            "provider": "minibus"
-        },
-        {
-            "route": "13M",
-            "bound": 1,
-            "route_id": 2003603,
-            "region": "KLN",
-            "orig_en": "Hung Hom (Hung Luen Road)",
-            "dest_en": "Hung Hom Station (Circular)",
-            "provider": "minibus"
-        },
-        {
-            "route": "16",
-            "bound": 1,
-            "route_id": 2004629,
-            "region": "KLN",
-            "orig_en": "Jat's Incline (Choi Wan Estate)",
-            "dest_en": "Ping Shek Estate (Circular)",
             "provider": "minibus"
         },
         {
@@ -13500,15 +13444,6 @@
             "provider": "minibus"
         },
         {
-            "route": "20M",
-            "bound": 2,
-            "route_id": 2004990,
-            "region": "KLN",
-            "orig_en": "Wong Tai Sin Station",
-            "dest_en": "新蒲岗",
-            "provider": "minibus"
-        },
-        {
             "route": "22A",
             "bound": 1,
             "route_id": 2005782,
@@ -13563,30 +13498,21 @@
             "provider": "minibus"
         },
         {
+            "route": "20M",
+            "bound": 2,
+            "route_id": 2004990,
+            "region": "KLN",
+            "orig_en": "Wong Tai Sin Station",
+            "dest_en": "新蒲岗",
+            "provider": "minibus"
+        },
+        {
             "route": "23C",
             "bound": 1,
             "route_id": 2008391,
             "region": "KLN",
             "orig_en": "Lam Tin Station (Sin Fat Road)",
             "dest_en": "Yau Tong Station (Cha Kwo Ling Road)(Circular)",
-            "provider": "minibus"
-        },
-        {
-            "route": "23P",
-            "bound": 1,
-            "route_id": 2009477,
-            "region": "KLN",
-            "orig_en": "Ko Ling Road",
-            "dest_en": "Lam Tin Station (Sin Fat Road)",
-            "provider": "minibus"
-        },
-        {
-            "route": "23P",
-            "bound": 2,
-            "route_id": 2009477,
-            "region": "KLN",
-            "orig_en": "Lam Tin Station (Sin Fat Road)",
-            "dest_en": "Ko Ling Road",
             "provider": "minibus"
         },
         {
@@ -13626,6 +13552,24 @@
             "provider": "minibus"
         },
         {
+            "route": "23P",
+            "bound": 1,
+            "route_id": 2009477,
+            "region": "KLN",
+            "orig_en": "Ko Ling Road",
+            "dest_en": "Lam Tin Station (Sin Fat Road)",
+            "provider": "minibus"
+        },
+        {
+            "route": "23P",
+            "bound": 2,
+            "route_id": 2009477,
+            "region": "KLN",
+            "orig_en": "Lam Tin Station (Sin Fat Road)",
+            "dest_en": "Ko Ling Road",
+            "provider": "minibus"
+        },
+        {
             "route": "25B",
             "bound": 1,
             "route_id": 2006078,
@@ -13641,6 +13585,15 @@
             "region": "KLN",
             "orig_en": "KOWLOON TONG (SUFFOLK ROAD) PUBLIC TRANSPORT INTERCHANGE",
             "dest_en": "SAN PO KONG(THE LATITUDE)",
+            "provider": "minibus"
+        },
+        {
+            "route": "25MS",
+            "bound": 1,
+            "route_id": 2006112,
+            "region": "KLN",
+            "orig_en": "Kowloon Tong (Suffolk Road) Public Transport Interchange",
+            "dest_en": "Hong Kong Baptist University (Circular)",
             "provider": "minibus"
         },
         {
@@ -13662,15 +13615,6 @@
             "provider": "minibus"
         },
         {
-            "route": "25MS",
-            "bound": 1,
-            "route_id": 2006112,
-            "region": "KLN",
-            "orig_en": "Kowloon Tong (Suffolk Road) Public Transport Interchange",
-            "dest_en": "Hong Kong Baptist University (Circular)",
-            "provider": "minibus"
-        },
-        {
             "route": "26",
             "bound": 2,
             "route_id": 2002815,
@@ -13689,15 +13633,6 @@
             "provider": "minibus"
         },
         {
-            "route": "26H",
-            "bound": 1,
-            "route_id": 2002849,
-            "region": "KLN",
-            "orig_en": "Queen Elizabeth Hospital",
-            "dest_en": "Hung Hom Station (Circular)",
-            "provider": "minibus"
-        },
-        {
             "route": "26W",
             "bound": 1,
             "route_id": 2002844,
@@ -13713,6 +13648,15 @@
             "region": "KLN",
             "orig_en": "Laguna Verde",
             "dest_en": "Jordan (Ferry Street) (Circular)",
+            "provider": "minibus"
+        },
+        {
+            "route": "26H",
+            "bound": 1,
+            "route_id": 2002849,
+            "region": "KLN",
+            "orig_en": "Queen Elizabeth Hospital",
+            "dest_en": "Hung Hom Station (Circular)",
             "provider": "minibus"
         },
         {
@@ -13752,24 +13696,6 @@
             "provider": "minibus"
         },
         {
-            "route": "28MS",
-            "bound": 1,
-            "route_id": 2001005,
-            "region": "KLN",
-            "orig_en": "Kowloon City (Wyler Gardens)",
-            "dest_en": "Ho Man Tin Station (Circular)",
-            "provider": "minibus"
-        },
-        {
-            "route": "29B",
-            "bound": 1,
-            "route_id": 2001007,
-            "region": "KLN",
-            "orig_en": "Kowloon Tong (Suffolk Road) Public Transport Interchange",
-            "dest_en": "Beacon Hill",
-            "provider": "minibus"
-        },
-        {
             "route": "2A",
             "bound": 1,
             "route_id": 2009247,
@@ -13785,6 +13711,33 @@
             "region": "KLN",
             "orig_en": "Festival Walk Public Transport Interchange",
             "dest_en": "Whampoa Garden Public Transport Interchange",
+            "provider": "minibus"
+        },
+        {
+            "route": "32M",
+            "bound": 1,
+            "route_id": 2000992,
+            "region": "KLN",
+            "orig_en": "Lung Ping Road",
+            "dest_en": "Shek Kip Mei (Circular)",
+            "provider": "minibus"
+        },
+        {
+            "route": "28MS",
+            "bound": 1,
+            "route_id": 2001005,
+            "region": "KLN",
+            "orig_en": "Kowloon City (Wyler Gardens)",
+            "dest_en": "Ho Man Tin Station (Circular)",
+            "provider": "minibus"
+        },
+        {
+            "route": "29B",
+            "bound": 1,
+            "route_id": 2001007,
+            "region": "KLN",
+            "orig_en": "Kowloon Tong (Suffolk Road) Public Transport Interchange",
+            "dest_en": "Beacon Hill",
             "provider": "minibus"
         },
         {
@@ -13815,12 +13768,12 @@
             "provider": "minibus"
         },
         {
-            "route": "32M",
+            "route": "34S",
             "bound": 1,
-            "route_id": 2000992,
+            "route_id": 2005947,
             "region": "KLN",
-            "orig_en": "Lung Ping Road",
-            "dest_en": "Shek Kip Mei (Circular)",
+            "orig_en": "Sau Mau Ping (Upper) Bus Terminus",
+            "dest_en": "Yue Man Square Public Transport Interchange",
             "provider": "minibus"
         },
         {
@@ -13842,33 +13795,6 @@
             "provider": "minibus"
         },
         {
-            "route": "33M",
-            "bound": 2,
-            "route_id": 2001010,
-            "region": "KLN",
-            "orig_en": "Wong Tai Sin Station",
-            "dest_en": "Hilltop Garden",
-            "provider": "minibus"
-        },
-        {
-            "route": "34M",
-            "bound": 1,
-            "route_id": 2005946,
-            "region": "KLN",
-            "orig_en": "Hiu Lai Court",
-            "dest_en": "Yue Man Square Public Transport Interchange",
-            "provider": "minibus"
-        },
-        {
-            "route": "34S",
-            "bound": 1,
-            "route_id": 2005947,
-            "region": "KLN",
-            "orig_en": "Sau Mau Ping (Upper) Bus Terminus",
-            "dest_en": "Yue Man Square Public Transport Interchange",
-            "provider": "minibus"
-        },
-        {
             "route": "35",
             "bound": 1,
             "route_id": 2005814,
@@ -13884,6 +13810,24 @@
             "region": "KLN",
             "orig_en": "Hong Lee Court",
             "dest_en": "Choi Ha Estate",
+            "provider": "minibus"
+        },
+        {
+            "route": "33M",
+            "bound": 2,
+            "route_id": 2001010,
+            "region": "KLN",
+            "orig_en": "Wong Tai Sin Station",
+            "dest_en": "Hilltop Garden",
+            "provider": "minibus"
+        },
+        {
+            "route": "34M",
+            "bound": 1,
+            "route_id": 2005946,
+            "region": "KLN",
+            "orig_en": "Hiu Lai Court",
+            "dest_en": "Yue Man Square Public Transport Interchange",
             "provider": "minibus"
         },
         {
@@ -13914,15 +13858,6 @@
             "provider": "minibus"
         },
         {
-            "route": "37M",
-            "bound": 1,
-            "route_id": 2003505,
-            "region": "KLN",
-            "orig_en": "Wong Tai Sin Public Light Bus (Scheduled) Service Terminus",
-            "dest_en": "Tsz Man Estate(Circular)",
-            "provider": "minibus"
-        },
-        {
             "route": "38M",
             "bound": 1,
             "route_id": 2004659,
@@ -13941,21 +13876,12 @@
             "provider": "minibus"
         },
         {
-            "route": "41A",
+            "route": "37M",
             "bound": 1,
-            "route_id": 2005687,
+            "route_id": 2003505,
             "region": "KLN",
-            "orig_en": "Yau Yat Tsuen",
-            "dest_en": "Shek Kip Mei Station (Circular)",
-            "provider": "minibus"
-        },
-        {
-            "route": "41M",
-            "bound": 1,
-            "route_id": 2005686,
-            "region": "KLN",
-            "orig_en": "Yau Yat Tsuen",
-            "dest_en": "Shek Kip Mei Station (Circular)",
+            "orig_en": "Wong Tai Sin Public Light Bus (Scheduled) Service Terminus",
+            "dest_en": "Tsz Man Estate(Circular)",
             "provider": "minibus"
         },
         {
@@ -13974,6 +13900,24 @@
             "region": "KLN",
             "orig_en": "Chak On Estate",
             "dest_en": "Cheung Sha Wan (Yu Chau West Street)",
+            "provider": "minibus"
+        },
+        {
+            "route": "41A",
+            "bound": 1,
+            "route_id": 2005687,
+            "region": "KLN",
+            "orig_en": "Yau Yat Tsuen",
+            "dest_en": "Shek Kip Mei Station (Circular)",
+            "provider": "minibus"
+        },
+        {
+            "route": "41M",
+            "bound": 1,
+            "route_id": 2005686,
+            "region": "KLN",
+            "orig_en": "Yau Yat Tsuen",
+            "dest_en": "Shek Kip Mei Station (Circular)",
             "provider": "minibus"
         },
         {
@@ -14004,21 +13948,21 @@
             "provider": "minibus"
         },
         {
-            "route": "44M",
-            "bound": 2,
-            "route_id": 2004593,
-            "region": "KLN",
-            "orig_en": "Cheung Sha Wan (Cheung Shun Street)",
-            "dest_en": "Stonecutters Island",
-            "provider": "minibus"
-        },
-        {
             "route": "44S",
             "bound": 1,
             "route_id": 2004627,
             "region": "KLN",
             "orig_en": "Hoi Lai Estate",
             "dest_en": "Castle Peak Road (Circular)",
+            "provider": "minibus"
+        },
+        {
+            "route": "44M",
+            "bound": 2,
+            "route_id": 2004593,
+            "region": "KLN",
+            "orig_en": "Cheung Sha Wan (Cheung Shun Street)",
+            "dest_en": "Stonecutters Island",
             "provider": "minibus"
         },
         {
@@ -14040,21 +13984,12 @@
             "provider": "minibus"
         },
         {
-            "route": "47",
+            "route": "49",
             "bound": 1,
-            "route_id": 2010368,
+            "route_id": 2007299,
             "region": "KLN",
-            "orig_en": "Shun Lee",
-            "dest_en": "Tsui Ping (Fuk Tong Road)",
-            "provider": "minibus"
-        },
-        {
-            "route": "47",
-            "bound": 2,
-            "route_id": 2010368,
-            "region": "KLN",
-            "orig_en": "Tsui Ping (Fuk Tong Road)",
-            "dest_en": "Shun Lee",
+            "orig_en": "Shun Tin",
+            "dest_en": "Kowloon City Ferry (Circular)",
             "provider": "minibus"
         },
         {
@@ -14064,15 +13999,6 @@
             "region": "KLN",
             "orig_en": "Shun Lee",
             "dest_en": "Kowloon Bay(Circular)",
-            "provider": "minibus"
-        },
-        {
-            "route": "49",
-            "bound": 1,
-            "route_id": 2007299,
-            "region": "KLN",
-            "orig_en": "Shun Tin",
-            "dest_en": "Kowloon City Ferry (Circular)",
             "provider": "minibus"
         },
         {
@@ -14091,6 +14017,24 @@
             "region": "KLN",
             "orig_en": "Lok Fu Station",
             "dest_en": "Tin Ma Court (Kam Chuk Lane)  (Circular)",
+            "provider": "minibus"
+        },
+        {
+            "route": "47",
+            "bound": 1,
+            "route_id": 2010368,
+            "region": "KLN",
+            "orig_en": "Shun Lee",
+            "dest_en": "Tsui Ping (Fuk Tong Road)",
+            "provider": "minibus"
+        },
+        {
+            "route": "47",
+            "bound": 2,
+            "route_id": 2010368,
+            "region": "KLN",
+            "orig_en": "Tsui Ping (Fuk Tong Road)",
+            "dest_en": "Shun Lee",
             "provider": "minibus"
         },
         {
@@ -14121,24 +14065,6 @@
             "provider": "minibus"
         },
         {
-            "route": "59M",
-            "bound": 1,
-            "route_id": 2004398,
-            "region": "KLN",
-            "orig_en": "Tsui Ping Estate South",
-            "dest_en": "Fuk Tong Road (Circular)",
-            "provider": "minibus"
-        },
-        {
-            "route": "60",
-            "bound": 1,
-            "route_id": 2006012,
-            "region": "KLN",
-            "orig_en": "Lam Tin",
-            "dest_en": "Shun Lee Estate (Circular)",
-            "provider": "minibus"
-        },
-        {
             "route": "62S",
             "bound": 1,
             "route_id": 2004395,
@@ -14154,6 +14080,24 @@
             "region": "KLN",
             "orig_en": "Tsim Sha Tsui",
             "dest_en": "Lam Tin (Kwong Tin Estate)",
+            "provider": "minibus"
+        },
+        {
+            "route": "60",
+            "bound": 1,
+            "route_id": 2006012,
+            "region": "KLN",
+            "orig_en": "Lam Tin",
+            "dest_en": "Shun Lee Estate (Circular)",
+            "provider": "minibus"
+        },
+        {
+            "route": "59M",
+            "bound": 1,
+            "route_id": 2004398,
+            "region": "KLN",
+            "orig_en": "Tsui Ping Estate South",
+            "dest_en": "Fuk Tong Road (Circular)",
             "provider": "minibus"
         },
         {
@@ -14184,24 +14128,6 @@
             "provider": "minibus"
         },
         {
-            "route": "70",
-            "bound": 1,
-            "route_id": 2008850,
-            "region": "KLN",
-            "orig_en": "Diamond Hill Station Public Transport Interchange",
-            "dest_en": "Tai Kok Tsui (Island Harbourview)",
-            "provider": "minibus"
-        },
-        {
-            "route": "70",
-            "bound": 2,
-            "route_id": 2008850,
-            "region": "KLN",
-            "orig_en": "Tai Kok Tsui (Island Harbourview)",
-            "dest_en": "Diamond Hill Station Public Transport Interchange",
-            "provider": "minibus"
-        },
-        {
             "route": "70A",
             "bound": 1,
             "route_id": 2008883,
@@ -14226,6 +14152,24 @@
             "region": "KLN",
             "orig_en": "Po Tat Estate",
             "dest_en": "Lam Tin Station (Circular)",
+            "provider": "minibus"
+        },
+        {
+            "route": "70",
+            "bound": 1,
+            "route_id": 2008850,
+            "region": "KLN",
+            "orig_en": "Diamond Hill Station Public Transport Interchange",
+            "dest_en": "Tai Kok Tsui (Island Harbourview)",
+            "provider": "minibus"
+        },
+        {
+            "route": "70",
+            "bound": 2,
+            "route_id": 2008850,
+            "region": "KLN",
+            "orig_en": "Tai Kok Tsui (Island Harbourview)",
+            "dest_en": "Diamond Hill Station Public Transport Interchange",
             "provider": "minibus"
         },
         {
@@ -14292,39 +14236,12 @@
             "provider": "minibus"
         },
         {
-            "route": "75",
-            "bound": 1,
-            "route_id": 2003372,
-            "region": "KLN",
-            "orig_en": "Sham Shui Po (Fu Cheong Estate)",
-            "dest_en": "Cheung Sha Wan (Castle Peak Road) (Circular)",
-            "provider": "minibus"
-        },
-        {
             "route": "75A",
             "bound": 1,
             "route_id": 2003373,
             "region": "KLN",
             "orig_en": "Sham Shui Po (Fu Cheong Estate)",
             "dest_en": "Kweilin Street (Circular)",
-            "provider": "minibus"
-        },
-        {
-            "route": "75C",
-            "bound": 1,
-            "route_id": 2009412,
-            "region": "KLN",
-            "orig_en": "HOI TAT PUBLIC TRANSPORT INTERCHANGE",
-            "dest_en": "SHAM SHUI PO (KWEILIN STREET)",
-            "provider": "minibus"
-        },
-        {
-            "route": "75C",
-            "bound": 2,
-            "route_id": 2009412,
-            "region": "KLN",
-            "orig_en": "SHAM SHUI PO (KWEILIN STREET)",
-            "dest_en": "HOI TAT PUBLIC TRANSPORT INTERCHANGE",
             "provider": "minibus"
         },
         {
@@ -14361,6 +14278,33 @@
             "region": "KLN",
             "orig_en": "Sham Shui Po (Yu Chau Street)",
             "dest_en": "Caritas Medical Centre",
+            "provider": "minibus"
+        },
+        {
+            "route": "75C",
+            "bound": 1,
+            "route_id": 2009412,
+            "region": "KLN",
+            "orig_en": "HOI TAT PUBLIC TRANSPORT INTERCHANGE",
+            "dest_en": "SHAM SHUI PO (KWEILIN STREET)",
+            "provider": "minibus"
+        },
+        {
+            "route": "75C",
+            "bound": 2,
+            "route_id": 2009412,
+            "region": "KLN",
+            "orig_en": "SHAM SHUI PO (KWEILIN STREET)",
+            "dest_en": "HOI TAT PUBLIC TRANSPORT INTERCHANGE",
+            "provider": "minibus"
+        },
+        {
+            "route": "75",
+            "bound": 1,
+            "route_id": 2003372,
+            "region": "KLN",
+            "orig_en": "Sham Shui Po (Fu Cheong Estate)",
+            "dest_en": "Cheung Sha Wan (Castle Peak Road) (Circular)",
             "provider": "minibus"
         },
         {
@@ -14427,39 +14371,12 @@
             "provider": "minibus"
         },
         {
-            "route": "79M",
-            "bound": 1,
-            "route_id": 2004759,
-            "region": "KLN",
-            "orig_en": "King Tung Street",
-            "dest_en": "Wong Tai Sin Station",
-            "provider": "minibus"
-        },
-        {
-            "route": "79M",
-            "bound": 2,
-            "route_id": 2004759,
-            "region": "KLN",
-            "orig_en": "Wong Tai Sin Station",
-            "dest_en": "King Tung Street",
-            "provider": "minibus"
-        },
-        {
             "route": "79S",
             "bound": 1,
             "route_id": 2004760,
             "region": "KLN",
             "orig_en": "King Tung Street",
             "dest_en": "Lung Cheung Road (Diamond Hill Station) (Circular)",
-            "provider": "minibus"
-        },
-        {
-            "route": "8",
-            "bound": 2,
-            "route_id": 2006309,
-            "region": "KLN",
-            "orig_en": "Ho Man Tin Estate",
-            "dest_en": "Tsim Sha Tsui (Hankow Road)",
             "provider": "minibus"
         },
         {
@@ -14478,6 +14395,33 @@
             "region": "KLN",
             "orig_en": "Sham Shui Po (Hoi Lai Estate)",
             "dest_en": "Mei Foo Staion (Circular)",
+            "provider": "minibus"
+        },
+        {
+            "route": "79M",
+            "bound": 1,
+            "route_id": 2004759,
+            "region": "KLN",
+            "orig_en": "King Tung Street",
+            "dest_en": "Wong Tai Sin Station",
+            "provider": "minibus"
+        },
+        {
+            "route": "79M",
+            "bound": 2,
+            "route_id": 2004759,
+            "region": "KLN",
+            "orig_en": "Wong Tai Sin Station",
+            "dest_en": "King Tung Street",
+            "provider": "minibus"
+        },
+        {
+            "route": "8",
+            "bound": 2,
+            "route_id": 2006309,
+            "region": "KLN",
+            "orig_en": "Ho Man Tin Estate",
+            "dest_en": "Tsim Sha Tsui (Hankow Road)",
             "provider": "minibus"
         },
         {
@@ -14535,15 +14479,6 @@
             "provider": "minibus"
         },
         {
-            "route": "86",
-            "bound": 1,
-            "route_id": 2005319,
-            "region": "KLN",
-            "orig_en": "Cruise Terminal",
-            "dest_en": "Kowloon Bay (Telford Garden) (Circular)",
-            "provider": "minibus"
-        },
-        {
             "route": "87",
             "bound": 1,
             "route_id": 2008520,
@@ -14553,39 +14488,21 @@
             "provider": "minibus"
         },
         {
+            "route": "86",
+            "bound": 1,
+            "route_id": 2005319,
+            "region": "KLN",
+            "orig_en": "Cruise Terminal",
+            "dest_en": "Kowloon Bay (Telford Garden) (Circular)",
+            "provider": "minibus"
+        },
+        {
             "route": "88",
             "bound": 1,
             "route_id": 2004428,
             "region": "KLN",
             "orig_en": "Kai Ching Estate (Kai Tak)",
             "dest_en": "Wong Tai Sin Station (Circular)",
-            "provider": "minibus"
-        },
-        {
-            "route": "88A",
-            "bound": 1,
-            "route_id": 2010797,
-            "region": "KLN",
-            "orig_en": "Wong Tai Sin Station",
-            "dest_en": "Hong Kong Children’s Hospital (Circular)",
-            "provider": "minibus"
-        },
-        {
-            "route": "89A",
-            "bound": 1,
-            "route_id": 2001031,
-            "region": "KLN",
-            "orig_en": "On Tai Estate",
-            "dest_en": "Ngau Tau Kok Bus Terminus",
-            "provider": "minibus"
-        },
-        {
-            "route": "89A",
-            "bound": 2,
-            "route_id": 2001031,
-            "region": "KLN",
-            "orig_en": "Ngau Tau Kok Bus Terminus",
-            "dest_en": "On Tai Estate",
             "provider": "minibus"
         },
         {
@@ -14607,21 +14524,30 @@
             "provider": "minibus"
         },
         {
-            "route": "89C",
+            "route": "89A",
             "bound": 1,
-            "route_id": 2001033,
+            "route_id": 2001031,
             "region": "KLN",
-            "orig_en": "On Tat Estate",
+            "orig_en": "On Tai Estate",
             "dest_en": "Ngau Tau Kok Bus Terminus",
             "provider": "minibus"
         },
         {
-            "route": "89C",
+            "route": "89A",
             "bound": 2,
-            "route_id": 2001033,
+            "route_id": 2001031,
             "region": "KLN",
             "orig_en": "Ngau Tau Kok Bus Terminus",
-            "dest_en": "On Tat Estate",
+            "dest_en": "On Tai Estate",
+            "provider": "minibus"
+        },
+        {
+            "route": "88A",
+            "bound": 1,
+            "route_id": 2010797,
+            "region": "KLN",
+            "orig_en": "Wong Tai Sin Station",
+            "dest_en": "Hong Kong Children’s Hospital (Circular)",
             "provider": "minibus"
         },
         {
@@ -14643,21 +14569,21 @@
             "provider": "minibus"
         },
         {
-            "route": "8S",
+            "route": "89C",
             "bound": 1,
-            "route_id": 2006315,
+            "route_id": 2001033,
             "region": "KLN",
-            "orig_en": "Tsim Sha Tsui (Hankow Road)",
-            "dest_en": "Ho Man Tin (Sheung Foo Street)",
+            "orig_en": "On Tat Estate",
+            "dest_en": "Ngau Tau Kok Bus Terminus",
             "provider": "minibus"
         },
         {
-            "route": "8S",
+            "route": "89C",
             "bound": 2,
-            "route_id": 2006315,
+            "route_id": 2001033,
             "region": "KLN",
-            "orig_en": "Ho Man Tin (Sheung Foo Street)",
-            "dest_en": "Tsim Sha Tsui (Hankow Road)",
+            "orig_en": "Ngau Tau Kok Bus Terminus",
+            "dest_en": "On Tat Estate",
             "provider": "minibus"
         },
         {
@@ -14679,6 +14605,15 @@
             "provider": "minibus"
         },
         {
+            "route": "9M",
+            "bound": 1,
+            "route_id": 2004362,
+            "region": "KLN",
+            "orig_en": "Upper Pak Tin Estate",
+            "dest_en": "Shek Kip Mei Station(Circular)",
+            "provider": "minibus"
+        },
+        {
             "route": "90B",
             "bound": 1,
             "route_id": 2008592,
@@ -14694,6 +14629,24 @@
             "region": "KLN",
             "orig_en": "Hong Kong Children's Hospital",
             "dest_en": "Sau Mau Ping",
+            "provider": "minibus"
+        },
+        {
+            "route": "8S",
+            "bound": 1,
+            "route_id": 2006315,
+            "region": "KLN",
+            "orig_en": "Tsim Sha Tsui (Hankow Road)",
+            "dest_en": "Ho Man Tin (Sheung Foo Street)",
+            "provider": "minibus"
+        },
+        {
+            "route": "8S",
+            "bound": 2,
+            "route_id": 2006315,
+            "region": "KLN",
+            "orig_en": "Ho Man Tin (Sheung Foo Street)",
+            "dest_en": "Tsim Sha Tsui (Hankow Road)",
             "provider": "minibus"
         },
         {
@@ -14715,15 +14668,6 @@
             "provider": "minibus"
         },
         {
-            "route": "9M",
-            "bound": 1,
-            "route_id": 2004362,
-            "region": "KLN",
-            "orig_en": "Upper Pak Tin Estate",
-            "dest_en": "Shek Kip Mei Station(Circular)",
-            "provider": "minibus"
-        },
-        {
             "route": "CX1",
             "bound": 1,
             "route_id": 2009642,
@@ -14733,21 +14677,12 @@
             "provider": "minibus"
         },
         {
-            "route": "101M",
+            "route": "102B",
             "bound": 1,
-            "route_id": 2003240,
+            "route_id": 2003835,
             "region": "NT",
-            "orig_en": "Hang Hau Station",
-            "dest_en": "Sai Kung",
-            "provider": "minibus"
-        },
-        {
-            "route": "101M",
-            "bound": 2,
-            "route_id": 2003240,
-            "region": "NT",
-            "orig_en": "Sai Kung",
-            "dest_en": "Hang Hau Station",
+            "orig_en": "Yuk Ming Court",
+            "dest_en": "Choi Hung(Circular)",
             "provider": "minibus"
         },
         {
@@ -14769,15 +14704,6 @@
             "provider": "minibus"
         },
         {
-            "route": "102B",
-            "bound": 1,
-            "route_id": 2003835,
-            "region": "NT",
-            "orig_en": "Yuk Ming Court",
-            "dest_en": "Choi Hung(Circular)",
-            "provider": "minibus"
-        },
-        {
             "route": "102S",
             "bound": 1,
             "route_id": 2003900,
@@ -14796,21 +14722,21 @@
             "provider": "minibus"
         },
         {
-            "route": "103",
+            "route": "101M",
             "bound": 1,
-            "route_id": 2007134,
+            "route_id": 2003240,
             "region": "NT",
-            "orig_en": "Clear Water Bay",
-            "dest_en": "Kwun Tong Ferry",
+            "orig_en": "Hang Hau Station",
+            "dest_en": "Sai Kung",
             "provider": "minibus"
         },
         {
-            "route": "103",
+            "route": "101M",
             "bound": 2,
-            "route_id": 2007134,
+            "route_id": 2003240,
             "region": "NT",
-            "orig_en": "Kwun Tong Ferry",
-            "dest_en": "Clear Water Bay",
+            "orig_en": "Sai Kung",
+            "dest_en": "Hang Hau Station",
             "provider": "minibus"
         },
         {
@@ -14832,15 +14758,6 @@
             "provider": "minibus"
         },
         {
-            "route": "104",
-            "bound": 1,
-            "route_id": 2007200,
-            "region": "NT",
-            "orig_en": "Hong Kong University of Science and Technology (South Station)",
-            "dest_en": "Kwun Tong(Circular)",
-            "provider": "minibus"
-        },
-        {
             "route": "105",
             "bound": 1,
             "route_id": 2006606,
@@ -14856,6 +14773,24 @@
             "region": "NT",
             "orig_en": "Hong Sing Garden",
             "dest_en": "To Kwa Wan",
+            "provider": "minibus"
+        },
+        {
+            "route": "103",
+            "bound": 1,
+            "route_id": 2007134,
+            "region": "NT",
+            "orig_en": "Clear Water Bay",
+            "dest_en": "Kwun Tong Ferry",
+            "provider": "minibus"
+        },
+        {
+            "route": "103",
+            "bound": 2,
+            "route_id": 2007134,
+            "region": "NT",
+            "orig_en": "Kwun Tong Ferry",
+            "dest_en": "Clear Water Bay",
             "provider": "minibus"
         },
         {
@@ -14877,48 +14812,21 @@
             "provider": "minibus"
         },
         {
+            "route": "104",
+            "bound": 1,
+            "route_id": 2007200,
+            "region": "NT",
+            "orig_en": "Hong Kong University of Science and Technology (South Station)",
+            "dest_en": "Kwun Tong(Circular)",
+            "provider": "minibus"
+        },
+        {
             "route": "107",
             "bound": 1,
             "route_id": 2002910,
             "region": "NT",
             "orig_en": "Haven Of Hope Hospital",
             "dest_en": "Po Lam Public Transport Interchange (Circular)",
-            "provider": "minibus"
-        },
-        {
-            "route": "108A",
-            "bound": 1,
-            "route_id": 2000993,
-            "region": "NT",
-            "orig_en": "Choi Ming Public Transport Interchange",
-            "dest_en": "Hang Hau (North)",
-            "provider": "minibus"
-        },
-        {
-            "route": "108A",
-            "bound": 2,
-            "route_id": 2000993,
-            "region": "NT",
-            "orig_en": "Hang Hau (North)",
-            "dest_en": "Choi Ming Public Transport Interchange",
-            "provider": "minibus"
-        },
-        {
-            "route": "109M",
-            "bound": 1,
-            "route_id": 2002350,
-            "region": "NT",
-            "orig_en": "Oscar By The Sea",
-            "dest_en": "Hang Hau Station",
-            "provider": "minibus"
-        },
-        {
-            "route": "109M",
-            "bound": 2,
-            "route_id": 2002350,
-            "region": "NT",
-            "orig_en": "Hang Hau Station",
-            "dest_en": " Oscar by the Sea ",
             "provider": "minibus"
         },
         {
@@ -14940,6 +14848,24 @@
             "provider": "minibus"
         },
         {
+            "route": "109M",
+            "bound": 1,
+            "route_id": 2002350,
+            "region": "NT",
+            "orig_en": "Oscar By The Sea",
+            "dest_en": "Hang Hau Station",
+            "provider": "minibus"
+        },
+        {
+            "route": "109M",
+            "bound": 2,
+            "route_id": 2002350,
+            "region": "NT",
+            "orig_en": "Hang Hau Station",
+            "dest_en": " Oscar by the Sea ",
+            "provider": "minibus"
+        },
+        {
             "route": "11",
             "bound": 1,
             "route_id": 2004791,
@@ -14955,6 +14881,24 @@
             "region": "NT",
             "orig_en": "Choi Hung Station (Lung Cheung Road)",
             "dest_en": "Hang Hau Village",
+            "provider": "minibus"
+        },
+        {
+            "route": "108A",
+            "bound": 1,
+            "route_id": 2000993,
+            "region": "NT",
+            "orig_en": "Choi Ming Public Transport Interchange",
+            "dest_en": "Hang Hau (North)",
+            "provider": "minibus"
+        },
+        {
+            "route": "108A",
+            "bound": 2,
+            "route_id": 2000993,
+            "region": "NT",
+            "orig_en": "Hang Hau (North)",
+            "dest_en": "Choi Ming Public Transport Interchange",
             "provider": "minibus"
         },
         {
@@ -15048,30 +14992,21 @@
             "provider": "minibus"
         },
         {
-            "route": "113",
-            "bound": 1,
-            "route_id": 2007368,
-            "region": "NT",
-            "orig_en": "The Beaumount",
-            "dest_en": "Hang Hau Station Public Transport Interchange (Circular)",
-            "provider": "minibus"
-        },
-        {
-            "route": "114A",
-            "bound": 1,
-            "route_id": 2005122,
-            "region": "NT",
-            "orig_en": "Tseung Kwan O Station",
-            "dest_en": "Ocean Wings(Circular)",
-            "provider": "minibus"
-        },
-        {
             "route": "114B",
             "bound": 1,
             "route_id": 2005187,
             "region": "NT",
             "orig_en": "Tiu Keng Leng Station Pubic Transport Interchange",
             "dest_en": "Alto Residences(Circular)",
+            "provider": "minibus"
+        },
+        {
+            "route": "113",
+            "bound": 1,
+            "route_id": 2007368,
+            "region": "NT",
+            "orig_en": "The Beaumount",
+            "dest_en": "Hang Hau Station Public Transport Interchange (Circular)",
             "provider": "minibus"
         },
         {
@@ -15090,6 +15025,15 @@
             "region": "NT",
             "orig_en": "Chun Cheong Street",
             "dest_en": "Po Lam",
+            "provider": "minibus"
+        },
+        {
+            "route": "114A",
+            "bound": 1,
+            "route_id": 2005122,
+            "region": "NT",
+            "orig_en": "Tseung Kwan O Station",
+            "dest_en": "Ocean Wings(Circular)",
             "provider": "minibus"
         },
         {
@@ -15174,24 +15118,6 @@
             "provider": "minibus"
         },
         {
-            "route": "11S",
-            "bound": 1,
-            "route_id": 2004826,
-            "region": "NT",
-            "orig_en": "Po Lam",
-            "dest_en": "Choi Hung Station (Lung Cheung Road)",
-            "provider": "minibus"
-        },
-        {
-            "route": "11S",
-            "bound": 2,
-            "route_id": 2004826,
-            "region": "NT",
-            "orig_en": "Choi Hung Station (Lung Cheung Road)",
-            "dest_en": "Po Lam",
-            "provider": "minibus"
-        },
-        {
             "route": "140M",
             "bound": 1,
             "route_id": 2004598,
@@ -15207,42 +15133,6 @@
             "region": "NT",
             "orig_en": "Tsing Yi Station",
             "dest_en": "Tuen Mun (Hanford Garden)",
-            "provider": "minibus"
-        },
-        {
-            "route": "15",
-            "bound": 1,
-            "route_id": 2006609,
-            "region": "NT",
-            "orig_en": "Hang Hau",
-            "dest_en": "Hong Sing",
-            "provider": "minibus"
-        },
-        {
-            "route": "15",
-            "bound": 2,
-            "route_id": 2006609,
-            "region": "NT",
-            "orig_en": "Hong Sing",
-            "dest_en": "Hang Hau",
-            "provider": "minibus"
-        },
-        {
-            "route": "15A",
-            "bound": 1,
-            "route_id": 2006611,
-            "region": "NT",
-            "orig_en": "Hang Hau (North)",
-            "dest_en": "Verbena Heights",
-            "provider": "minibus"
-        },
-        {
-            "route": "15A",
-            "bound": 2,
-            "route_id": 2006611,
-            "region": "NT",
-            "orig_en": "Verbena Heights",
-            "dest_en": "Hang Hau (North)",
             "provider": "minibus"
         },
         {
@@ -15291,24 +15181,6 @@
             "provider": "minibus"
         },
         {
-            "route": "17A",
-            "bound": 1,
-            "route_id": 2006674,
-            "region": "NT",
-            "orig_en": "Po Lam Station",
-            "dest_en": "Po Hong Road",
-            "provider": "minibus"
-        },
-        {
-            "route": "17A",
-            "bound": 2,
-            "route_id": 2006674,
-            "region": "NT",
-            "orig_en": "Po Hong Road",
-            "dest_en": "Po Lam Station",
-            "provider": "minibus"
-        },
-        {
             "route": "17M",
             "bound": 2,
             "route_id": 2006675,
@@ -15327,39 +15199,57 @@
             "provider": "minibus"
         },
         {
-            "route": "1S",
+            "route": "11S",
             "bound": 1,
-            "route_id": 2002352,
+            "route_id": 2004826,
             "region": "NT",
-            "orig_en": "Sai Kung",
-            "dest_en": "Diamond Hill (Choi Hung Road) Public Transport Interchange",
+            "orig_en": "Po Lam",
+            "dest_en": "Choi Hung Station (Lung Cheung Road)",
             "provider": "minibus"
         },
         {
-            "route": "1S",
+            "route": "11S",
             "bound": 2,
-            "route_id": 2002352,
+            "route_id": 2004826,
             "region": "NT",
-            "orig_en": "Diamond Hill (Choi Hung Road) Public Transport Interchange",
-            "dest_en": "Sai Kung ",
+            "orig_en": "Choi Hung Station (Lung Cheung Road)",
+            "dest_en": "Po Lam",
             "provider": "minibus"
         },
         {
-            "route": "20A",
+            "route": "15A",
             "bound": 1,
-            "route_id": 2001361,
+            "route_id": 2006611,
             "region": "NT",
-            "orig_en": "Tai Po Market Station",
-            "dest_en": "Tai Po Nethersole Hospital (Cirular)",
+            "orig_en": "Hang Hau (North)",
+            "dest_en": "Verbena Heights",
             "provider": "minibus"
         },
         {
-            "route": "20B",
-            "bound": 1,
-            "route_id": 2001468,
+            "route": "15A",
+            "bound": 2,
+            "route_id": 2006611,
             "region": "NT",
-            "orig_en": "Tung Tsz",
-            "dest_en": "Tai Po Market Station",
+            "orig_en": "Verbena Heights",
+            "dest_en": "Hang Hau (North)",
+            "provider": "minibus"
+        },
+        {
+            "route": "15",
+            "bound": 1,
+            "route_id": 2006609,
+            "region": "NT",
+            "orig_en": "Hang Hau",
+            "dest_en": "Hong Sing",
+            "provider": "minibus"
+        },
+        {
+            "route": "15",
+            "bound": 2,
+            "route_id": 2006609,
+            "region": "NT",
+            "orig_en": "Hong Sing",
+            "dest_en": "Hang Hau",
             "provider": "minibus"
         },
         {
@@ -15381,12 +15271,21 @@
             "provider": "minibus"
         },
         {
-            "route": "20E",
+            "route": "20A",
             "bound": 1,
-            "route_id": 2001473,
+            "route_id": 2001361,
             "region": "NT",
             "orig_en": "Tai Po Market Station",
-            "dest_en": "Shan Liu (Circular)",
+            "dest_en": "Tai Po Nethersole Hospital (Cirular)",
+            "provider": "minibus"
+        },
+        {
+            "route": "20B",
+            "bound": 1,
+            "route_id": 2001468,
+            "region": "NT",
+            "orig_en": "Tung Tsz",
+            "dest_en": "Tai Po Market Station",
             "provider": "minibus"
         },
         {
@@ -15417,30 +15316,30 @@
             "provider": "minibus"
         },
         {
+            "route": "17A",
+            "bound": 1,
+            "route_id": 2006674,
+            "region": "NT",
+            "orig_en": "Po Lam Station",
+            "dest_en": "Po Hong Road",
+            "provider": "minibus"
+        },
+        {
+            "route": "17A",
+            "bound": 2,
+            "route_id": 2006674,
+            "region": "NT",
+            "orig_en": "Po Hong Road",
+            "dest_en": "Po Lam Station",
+            "provider": "minibus"
+        },
+        {
             "route": "20P",
             "bound": 1,
             "route_id": 2001461,
             "region": "NT",
             "orig_en": "Fung Yuen",
             "dest_en": "Tai Po Market Station (Circular)",
-            "provider": "minibus"
-        },
-        {
-            "route": "20R",
-            "bound": 1,
-            "route_id": 2001475,
-            "region": "NT",
-            "orig_en": "Tai Po Market Station",
-            "dest_en": "Wu Kau Tang",
-            "provider": "minibus"
-        },
-        {
-            "route": "20R",
-            "bound": 2,
-            "route_id": 2001475,
-            "region": "NT",
-            "orig_en": "Wu Kau Tang",
-            "dest_en": "Tai Po Market Station",
             "provider": "minibus"
         },
         {
@@ -15453,39 +15352,30 @@
             "provider": "minibus"
         },
         {
-            "route": "20T",
+            "route": "1S",
             "bound": 1,
-            "route_id": 2001476,
+            "route_id": 2002352,
+            "region": "NT",
+            "orig_en": "Sai Kung",
+            "dest_en": "Diamond Hill (Choi Hung Road) Public Transport Interchange",
+            "provider": "minibus"
+        },
+        {
+            "route": "1S",
+            "bound": 2,
+            "route_id": 2002352,
+            "region": "NT",
+            "orig_en": "Diamond Hill (Choi Hung Road) Public Transport Interchange",
+            "dest_en": "Sai Kung ",
+            "provider": "minibus"
+        },
+        {
+            "route": "20E",
+            "bound": 1,
+            "route_id": 2001473,
             "region": "NT",
             "orig_en": "Tai Po Market Station",
-            "dest_en": "Tsz Shan Monastery",
-            "provider": "minibus"
-        },
-        {
-            "route": "20T",
-            "bound": 2,
-            "route_id": 2001476,
-            "region": "NT",
-            "orig_en": "Tsz Shan Monastery",
-            "dest_en": "Tai Po Market Station",
-            "provider": "minibus"
-        },
-        {
-            "route": "20X",
-            "bound": 1,
-            "route_id": 2001392,
-            "region": "NT",
-            "orig_en": "Tai Po Market Station",
-            "dest_en": "Tai Po Nethersole Hospital",
-            "provider": "minibus"
-        },
-        {
-            "route": "20X",
-            "bound": 2,
-            "route_id": 2001392,
-            "region": "NT",
-            "orig_en": "Tai Po Nethersole Hospital",
-            "dest_en": "Tai Po Market Station",
+            "dest_en": "Shan Liu (Circular)",
             "provider": "minibus"
         },
         {
@@ -15525,12 +15415,21 @@
             "provider": "minibus"
         },
         {
-            "route": "23K",
+            "route": "20R",
             "bound": 1,
-            "route_id": 2001326,
+            "route_id": 2001475,
             "region": "NT",
-            "orig_en": "San Uk Ka",
-            "dest_en": "Tai Po Market (Circular)",
+            "orig_en": "Tai Po Market Station",
+            "dest_en": "Wu Kau Tang",
+            "provider": "minibus"
+        },
+        {
+            "route": "20R",
+            "bound": 2,
+            "route_id": 2001475,
+            "region": "NT",
+            "orig_en": "Wu Kau Tang",
+            "dest_en": "Tai Po Market Station",
             "provider": "minibus"
         },
         {
@@ -15540,6 +15439,51 @@
             "region": "NT",
             "orig_en": "Ta Tit Yan",
             "dest_en": "Tai Po Market Station",
+            "provider": "minibus"
+        },
+        {
+            "route": "20T",
+            "bound": 1,
+            "route_id": 2001476,
+            "region": "NT",
+            "orig_en": "Tai Po Market Station",
+            "dest_en": "Tsz Shan Monastery",
+            "provider": "minibus"
+        },
+        {
+            "route": "20T",
+            "bound": 2,
+            "route_id": 2001476,
+            "region": "NT",
+            "orig_en": "Tsz Shan Monastery",
+            "dest_en": "Tai Po Market Station",
+            "provider": "minibus"
+        },
+        {
+            "route": "20X",
+            "bound": 1,
+            "route_id": 2001392,
+            "region": "NT",
+            "orig_en": "Tai Po Market Station",
+            "dest_en": "Tai Po Nethersole Hospital",
+            "provider": "minibus"
+        },
+        {
+            "route": "20X",
+            "bound": 2,
+            "route_id": 2001392,
+            "region": "NT",
+            "orig_en": "Tai Po Nethersole Hospital",
+            "dest_en": "Tai Po Market Station",
+            "provider": "minibus"
+        },
+        {
+            "route": "23K",
+            "bound": 1,
+            "route_id": 2001326,
+            "region": "NT",
+            "orig_en": "San Uk Ka",
+            "dest_en": "Tai Po Market (Circular)",
             "provider": "minibus"
         },
         {
@@ -15558,6 +15502,24 @@
             "region": "NT",
             "orig_en": "Lam Tsuen (Pak Ngau Shek)",
             "dest_en": "Tai Po Market",
+            "provider": "minibus"
+        },
+        {
+            "route": "28A",
+            "bound": 1,
+            "route_id": 2010401,
+            "region": "NT",
+            "orig_en": "Tai Po Market Station",
+            "dest_en": "Yau King Lane",
+            "provider": "minibus"
+        },
+        {
+            "route": "28A",
+            "bound": 2,
+            "route_id": 2010401,
+            "region": "NT",
+            "orig_en": "Yau King Lane",
+            "dest_en": "Tai Po Market Station",
             "provider": "minibus"
         },
         {
@@ -15588,24 +15550,6 @@
             "provider": "minibus"
         },
         {
-            "route": "28A",
-            "bound": 1,
-            "route_id": 2010401,
-            "region": "NT",
-            "orig_en": "Tai Po Market Station",
-            "dest_en": "Yau King Lane",
-            "provider": "minibus"
-        },
-        {
-            "route": "28A",
-            "bound": 2,
-            "route_id": 2010401,
-            "region": "NT",
-            "orig_en": "Yau King Lane",
-            "dest_en": "Tai Po Market Station",
-            "provider": "minibus"
-        },
-        {
             "route": "28K",
             "bound": 1,
             "route_id": 2010071,
@@ -15624,15 +15568,6 @@
             "provider": "minibus"
         },
         {
-            "route": "301",
-            "bound": 1,
-            "route_id": 2001689,
-            "region": "NT",
-            "orig_en": "Clague Garden Estate",
-            "dest_en": "Tsuen Wan Station(Circular)",
-            "provider": "minibus"
-        },
-        {
             "route": "301M",
             "bound": 1,
             "route_id": 2001889,
@@ -15642,12 +15577,12 @@
             "provider": "minibus"
         },
         {
-            "route": "302",
+            "route": "301",
             "bound": 1,
-            "route_id": 2001890,
+            "route_id": 2001689,
             "region": "NT",
-            "orig_en": "Hong Kong Garden",
-            "dest_en": "Kwai Fong (Circular)",
+            "orig_en": "Clague Garden Estate",
+            "dest_en": "Tsuen Wan Station(Circular)",
             "provider": "minibus"
         },
         {
@@ -15678,30 +15613,12 @@
             "provider": "minibus"
         },
         {
-            "route": "310M",
+            "route": "302",
             "bound": 1,
-            "route_id": 2004594,
+            "route_id": 2001890,
             "region": "NT",
-            "orig_en": "Tsing Yi Station",
-            "dest_en": "Tsuen Wan (Riviera Gardens)(Circular)",
-            "provider": "minibus"
-        },
-        {
-            "route": "312",
-            "bound": 1,
-            "route_id": 2004263,
-            "region": "NT",
-            "orig_en": "Lei Muk Shue Estate Public Transport Interchange",
-            "dest_en": "Tsing Yi Station",
-            "provider": "minibus"
-        },
-        {
-            "route": "312",
-            "bound": 2,
-            "route_id": 2004263,
-            "region": "NT",
-            "orig_en": "Tsing Yi Station",
-            "dest_en": "Lei Muk Shue Estate Public Transport Interchange",
+            "orig_en": "Hong Kong Garden",
+            "dest_en": "Kwai Fong (Circular)",
             "provider": "minibus"
         },
         {
@@ -15723,30 +15640,39 @@
             "provider": "minibus"
         },
         {
+            "route": "312",
+            "bound": 1,
+            "route_id": 2004263,
+            "region": "NT",
+            "orig_en": "Lei Muk Shue Estate Public Transport Interchange",
+            "dest_en": "Tsing Yi Station",
+            "provider": "minibus"
+        },
+        {
+            "route": "312",
+            "bound": 2,
+            "route_id": 2004263,
+            "region": "NT",
+            "orig_en": "Tsing Yi Station",
+            "dest_en": "Lei Muk Shue Estate Public Transport Interchange",
+            "provider": "minibus"
+        },
+        {
+            "route": "310M",
+            "bound": 1,
+            "route_id": 2004594,
+            "region": "NT",
+            "orig_en": "Tsing Yi Station",
+            "dest_en": "Tsuen Wan (Riviera Gardens)(Circular)",
+            "provider": "minibus"
+        },
+        {
             "route": "31A",
             "bound": 1,
             "route_id": 2006576,
             "region": "NT",
             "orig_en": "Tong Yan San Tsuen",
             "dest_en": "Yeun Long Plaza (Circular)",
-            "provider": "minibus"
-        },
-        {
-            "route": "34A",
-            "bound": 1,
-            "route_id": 2002382,
-            "region": "NT",
-            "orig_en": "Ha Tsuen",
-            "dest_en": "Lau Fau Shan",
-            "provider": "minibus"
-        },
-        {
-            "route": "34A",
-            "bound": 2,
-            "route_id": 2002382,
-            "region": "NT",
-            "orig_en": "Lau Fau Shan",
-            "dest_en": "Ha Tsuen",
             "provider": "minibus"
         },
         {
@@ -15768,12 +15694,21 @@
             "provider": "minibus"
         },
         {
-            "route": "36A",
-            "bound": 2,
-            "route_id": 2010830,
+            "route": "34A",
+            "bound": 1,
+            "route_id": 2002382,
             "region": "NT",
-            "orig_en": "Yau Pok Road Light Public Housing",
-            "dest_en": "Yuen Long (Fook Hong Street)",
+            "orig_en": "Ha Tsuen",
+            "dest_en": "Lau Fau Shan",
+            "provider": "minibus"
+        },
+        {
+            "route": "34A",
+            "bound": 2,
+            "route_id": 2002382,
+            "region": "NT",
+            "orig_en": "Lau Fau Shan",
+            "dest_en": "Ha Tsuen",
             "provider": "minibus"
         },
         {
@@ -15804,30 +15739,21 @@
             "provider": "minibus"
         },
         {
-            "route": "39",
-            "bound": 1,
-            "route_id": 2007532,
-            "region": "NT",
-            "orig_en": "Kung Um",
-            "dest_en": "Yuen Long (Fung Cheung Road)",
-            "provider": "minibus"
-        },
-        {
-            "route": "39",
-            "bound": 2,
-            "route_id": 2007532,
-            "region": "NT",
-            "orig_en": "Yuen Long (Fung Cheung Road)",
-            "dest_en": "Kung Um",
-            "provider": "minibus"
-        },
-        {
             "route": "39A",
             "bound": 1,
             "route_id": 2007533,
             "region": "NT",
             "orig_en": "Kung Um Road (near Muk Kiu Tau)",
             "dest_en": "YUEN LONG (KAU YUK ROAD)(Circular)",
+            "provider": "minibus"
+        },
+        {
+            "route": "36A",
+            "bound": 2,
+            "route_id": 2010830,
+            "region": "NT",
+            "orig_en": "Yau Pok Road Light Public Housing",
+            "dest_en": "Yuen Long (Fook Hong Street)",
             "provider": "minibus"
         },
         {
@@ -15846,6 +15772,24 @@
             "region": "NT",
             "orig_en": "Tui Min Hoi",
             "dest_en": "Sai Kung",
+            "provider": "minibus"
+        },
+        {
+            "route": "39",
+            "bound": 1,
+            "route_id": 2007532,
+            "region": "NT",
+            "orig_en": "Kung Um",
+            "dest_en": "Yuen Long (Fung Cheung Road)",
+            "provider": "minibus"
+        },
+        {
+            "route": "39",
+            "bound": 2,
+            "route_id": 2007532,
+            "region": "NT",
+            "orig_en": "Yuen Long (Fung Cheung Road)",
+            "dest_en": "Kung Um",
             "provider": "minibus"
         },
         {
@@ -15930,15 +15874,6 @@
             "provider": "minibus"
         },
         {
-            "route": "405",
-            "bound": 1,
-            "route_id": 2001635,
-            "region": "NT",
-            "orig_en": "Cheung Hang",
-            "dest_en": "Lai King South (Circular)",
-            "provider": "minibus"
-        },
-        {
             "route": "406",
             "bound": 1,
             "route_id": 2006837,
@@ -15948,21 +15883,12 @@
             "provider": "minibus"
         },
         {
-            "route": "407",
+            "route": "405",
             "bound": 1,
-            "route_id": 2006870,
+            "route_id": 2001635,
             "region": "NT",
-            "orig_en": "Cheung Wang",
-            "dest_en": "Princess Margaret Hospital",
-            "provider": "minibus"
-        },
-        {
-            "route": "407",
-            "bound": 2,
-            "route_id": 2006870,
-            "region": "NT",
-            "orig_en": "Princess Margaret Hospital",
-            "dest_en": "Cheung Wang",
+            "orig_en": "Cheung Hang",
+            "dest_en": "Lai King South (Circular)",
             "provider": "minibus"
         },
         {
@@ -15993,21 +15919,30 @@
             "provider": "minibus"
         },
         {
+            "route": "407",
+            "bound": 1,
+            "route_id": 2006870,
+            "region": "NT",
+            "orig_en": "Cheung Wang",
+            "dest_en": "Princess Margaret Hospital",
+            "provider": "minibus"
+        },
+        {
+            "route": "407",
+            "bound": 2,
+            "route_id": 2006870,
+            "region": "NT",
+            "orig_en": "Princess Margaret Hospital",
+            "dest_en": "Cheung Wang",
+            "provider": "minibus"
+        },
+        {
             "route": "409",
             "bound": 1,
             "route_id": 2008653,
             "region": "NT",
             "orig_en": "Tsing Yi (Cheung Hang)",
             "dest_en": "Tsuen Wan (Tsuen Wan Market Street)(Circular)",
-            "provider": "minibus"
-        },
-        {
-            "route": "409K",
-            "bound": 1,
-            "route_id": 2008654,
-            "region": "NT",
-            "orig_en": "Tsing Yi (Cheung Hang)",
-            "dest_en": "Tsuen Wan West Station (Circular)",
             "provider": "minibus"
         },
         {
@@ -16056,30 +15991,12 @@
             "provider": "minibus"
         },
         {
-            "route": "411",
+            "route": "409K",
             "bound": 1,
-            "route_id": 2005847,
+            "route_id": 2008654,
             "region": "NT",
-            "orig_en": "Kwai Chung (Lai Kong Street)",
-            "dest_en": "Sham Shui Po (Un Chau Street)",
-            "provider": "minibus"
-        },
-        {
-            "route": "413",
-            "bound": 1,
-            "route_id": 2001788,
-            "region": "NT",
-            "orig_en": "Tsing Yi Public Pier",
-            "dest_en": "Princess Margaret Hospital",
-            "provider": "minibus"
-        },
-        {
-            "route": "413",
-            "bound": 2,
-            "route_id": 2001788,
-            "region": "NT",
-            "orig_en": "Princess Margaret Hosptil",
-            "dest_en": "Tsing Yi Public Pier",
+            "orig_en": "Tsing Yi (Cheung Hang)",
+            "dest_en": "Tsuen Wan West Station (Circular)",
             "provider": "minibus"
         },
         {
@@ -16089,6 +16006,15 @@
             "region": "NT",
             "orig_en": "Tuen Mun Town Centre (Ho Pong Street) ",
             "dest_en": "So Kwun Wat (Circular)",
+            "provider": "minibus"
+        },
+        {
+            "route": "411",
+            "bound": 1,
+            "route_id": 2005847,
+            "region": "NT",
+            "orig_en": "Kwai Chung (Lai Kong Street)",
+            "dest_en": "Sham Shui Po (Un Chau Street)",
             "provider": "minibus"
         },
         {
@@ -16110,12 +16036,48 @@
             "provider": "minibus"
         },
         {
+            "route": "413",
+            "bound": 1,
+            "route_id": 2001788,
+            "region": "NT",
+            "orig_en": "Tsing Yi Public Pier",
+            "dest_en": "Princess Margaret Hospital",
+            "provider": "minibus"
+        },
+        {
+            "route": "413",
+            "bound": 2,
+            "route_id": 2001788,
+            "region": "NT",
+            "orig_en": "Princess Margaret Hosptil",
+            "dest_en": "Tsing Yi Public Pier",
+            "provider": "minibus"
+        },
+        {
             "route": "43B",
             "bound": 1,
             "route_id": 2001740,
             "region": "NT",
             "orig_en": "Tuen Mun Town Centre (Ho Pong Street) ",
             "dest_en": "Tai Lam Chung (Circular)",
+            "provider": "minibus"
+        },
+        {
+            "route": "44",
+            "bound": 2,
+            "route_id": 2003966,
+            "region": "NT",
+            "orig_en": "Sheung Shui Station",
+            "dest_en": "Tuen Mun Ferry Pier",
+            "provider": "minibus"
+        },
+        {
+            "route": "43S",
+            "bound": 1,
+            "route_id": 2001656,
+            "region": "NT",
+            "orig_en": "Tuen Mun Town Centre (Ho Pong Street) ",
+            "dest_en": "So Kwun Wat (Circular)",
             "provider": "minibus"
         },
         {
@@ -16134,33 +16096,6 @@
             "region": "NT",
             "orig_en": "Siu Lun Court",
             "dest_en": "Tuen Mun Town Centre (Ho Pong Street) ",
-            "provider": "minibus"
-        },
-        {
-            "route": "43S",
-            "bound": 1,
-            "route_id": 2001656,
-            "region": "NT",
-            "orig_en": "Tuen Mun Town Centre (Ho Pong Street) ",
-            "dest_en": "So Kwun Wat (Circular)",
-            "provider": "minibus"
-        },
-        {
-            "route": "44",
-            "bound": 2,
-            "route_id": 2003966,
-            "region": "NT",
-            "orig_en": "Sheung Shui Station",
-            "dest_en": "Tuen Mun Ferry Pier",
-            "provider": "minibus"
-        },
-        {
-            "route": "44A1",
-            "bound": 1,
-            "route_id": 2004036,
-            "region": "NT",
-            "orig_en": "Tuen Mun Po Tin Estate",
-            "dest_en": "Sheung Shui Station",
             "provider": "minibus"
         },
         {
@@ -16197,6 +16132,15 @@
             "region": "NT",
             "orig_en": "Tuen Mun Ferry Pier",
             "dest_en": "Lok Ma Chau (San Tin) Public Transport Interchange",
+            "provider": "minibus"
+        },
+        {
+            "route": "44A1",
+            "bound": 1,
+            "route_id": 2004036,
+            "region": "NT",
+            "orig_en": "Tuen Mun Po Tin Estate",
+            "dest_en": "Sheung Shui Station",
             "provider": "minibus"
         },
         {
@@ -16245,24 +16189,6 @@
             "provider": "minibus"
         },
         {
-            "route": "481",
-            "bound": 1,
-            "route_id": 2003209,
-            "region": "NT",
-            "orig_en": "Fo Tan (Shan Mei Street)",
-            "dest_en": "Tsuen Wan Market Street",
-            "provider": "minibus"
-        },
-        {
-            "route": "481",
-            "bound": 2,
-            "route_id": 2003209,
-            "region": "NT",
-            "orig_en": "Tsuen Wan Market Street",
-            "dest_en": "Fo Tan (Shan Mei Street)",
-            "provider": "minibus"
-        },
-        {
             "route": "481A",
             "bound": 1,
             "route_id": 2003211,
@@ -16278,6 +16204,24 @@
             "region": "NT",
             "orig_en": "Sha Tin Central (Tam Kon Po Street)",
             "dest_en": "Tsuen Wan Market Street",
+            "provider": "minibus"
+        },
+        {
+            "route": "481",
+            "bound": 1,
+            "route_id": 2003209,
+            "region": "NT",
+            "orig_en": "Fo Tan (Shan Mei Street)",
+            "dest_en": "Tsuen Wan Market Street",
+            "provider": "minibus"
+        },
+        {
+            "route": "481",
+            "bound": 2,
+            "route_id": 2003209,
+            "region": "NT",
+            "orig_en": "Tsuen Wan Market Street",
+            "dest_en": "Fo Tan (Shan Mei Street)",
             "provider": "minibus"
         },
         {
@@ -16407,24 +16351,6 @@
             "provider": "minibus"
         },
         {
-            "route": "502",
-            "bound": 1,
-            "route_id": 2001920,
-            "region": "NT",
-            "orig_en": "Tai Pon Nethersole Hospital",
-            "dest_en": "Ching Ho Estate",
-            "provider": "minibus"
-        },
-        {
-            "route": "502",
-            "bound": 2,
-            "route_id": 2001920,
-            "region": "NT",
-            "orig_en": "Ching Ho Estate Public Transport Interchange",
-            "dest_en": "Tai Po Nethersole Hospital",
-            "provider": "minibus"
-        },
-        {
             "route": "503",
             "bound": 1,
             "route_id": 2004461,
@@ -16458,6 +16384,24 @@
             "region": "NT",
             "orig_en": "Spot",
             "dest_en": "Queen's Hill",
+            "provider": "minibus"
+        },
+        {
+            "route": "502",
+            "bound": 1,
+            "route_id": 2001920,
+            "region": "NT",
+            "orig_en": "Tai Pon Nethersole Hospital",
+            "dest_en": "Ching Ho Estate",
+            "provider": "minibus"
+        },
+        {
+            "route": "502",
+            "bound": 2,
+            "route_id": 2001920,
+            "region": "NT",
+            "orig_en": "Ching Ho Estate Public Transport Interchange",
+            "dest_en": "Tai Po Nethersole Hospital",
             "provider": "minibus"
         },
         {
@@ -16533,20 +16477,20 @@
             "provider": "minibus"
         },
         {
-            "route": "50K",
+            "route": "51K",
             "bound": 1,
-            "route_id": 2005323,
+            "route_id": 2005325,
             "region": "NT",
             "orig_en": "Sheung Shui Station",
-            "dest_en": "Hang Tau",
+            "dest_en": "Ho Sheung Heung",
             "provider": "minibus"
         },
         {
-            "route": "50K",
+            "route": "51K",
             "bound": 2,
-            "route_id": 2005323,
+            "route_id": 2005325,
             "region": "NT",
-            "orig_en": "Hang Tau",
+            "orig_en": "Ho Sheung Heung",
             "dest_en": "Sheung Shui Station",
             "provider": "minibus"
         },
@@ -16565,24 +16509,6 @@
             "route_id": 2005331,
             "region": "NT",
             "orig_en": "Liu Pok",
-            "dest_en": "Sheung Shui Station",
-            "provider": "minibus"
-        },
-        {
-            "route": "51K",
-            "bound": 1,
-            "route_id": 2005325,
-            "region": "NT",
-            "orig_en": "Sheung Shui Station",
-            "dest_en": "Ho Sheung Heung",
-            "provider": "minibus"
-        },
-        {
-            "route": "51K",
-            "bound": 2,
-            "route_id": 2005325,
-            "region": "NT",
-            "orig_en": "Ho Sheung Heung",
             "dest_en": "Sheung Shui Station",
             "provider": "minibus"
         },
@@ -16623,6 +16549,24 @@
             "provider": "minibus"
         },
         {
+            "route": "50K",
+            "bound": 1,
+            "route_id": 2005323,
+            "region": "NT",
+            "orig_en": "Sheung Shui Station",
+            "dest_en": "Hang Tau",
+            "provider": "minibus"
+        },
+        {
+            "route": "50K",
+            "bound": 2,
+            "route_id": 2005323,
+            "region": "NT",
+            "orig_en": "Hang Tau",
+            "dest_en": "Sheung Shui Station",
+            "provider": "minibus"
+        },
+        {
             "route": "52K",
             "bound": 1,
             "route_id": 2006375,
@@ -16637,24 +16581,6 @@
             "route_id": 2006375,
             "region": "NT",
             "orig_en": "Ping Che",
-            "dest_en": "Fanling Station",
-            "provider": "minibus"
-        },
-        {
-            "route": "54A",
-            "bound": 1,
-            "route_id": 2007432,
-            "region": "NT",
-            "orig_en": "Fanling Station",
-            "dest_en": "Wo Mun Street Public Light Bus Terminus",
-            "provider": "minibus"
-        },
-        {
-            "route": "54A",
-            "bound": 2,
-            "route_id": 2007432,
-            "region": "NT",
-            "orig_en": "Wo Mun Street Public Light Bus Terminus",
             "dest_en": "Fanling Station",
             "provider": "minibus"
         },
@@ -16704,20 +16630,20 @@
             "provider": "minibus"
         },
         {
-            "route": "56C",
+            "route": "54A",
             "bound": 1,
-            "route_id": 2001025,
+            "route_id": 2007432,
             "region": "NT",
             "orig_en": "Fanling Station",
-            "dest_en": "Siu Hang Tsuen",
+            "dest_en": "Wo Mun Street Public Light Bus Terminus",
             "provider": "minibus"
         },
         {
-            "route": "56C",
+            "route": "54A",
             "bound": 2,
-            "route_id": 2001025,
+            "route_id": 2007432,
             "region": "NT",
-            "orig_en": "Siu Hang Tsuen",
+            "orig_en": "Wo Mun Street Public Light Bus Terminus",
             "dest_en": "Fanling Station",
             "provider": "minibus"
         },
@@ -16776,21 +16702,21 @@
             "provider": "minibus"
         },
         {
-            "route": "59K",
+            "route": "56C",
             "bound": 1,
-            "route_id": 2006277,
+            "route_id": 2001025,
             "region": "NT",
-            "orig_en": "Sheung Shui Station",
-            "dest_en": "Lin Ma Hang",
+            "orig_en": "Fanling Station",
+            "dest_en": "Siu Hang Tsuen",
             "provider": "minibus"
         },
         {
-            "route": "59K",
+            "route": "56C",
             "bound": 2,
-            "route_id": 2006277,
+            "route_id": 2001025,
             "region": "NT",
-            "orig_en": "Lin Ma Hang",
-            "dest_en": "Sheung Shui Station",
+            "orig_en": "Siu Hang Tsuen",
+            "dest_en": "Fanling Station",
             "provider": "minibus"
         },
         {
@@ -16827,6 +16753,24 @@
             "region": "NT",
             "orig_en": "Yuen Long (Fung Cheung Road)",
             "dest_en": "Kam Sheung Road Station (Circular)",
+            "provider": "minibus"
+        },
+        {
+            "route": "59K",
+            "bound": 1,
+            "route_id": 2006277,
+            "region": "NT",
+            "orig_en": "Sheung Shui Station",
+            "dest_en": "Lin Ma Hang",
+            "provider": "minibus"
+        },
+        {
+            "route": "59K",
+            "bound": 2,
+            "route_id": 2006277,
+            "region": "NT",
+            "orig_en": "Lin Ma Hang",
+            "dest_en": "Sheung Shui Station",
             "provider": "minibus"
         },
         {
@@ -16929,21 +16873,21 @@
             "provider": "minibus"
         },
         {
-            "route": "608",
-            "bound": 1,
-            "route_id": 2001194,
-            "region": "NT",
-            "orig_en": "Wang Toi Shan (Pat Heung)",
-            "dest_en": "Yuen Long (Fung Cheung Road) (Circular)",
-            "provider": "minibus"
-        },
-        {
             "route": "608S",
             "bound": 1,
             "route_id": 2010236,
             "region": "NT",
             "orig_en": "CONCORDIA Tsat Sing Kong Public Light Bus Terminus",
             "dest_en": "Kam Sheung Road Station Public Transport Interchange (Circular)",
+            "provider": "minibus"
+        },
+        {
+            "route": "608",
+            "bound": 1,
+            "route_id": 2001194,
+            "region": "NT",
+            "orig_en": "Wang Toi Shan (Pat Heung)",
+            "dest_en": "Yuen Long (Fung Cheung Road) (Circular)",
             "provider": "minibus"
         },
         {
@@ -17010,24 +16954,6 @@
             "provider": "minibus"
         },
         {
-            "route": "60R",
-            "bound": 1,
-            "route_id": 2003673,
-            "region": "NT",
-            "orig_en": "Sha Tin Station",
-            "dest_en": "Sha Tin Racecourse (Penfold Park)",
-            "provider": "minibus"
-        },
-        {
-            "route": "60R",
-            "bound": 2,
-            "route_id": 2003673,
-            "region": "NT",
-            "orig_en": "Sha Tin Racecourse (Penfold Park)",
-            "dest_en": "Sha Tin Station",
-            "provider": "minibus"
-        },
-        {
             "route": "610S",
             "bound": 1,
             "route_id": 2001161,
@@ -17043,6 +16969,24 @@
             "region": "NT",
             "orig_en": "Tsim Sha Tsui (Haiphong Road)",
             "dest_en": "Tin Shui Wai (Tin Shui Estate)",
+            "provider": "minibus"
+        },
+        {
+            "route": "60R",
+            "bound": 1,
+            "route_id": 2003673,
+            "region": "NT",
+            "orig_en": "Sha Tin Station",
+            "dest_en": "Sha Tin Racecourse (Penfold Park)",
+            "provider": "minibus"
+        },
+        {
+            "route": "60R",
+            "bound": 2,
+            "route_id": 2003673,
+            "region": "NT",
+            "orig_en": "Sha Tin Racecourse (Penfold Park)",
+            "dest_en": "Sha Tin Station",
             "provider": "minibus"
         },
         {
@@ -17109,24 +17053,6 @@
             "provider": "minibus"
         },
         {
-            "route": "618",
-            "bound": 1,
-            "route_id": 2007438,
-            "region": "NT",
-            "orig_en": "Tin Shui Wai (Tin Yan Estate)",
-            "dest_en": "Shenzhen Bay Port",
-            "provider": "minibus"
-        },
-        {
-            "route": "618",
-            "bound": 2,
-            "route_id": 2007438,
-            "region": "NT",
-            "orig_en": "Shenzhen Bay Port",
-            "dest_en": "Tin Shui Wai (Tin Yan Estate)",
-            "provider": "minibus"
-        },
-        {
             "route": "618A",
             "bound": 1,
             "route_id": 2009906,
@@ -17163,42 +17089,6 @@
             "provider": "minibus"
         },
         {
-            "route": "61S",
-            "bound": 1,
-            "route_id": 2003681,
-            "region": "NT",
-            "orig_en": "FO TAN",
-            "dest_en": "MONG KOK STATION",
-            "provider": "minibus"
-        },
-        {
-            "route": "61S",
-            "bound": 2,
-            "route_id": 2003681,
-            "region": "NT",
-            "orig_en": "MONG KOK STATION",
-            "dest_en": "FO TAN",
-            "provider": "minibus"
-        },
-        {
-            "route": "620",
-            "bound": 1,
-            "route_id": 2008785,
-            "region": "NT",
-            "orig_en": "Park YOHO Transport Interchange",
-            "dest_en": "Kam Sheung Road Station Public Transport Interchange",
-            "provider": "minibus"
-        },
-        {
-            "route": "620",
-            "bound": 2,
-            "route_id": 2008785,
-            "region": "NT",
-            "orig_en": "Kam Sheung Road Station Public Transport Interchange",
-            "dest_en": "Park YOHO Transport Interchange",
-            "provider": "minibus"
-        },
-        {
             "route": "621",
             "bound": 1,
             "route_id": 2009774,
@@ -17226,30 +17116,66 @@
             "provider": "minibus"
         },
         {
+            "route": "61S",
+            "bound": 1,
+            "route_id": 2003681,
+            "region": "NT",
+            "orig_en": "FO TAN",
+            "dest_en": "MONG KOK STATION",
+            "provider": "minibus"
+        },
+        {
+            "route": "61S",
+            "bound": 2,
+            "route_id": 2003681,
+            "region": "NT",
+            "orig_en": "MONG KOK STATION",
+            "dest_en": "FO TAN",
+            "provider": "minibus"
+        },
+        {
+            "route": "618",
+            "bound": 1,
+            "route_id": 2007438,
+            "region": "NT",
+            "orig_en": "Tin Shui Wai (Tin Yan Estate)",
+            "dest_en": "Shenzhen Bay Port",
+            "provider": "minibus"
+        },
+        {
+            "route": "618",
+            "bound": 2,
+            "route_id": 2007438,
+            "region": "NT",
+            "orig_en": "Shenzhen Bay Port",
+            "dest_en": "Tin Shui Wai (Tin Yan Estate)",
+            "provider": "minibus"
+        },
+        {
+            "route": "620",
+            "bound": 1,
+            "route_id": 2008785,
+            "region": "NT",
+            "orig_en": "Park YOHO Transport Interchange",
+            "dest_en": "Kam Sheung Road Station Public Transport Interchange",
+            "provider": "minibus"
+        },
+        {
+            "route": "620",
+            "bound": 2,
+            "route_id": 2008785,
+            "region": "NT",
+            "orig_en": "Kam Sheung Road Station Public Transport Interchange",
+            "dest_en": "Park YOHO Transport Interchange",
+            "provider": "minibus"
+        },
+        {
             "route": "624",
             "bound": 1,
             "route_id": 2010635,
             "region": "NT",
             "orig_en": "Park YOHO Transport Terminus",
             "dest_en": "Yuen Long Station (Long Ming Street)(Circular)",
-            "provider": "minibus"
-        },
-        {
-            "route": "62K",
-            "bound": 1,
-            "route_id": 2003679,
-            "region": "NT",
-            "orig_en": "Sha Tin Station",
-            "dest_en": "Shatin Lodge",
-            "provider": "minibus"
-        },
-        {
-            "route": "62K",
-            "bound": 2,
-            "route_id": 2003679,
-            "region": "NT",
-            "orig_en": "Shatin Lodge",
-            "dest_en": "Sha Tin Station",
             "provider": "minibus"
         },
         {
@@ -17277,24 +17203,6 @@
             "region": "NT",
             "orig_en": "Tai Wai Station (Tsuen Nam Road)",
             "dest_en": "Granville Garden",
-            "provider": "minibus"
-        },
-        {
-            "route": "63K",
-            "bound": 1,
-            "route_id": 2008223,
-            "region": "NT",
-            "orig_en": "Mei Tin Estate Public Transport Interchange",
-            "dest_en": "Tai Wai Station (Tsuen Nam Road)",
-            "provider": "minibus"
-        },
-        {
-            "route": "63K",
-            "bound": 2,
-            "route_id": 2008223,
-            "region": "NT",
-            "orig_en": "Tai Wai Station (Tsuen Nam Road)",
-            "dest_en": "Mei Tin Estate Public Transport Interchange",
             "provider": "minibus"
         },
         {
@@ -17343,21 +17251,48 @@
             "provider": "minibus"
         },
         {
+            "route": "62K",
+            "bound": 1,
+            "route_id": 2003679,
+            "region": "NT",
+            "orig_en": "Sha Tin Station",
+            "dest_en": "Shatin Lodge",
+            "provider": "minibus"
+        },
+        {
+            "route": "62K",
+            "bound": 2,
+            "route_id": 2003679,
+            "region": "NT",
+            "orig_en": "Shatin Lodge",
+            "dest_en": "Sha Tin Station",
+            "provider": "minibus"
+        },
+        {
+            "route": "63K",
+            "bound": 1,
+            "route_id": 2008223,
+            "region": "NT",
+            "orig_en": "Mei Tin Estate Public Transport Interchange",
+            "dest_en": "Tai Wai Station (Tsuen Nam Road)",
+            "provider": "minibus"
+        },
+        {
+            "route": "63K",
+            "bound": 2,
+            "route_id": 2008223,
+            "region": "NT",
+            "orig_en": "Tai Wai Station (Tsuen Nam Road)",
+            "dest_en": "Mei Tin Estate Public Transport Interchange",
+            "provider": "minibus"
+        },
+        {
             "route": "65A",
             "bound": 2,
             "route_id": 2009082,
             "region": "NT",
             "orig_en": "Sha Tin Central",
             "dest_en": "Wong Nai Tau",
-            "provider": "minibus"
-        },
-        {
-            "route": "65K",
-            "bound": 1,
-            "route_id": 2009081,
-            "region": "NT",
-            "orig_en": "Wong Nai Tau",
-            "dest_en": "Fo Tan Station (Circular)",
             "provider": "minibus"
         },
         {
@@ -17379,21 +17314,12 @@
             "provider": "minibus"
         },
         {
-            "route": "65S",
+            "route": "65K",
             "bound": 1,
-            "route_id": 2009116,
+            "route_id": 2009081,
             "region": "NT",
             "orig_en": "Wong Nai Tau",
-            "dest_en": "Mong Kok Station (Circular)",
-            "provider": "minibus"
-        },
-        {
-            "route": "66K",
-            "bound": 1,
-            "route_id": 2009117,
-            "region": "NT",
-            "orig_en": "Sha Tin Station",
-            "dest_en": "Kau To (Circular)",
+            "dest_en": "Fo Tan Station (Circular)",
             "provider": "minibus"
         },
         {
@@ -17415,6 +17341,24 @@
             "provider": "minibus"
         },
         {
+            "route": "66K",
+            "bound": 1,
+            "route_id": 2009117,
+            "region": "NT",
+            "orig_en": "Sha Tin Station",
+            "dest_en": "Kau To (Circular)",
+            "provider": "minibus"
+        },
+        {
+            "route": "65S",
+            "bound": 1,
+            "route_id": 2009116,
+            "region": "NT",
+            "orig_en": "Wong Nai Tau",
+            "dest_en": "Mong Kok Station (Circular)",
+            "provider": "minibus"
+        },
+        {
             "route": "67K",
             "bound": 1,
             "route_id": 2009118,
@@ -17430,60 +17374,6 @@
             "region": "NT",
             "orig_en": "Sha Tin  Station",
             "dest_en": "A Kung Kok",
-            "provider": "minibus"
-        },
-        {
-            "route": "68K",
-            "bound": 1,
-            "route_id": 2007762,
-            "region": "NT",
-            "orig_en": "Sha Tin Station (Pai Tau Street)",
-            "dest_en": "Julimount Garden",
-            "provider": "minibus"
-        },
-        {
-            "route": "68K",
-            "bound": 2,
-            "route_id": 2007762,
-            "region": "NT",
-            "orig_en": "Julimount Garden",
-            "dest_en": "Sha Tin Station (Pai Tau Street)",
-            "provider": "minibus"
-        },
-        {
-            "route": "68S",
-            "bound": 1,
-            "route_id": 2007764,
-            "region": "NT",
-            "orig_en": "Julimount Garden",
-            "dest_en": "Hin Keng Station",
-            "provider": "minibus"
-        },
-        {
-            "route": "68S",
-            "bound": 2,
-            "route_id": 2007764,
-            "region": "NT",
-            "orig_en": "Hin Keng Station",
-            "dest_en": "Julimount Garden",
-            "provider": "minibus"
-        },
-        {
-            "route": "69K",
-            "bound": 1,
-            "route_id": 2007766,
-            "region": "NT",
-            "orig_en": "Sha Tin Station (Pai Tau Street)",
-            "dest_en": "Ville De Jardin / Greenwood Terrace",
-            "provider": "minibus"
-        },
-        {
-            "route": "69K",
-            "bound": 2,
-            "route_id": 2007766,
-            "region": "NT",
-            "orig_en": "Ville De Jardin / Greenwood Terrace",
-            "dest_en": "Sha Tin Station (Pai Tau Street)",
             "provider": "minibus"
         },
         {
@@ -17523,12 +17413,57 @@
             "provider": "minibus"
         },
         {
-            "route": "71A",
-            "bound": 2,
-            "route_id": 2008388,
+            "route": "68S",
+            "bound": 1,
+            "route_id": 2007764,
             "region": "NT",
-            "orig_en": "Kam Sheung Road Public Transport Interchange",
-            "dest_en": "Cheung Po Tsuen",
+            "orig_en": "Julimount Garden",
+            "dest_en": "Hin Keng Station",
+            "provider": "minibus"
+        },
+        {
+            "route": "68S",
+            "bound": 2,
+            "route_id": 2007764,
+            "region": "NT",
+            "orig_en": "Hin Keng Station",
+            "dest_en": "Julimount Garden",
+            "provider": "minibus"
+        },
+        {
+            "route": "68K",
+            "bound": 1,
+            "route_id": 2007762,
+            "region": "NT",
+            "orig_en": "Sha Tin Station (Pai Tau Street)",
+            "dest_en": "Julimount Garden",
+            "provider": "minibus"
+        },
+        {
+            "route": "68K",
+            "bound": 2,
+            "route_id": 2007762,
+            "region": "NT",
+            "orig_en": "Julimount Garden",
+            "dest_en": "Sha Tin Station (Pai Tau Street)",
+            "provider": "minibus"
+        },
+        {
+            "route": "69K",
+            "bound": 1,
+            "route_id": 2007766,
+            "region": "NT",
+            "orig_en": "Sha Tin Station (Pai Tau Street)",
+            "dest_en": "Ville De Jardin / Greenwood Terrace",
+            "provider": "minibus"
+        },
+        {
+            "route": "69K",
+            "bound": 2,
+            "route_id": 2007766,
+            "region": "NT",
+            "orig_en": "Ville De Jardin / Greenwood Terrace",
+            "dest_en": "Sha Tin Station (Pai Tau Street)",
             "provider": "minibus"
         },
         {
@@ -17568,6 +17503,24 @@
             "provider": "minibus"
         },
         {
+            "route": "71A",
+            "bound": 2,
+            "route_id": 2008388,
+            "region": "NT",
+            "orig_en": "Kam Sheung Road Public Transport Interchange",
+            "dest_en": "Cheung Po Tsuen",
+            "provider": "minibus"
+        },
+        {
+            "route": "75",
+            "bound": 2,
+            "route_id": 2007398,
+            "region": "NT",
+            "orig_en": "Lok Ma Chau Spur Line Public Transport Interchange",
+            "dest_en": "Yuen Long (Fook Hong Street)",
+            "provider": "minibus"
+        },
+        {
             "route": "74A",
             "bound": 1,
             "route_id": 2008555,
@@ -17586,12 +17539,12 @@
             "provider": "minibus"
         },
         {
-            "route": "75",
+            "route": "78A",
             "bound": 2,
-            "route_id": 2007398,
+            "route_id": 2003704,
             "region": "NT",
-            "orig_en": "Lok Ma Chau Spur Line Public Transport Interchange",
-            "dest_en": "Yuen Long (Fook Hong Street)",
+            "orig_en": "Pat Heung Road (near Tai Lam Bus-Bus Interchange)",
+            "dest_en": "Kam Sheung Road Station",
             "provider": "minibus"
         },
         {
@@ -17610,51 +17563,6 @@
             "region": "NT",
             "orig_en": "Siu Hum Tsuen",
             "dest_en": "Yuen Long (Fook Hong Street)",
-            "provider": "minibus"
-        },
-        {
-            "route": "78",
-            "bound": 2,
-            "route_id": 2003702,
-            "region": "NT",
-            "orig_en": "Pat Heung Road (near Tai Lam Bus-Bus Interchange)",
-            "dest_en": "Lok Ma Chau (San Tin) Public Transport Interchange",
-            "provider": "minibus"
-        },
-        {
-            "route": "78A",
-            "bound": 2,
-            "route_id": 2003704,
-            "region": "NT",
-            "orig_en": "Pat Heung Road (near Tai Lam Bus-Bus Interchange)",
-            "dest_en": "Kam Sheung Road Station",
-            "provider": "minibus"
-        },
-        {
-            "route": "79S",
-            "bound": 2,
-            "route_id": 2007630,
-            "region": "NT",
-            "orig_en": "Lok Ma Chau Control Point",
-            "dest_en": "Tin Shui Wai (Grandeur Terrace)",
-            "provider": "minibus"
-        },
-        {
-            "route": "80",
-            "bound": 1,
-            "route_id": 2007999,
-            "region": "NT",
-            "orig_en": "Tsuen Wan (Chuen Lung Street)",
-            "dest_en": "Chuen Lung",
-            "provider": "minibus"
-        },
-        {
-            "route": "80",
-            "bound": 2,
-            "route_id": 2007999,
-            "region": "NT",
-            "orig_en": "Chuen Lung",
-            "dest_en": "Tsuen Wan (Chuen Lung Street)",
             "provider": "minibus"
         },
         {
@@ -17709,6 +17617,42 @@
             "region": "NT",
             "orig_en": "Hin Keng",
             "dest_en": "Kwong Yuen",
+            "provider": "minibus"
+        },
+        {
+            "route": "78",
+            "bound": 2,
+            "route_id": 2003702,
+            "region": "NT",
+            "orig_en": "Pat Heung Road (near Tai Lam Bus-Bus Interchange)",
+            "dest_en": "Lok Ma Chau (San Tin) Public Transport Interchange",
+            "provider": "minibus"
+        },
+        {
+            "route": "80",
+            "bound": 1,
+            "route_id": 2007999,
+            "region": "NT",
+            "orig_en": "Tsuen Wan (Chuen Lung Street)",
+            "dest_en": "Chuen Lung",
+            "provider": "minibus"
+        },
+        {
+            "route": "80",
+            "bound": 2,
+            "route_id": 2007999,
+            "region": "NT",
+            "orig_en": "Chuen Lung",
+            "dest_en": "Tsuen Wan (Chuen Lung Street)",
+            "provider": "minibus"
+        },
+        {
+            "route": "79S",
+            "bound": 2,
+            "route_id": 2007630,
+            "region": "NT",
+            "orig_en": "Lok Ma Chau Control Point",
+            "dest_en": "Tin Shui Wai (Grandeur Terrace)",
             "provider": "minibus"
         },
         {
@@ -17811,15 +17755,6 @@
             "provider": "minibus"
         },
         {
-            "route": "807B",
-            "bound": 1,
-            "route_id": 2001231,
-            "region": "NT",
-            "orig_en": "Ma On Shan Station",
-            "dest_en": "Wong Chuk Wan",
-            "provider": "minibus"
-        },
-        {
             "route": "807C",
             "bound": 1,
             "route_id": 2001232,
@@ -17838,21 +17773,21 @@
             "provider": "minibus"
         },
         {
-            "route": "807K",
+            "route": "807B",
             "bound": 1,
-            "route_id": 2001227,
+            "route_id": 2001231,
             "region": "NT",
-            "orig_en": "University Station",
-            "dest_en": "Tseng Tau Tsuen",
+            "orig_en": "Ma On Shan Station",
+            "dest_en": "Wong Chuk Wan",
             "provider": "minibus"
         },
         {
-            "route": "807K",
-            "bound": 2,
-            "route_id": 2001227,
+            "route": "807X",
+            "bound": 1,
+            "route_id": 2001233,
             "region": "NT",
-            "orig_en": "Tseng Tau Tsuen",
-            "dest_en": "University Station",
+            "orig_en": "University Station",
+            "dest_en": "Wu Kai Sha Station",
             "provider": "minibus"
         },
         {
@@ -17874,12 +17809,21 @@
             "provider": "minibus"
         },
         {
-            "route": "807X",
+            "route": "807K",
             "bound": 1,
-            "route_id": 2001233,
+            "route_id": 2001227,
             "region": "NT",
             "orig_en": "University Station",
-            "dest_en": "Wu Kai Sha Station",
+            "dest_en": "Tseng Tau Tsuen",
+            "provider": "minibus"
+        },
+        {
+            "route": "807K",
+            "bound": 2,
+            "route_id": 2001227,
+            "region": "NT",
+            "orig_en": "Tseng Tau Tsuen",
+            "dest_en": "University Station",
             "provider": "minibus"
         },
         {
@@ -18018,15 +17962,6 @@
             "provider": "minibus"
         },
         {
-            "route": "811K",
-            "bound": 1,
-            "route_id": 2007827,
-            "region": "NT",
-            "orig_en": "Sui Wo Court",
-            "dest_en": "Fo Tan Station (Circular)",
-            "provider": "minibus"
-        },
-        {
             "route": "811P",
             "bound": 1,
             "route_id": 2007794,
@@ -18072,12 +18007,48 @@
             "provider": "minibus"
         },
         {
+            "route": "811K",
+            "bound": 1,
+            "route_id": 2007827,
+            "region": "NT",
+            "orig_en": "Sui Wo Court",
+            "dest_en": "Fo Tan Station (Circular)",
+            "provider": "minibus"
+        },
+        {
             "route": "812A",
             "bound": 1,
             "route_id": 2005329,
             "region": "NT",
             "orig_en": "Shui Chuen O",
             "dest_en": "SHA TIN WAI STATION(CIRCULAR)",
+            "provider": "minibus"
+        },
+        {
+            "route": "813A",
+            "bound": 1,
+            "route_id": 2005334,
+            "region": "NT",
+            "orig_en": "Shui Chuen O",
+            "dest_en": "Shatin Hospital(Circular)",
+            "provider": "minibus"
+        },
+        {
+            "route": "81M",
+            "bound": 1,
+            "route_id": 2005551,
+            "region": "NT",
+            "orig_en": "Tsuen Wan (Shiu Wo Street)",
+            "dest_en": "Shek Wai Kok Estate",
+            "provider": "minibus"
+        },
+        {
+            "route": "81M",
+            "bound": 2,
+            "route_id": 2005551,
+            "region": "NT",
+            "orig_en": "Shek Wai Kok Estate",
+            "dest_en": "Tsuen Wan (Shiu Wo Street)",
             "provider": "minibus"
         },
         {
@@ -18099,39 +18070,12 @@
             "provider": "minibus"
         },
         {
-            "route": "813A",
-            "bound": 1,
-            "route_id": 2005334,
-            "region": "NT",
-            "orig_en": "Shui Chuen O",
-            "dest_en": "Shatin Hospital(Circular)",
-            "provider": "minibus"
-        },
-        {
             "route": "814",
             "bound": 1,
             "route_id": 2010077,
             "region": "NT",
             "orig_en": "Lai Ping Road",
             "dest_en": "Sha Tin (Pak Hok Ting Street)(Circular)",
-            "provider": "minibus"
-        },
-        {
-            "route": "81M",
-            "bound": 1,
-            "route_id": 2005551,
-            "region": "NT",
-            "orig_en": "Tsuen Wan (Shiu Wo Street)",
-            "dest_en": "Shek Wai Kok Estate",
-            "provider": "minibus"
-        },
-        {
-            "route": "81M",
-            "bound": 2,
-            "route_id": 2005551,
-            "region": "NT",
-            "orig_en": "Shek Wai Kok Estate",
-            "dest_en": "Tsuen Wan (Shiu Wo Street)",
             "provider": "minibus"
         },
         {
@@ -18171,6 +18115,15 @@
             "provider": "minibus"
         },
         {
+            "route": "86",
+            "bound": 2,
+            "route_id": 2008591,
+            "region": "NT",
+            "orig_en": "Shek Lei (Lei Pui Street)",
+            "dest_en": "Tsuen Wan (Hoi Kwai Road)",
+            "provider": "minibus"
+        },
+        {
             "route": "85",
             "bound": 1,
             "route_id": 2008589,
@@ -18189,15 +18142,6 @@
             "provider": "minibus"
         },
         {
-            "route": "86",
-            "bound": 2,
-            "route_id": 2008591,
-            "region": "NT",
-            "orig_en": "Shek Lei (Lei Pui Street)",
-            "dest_en": "Tsuen Wan (Hoi Kwai Road)",
-            "provider": "minibus"
-        },
-        {
             "route": "86A",
             "bound": 1,
             "route_id": 2008593,
@@ -18231,15 +18175,6 @@
             "region": "NT",
             "orig_en": "Shek Lei (Lei Pui Street)",
             "dest_en": "Tsuen Wan (Chuen Lung Street)",
-            "provider": "minibus"
-        },
-        {
-            "route": "87",
-            "bound": 2,
-            "route_id": 2006678,
-            "region": "NT",
-            "orig_en": "Kwai Shing (Shing Fong Street)",
-            "dest_en": "Tsuen Wan (Ham Tin Street)",
             "provider": "minibus"
         },
         {
@@ -18258,6 +18193,15 @@
             "region": "NT",
             "orig_en": "Ngong Wan Road",
             "dest_en": "Container Port Road Public Transport Interchange",
+            "provider": "minibus"
+        },
+        {
+            "route": "87",
+            "bound": 2,
+            "route_id": 2006678,
+            "region": "NT",
+            "orig_en": "Kwai Shing (Shing Fong Street)",
+            "dest_en": "Tsuen Wan (Ham Tin Street)",
             "provider": "minibus"
         },
         {
@@ -18360,24 +18304,6 @@
             "provider": "minibus"
         },
         {
-            "route": "88F",
-            "bound": 1,
-            "route_id": 2008604,
-            "region": "NT",
-            "orig_en": "Tsing Yi Station",
-            "dest_en": "Rambler Crest",
-            "provider": "minibus"
-        },
-        {
-            "route": "88F",
-            "bound": 2,
-            "route_id": 2008604,
-            "region": "NT",
-            "orig_en": "Rambler Crest",
-            "dest_en": "Tsing Yi Station",
-            "provider": "minibus"
-        },
-        {
             "route": "88G",
             "bound": 1,
             "route_id": 2008629,
@@ -18393,6 +18319,24 @@
             "region": "NT",
             "orig_en": "Rambler Crest",
             "dest_en": "Kwai Fong Station",
+            "provider": "minibus"
+        },
+        {
+            "route": "89",
+            "bound": 1,
+            "route_id": 2007959,
+            "region": "NT",
+            "orig_en": "Tsuen Wan (Ho Pui Street)",
+            "dest_en": "Shek Tau Street",
+            "provider": "minibus"
+        },
+        {
+            "route": "89",
+            "bound": 2,
+            "route_id": 2007959,
+            "region": "NT",
+            "orig_en": "Shek Tau Street",
+            "dest_en": "Tsuen Wan (Ho Pui Street)",
             "provider": "minibus"
         },
         {
@@ -18414,21 +18358,21 @@
             "provider": "minibus"
         },
         {
-            "route": "89",
+            "route": "88F",
             "bound": 1,
-            "route_id": 2007959,
+            "route_id": 2008604,
             "region": "NT",
-            "orig_en": "Tsuen Wan (Ho Pui Street)",
-            "dest_en": "Shek Tau Street",
+            "orig_en": "Tsing Yi Station",
+            "dest_en": "Rambler Crest",
             "provider": "minibus"
         },
         {
-            "route": "89",
+            "route": "88F",
             "bound": 2,
-            "route_id": 2007959,
+            "route_id": 2008604,
             "region": "NT",
-            "orig_en": "Shek Tau Street",
-            "dest_en": "Tsuen Wan (Ho Pui Street)",
+            "orig_en": "Rambler Crest",
+            "dest_en": "Tsing Yi Station",
             "provider": "minibus"
         },
         {
@@ -18621,21 +18565,21 @@
             "provider": "minibus"
         },
         {
-            "route": "95",
+            "route": "95K",
             "bound": 1,
-            "route_id": 2008002,
+            "route_id": 2008004,
             "region": "NT",
-            "orig_en": "Tsuen Wan Centre",
-            "dest_en": "Hoi Kwai Road Public Transport Interchange",
+            "orig_en": "Hoi Kwai Road Public Transport Interchange",
+            "dest_en": "Tsuen Wan Station",
             "provider": "minibus"
         },
         {
-            "route": "95",
+            "route": "95K",
             "bound": 2,
-            "route_id": 2008002,
+            "route_id": 2008004,
             "region": "NT",
-            "orig_en": "Hoi Kwai Road Public Transport Interchange",
-            "dest_en": "Tsuen Wan Centre",
+            "orig_en": "Tsuen Wan Station",
+            "dest_en": "Hoi Kwai Road Public Transport Interchange",
             "provider": "minibus"
         },
         {
@@ -18648,24 +18592,6 @@
             "provider": "minibus"
         },
         {
-            "route": "95K",
-            "bound": 1,
-            "route_id": 2008004,
-            "region": "NT",
-            "orig_en": "Hoi Kwai Road Public Transport Interchange",
-            "dest_en": "Tsuen Wan Station",
-            "provider": "minibus"
-        },
-        {
-            "route": "95K",
-            "bound": 2,
-            "route_id": 2008004,
-            "region": "NT",
-            "orig_en": "Tsuen Wan Station",
-            "dest_en": "Hoi Kwai Road Public Transport Interchange",
-            "provider": "minibus"
-        },
-        {
             "route": "95M",
             "bound": 1,
             "route_id": 2008058,
@@ -18681,6 +18607,33 @@
             "region": "NT",
             "orig_en": "Tsuen Wan Centre",
             "dest_en": "Tsuen Wan Station",
+            "provider": "minibus"
+        },
+        {
+            "route": "95",
+            "bound": 1,
+            "route_id": 2008002,
+            "region": "NT",
+            "orig_en": "Tsuen Wan Centre",
+            "dest_en": "Hoi Kwai Road Public Transport Interchange",
+            "provider": "minibus"
+        },
+        {
+            "route": "95",
+            "bound": 2,
+            "route_id": 2008002,
+            "region": "NT",
+            "orig_en": "Hoi Kwai Road Public Transport Interchange",
+            "dest_en": "Tsuen Wan Centre",
+            "provider": "minibus"
+        },
+        {
+            "route": "96A",
+            "bound": 1,
+            "route_id": 2008061,
+            "region": "NT",
+            "orig_en": "Yau Kom Tau Village",
+            "dest_en": "Tsuen Wan Station(Circular)",
             "provider": "minibus"
         },
         {
@@ -18699,15 +18652,6 @@
             "region": "NT",
             "orig_en": "Tsing Lung Tau",
             "dest_en": "Tsuen Wan (Hoi Pa Street)",
-            "provider": "minibus"
-        },
-        {
-            "route": "96A",
-            "bound": 1,
-            "route_id": 2008061,
-            "region": "NT",
-            "orig_en": "Yau Kom Tau Village",
-            "dest_en": "Tsuen Wan Station(Circular)",
             "provider": "minibus"
         },
         {
@@ -18855,5 +18799,5 @@
             "provider": "minibus"
         }
     ],
-    "timestamp": 1744131461858
+    "timestamp": 1744230549451
 }
