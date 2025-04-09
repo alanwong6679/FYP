@@ -564,6 +564,7 @@ class RouteFinder {
             console.error("MTR Route Error:", response.error || "No route found", "from", start, "to", end);
             return [];
         }
+        
         return [{
             type: 'MTR',
             mtrRoute: response.bestRoute,
@@ -609,6 +610,9 @@ class RouteFinder {
         const durationMinutes = Math.max(1, Math.round(durationSeconds / 60));
         return { distance: Math.round(distance), duration: durationMinutes };
     }
+
+
+    
 
     async fetchMTRSchedule(from, to) {
         if (!from || !to) return { error: 'Missing MTR station code(s)', bestRoute: null };
@@ -670,7 +674,17 @@ class RouteFinder {
         const interchangeTimeEstimate = interchangeCount * 5;
         return lineTimeEstimate + interchangeTimeEstimate;
     }
-}class TimelineGenerator {
+}
+
+
+
+
+
+
+
+
+
+class TimelineGenerator {
 
     static getItems(route) {
         const now = route.startTime || new Date(); // Use route startTime if available

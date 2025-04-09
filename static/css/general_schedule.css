@@ -85,7 +85,7 @@ header h1 {
     font-weight: bold;
     display: flex;
     align-items: center;
-    color: #ffffff; /* White text from image */
+    color: #00d9ff; /* White text from image */
 }
 .summary-time .arrow {
     margin: 0 8px;
@@ -176,7 +176,7 @@ header h1 {
 
 /* Styling for station names */
 .sequence-station-name {
-    color: #a0a0a0;
+    color: #ffffff;
     font-size: 0.95em;
     display: inline-flex;
     align-items: center;
