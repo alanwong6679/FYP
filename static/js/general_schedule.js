@@ -419,7 +419,7 @@ class RouteFinder {
     
         const MAX_INTERCHANGE_DISTANCE = 2000;
         const BUS_WAIT_TIME_MIN = 5;
-        const MAX_INTERCHANGES = 2;
+        const MAX_INTERCHANGES = 5;
     
         async function fetchETA(route, direction, stopId, company) {
             try {
@@ -1387,6 +1387,41 @@ function getUniqueMTRStations() {
     return uniqueStations;
 }
 window.onload = async () => {
+    let sortByTimeDirection = 'asc'; // 'asc' or 'desc'
+    let sortByWalkDirection = 'asc';
+    const sortByTimeBtn = document.getElementById('sortByTime');
+    if (sortByTimeBtn) {
+        sortByTimeBtn.addEventListener('click', () => {
+            sortByTimeDirection = sortByTimeDirection === 'asc' ? 'desc' : 'asc';
+            currentRoutes.sort((a, b) => {
+                const timeA = a.estimatedTime || Infinity;
+                const timeB = b.estimatedTime || Infinity;
+                return sortByTimeDirection === 'asc' ? timeA - timeB : timeB - timeA;
+            });
+            displayRouteSummaries();
+            // Optional: Update button text or style to reflect sort direction
+            sortByTimeBtn.textContent = `Sort by Time (${sortByTimeDirection === 'asc' ? '↑' : '↓'})`;
+        });
+    } else {
+        console.warn("Sort by Time button not found in DOM");
+    }
+    const sortByWalkBtn = document.getElementById('sortByWalk');
+    if (sortByWalkBtn) {
+        sortByWalkBtn.addEventListener('click', () => {
+            sortByWalkDirection = sortByWalkDirection === 'asc' ? 'desc' : 'asc';
+            const getTotalWalk = (route) => route.walkingDistance || 0;
+            currentRoutes.sort((a, b) => {
+                const walkA = getTotalWalk(a);
+                const walkB = getTotalWalk(b);
+                return sortByWalkDirection === 'asc' ? walkA - walkB : walkB - walkA;
+            });
+            displayRouteSummaries();
+            // Optional: Update button text or style
+            sortByWalkBtn.textContent = `Sort by Walk (${sortByWalkDirection === 'asc' ? '↑' : '↓'})`;
+        });
+    } else {
+        console.warn("Sort by Walk button not found in DOM");
+    }
     const params = new URLSearchParams(window.location.search);
     const cs = params.get('currentStation');
     const ds = params.get('destinationStation');
