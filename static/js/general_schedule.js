@@ -13,7 +13,119 @@ const LINE_NAMES = {
     "Walk": { name: "Walk", color: "#888" },
     "Taxi": { name: "Taxi", color: "#FFD700" }
 };
+function displayRouteAnalysisChart(routesToDisplay) {
+    const ctx = document.getElementById('routeAnalysisChart')?.getContext('2d');
+    if (!ctx) {
+        console.error("Canvas element 'routeAnalysisChart' not found.");
+        return;
+    }
 
+    if (!routesToDisplay || routesToDisplay.length === 0) {
+        console.warn("No routes to analyze.");
+        ctx.canvas.nextSibling?.remove();
+        const noDataLabel = document.createElement('div');
+        noDataLabel.textContent = "No data";
+        noDataLabel.style.fontSize = "10px";
+        noDataLabel.style.color = "#555";
+        ctx.canvas.after(noDataLabel);
+        return;
+    }
+
+    // Data for the chart
+    const routeLabels = routesToDisplay.map((_, i) => `Route ${i + 1}`);
+    const times = routesToDisplay.map(route => route.estimatedTime || 0);
+    const walkDistances = routesToDisplay.map(route => route.walkingDistance || 0);
+
+    // Normalize and score routes (similar to evaluateRouteScore but simpler)
+    const maxTime = Math.max(...times, 1); // Avoid division by zero
+    const maxWalk = Math.max(...walkDistances, 1);
+    const scores = routesToDisplay.map((route, i) => {
+        const timeScore = times[i] / maxTime; // Lower is better (0-1)
+        const walkScore = walkDistances[i] / maxWalk; // Lower is better (0-1)
+        return 0.6 * timeScore + 0.4 * walkScore; // Weighted: 60% time, 40% walk
+    });
+
+    // Find the best route (lowest combined score)
+    const bestRouteIndex = scores.indexOf(Math.min(...scores));
+    const backgroundColors = times.map((_, i) =>
+        i === bestRouteIndex ? 'rgba(75, 192, 192, 0.8)' : 'rgba(54, 162, 235, 0.6)'
+    );
+    const borderColors = times.map((_, i) =>
+        i === bestRouteIndex ? 'rgba(75, 192, 192, 1)' : 'rgba(54, 162, 235, 1)'
+    );
+
+    // Destroy existing chart
+    if (window.routeChart instanceof Chart) {
+        window.routeChart.destroy();
+    }
+
+    // Compact pie chart
+    window.routeChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: routeLabels,
+            datasets: [
+                {
+                    label: 'Time (min)',
+                    data: times,
+                    backgroundColor: backgroundColors,
+                    borderColor: borderColors,
+                    borderWidth: 1
+                },
+                {
+                    label: 'Walk (m)',
+                    data: walkDistances,
+                    hidden: true, // Toggle via legend
+                    backgroundColor: backgroundColors,
+                    borderColor: borderColors,
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        font: { size: 8 }, // Tiny legend
+                        padding: 2
+                    },
+                    onClick: (e, legendItem, legend) => {
+                        const index = legendItem.datasetIndex;
+                        const ci = legend.chart;
+                        ci.getDatasetMeta(index).hidden = !ci.getDatasetMeta(index).hidden;
+                        ci.update();
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            const datasetLabel = context.dataset.label || '';
+                            const value = context.parsed;
+                            return `${datasetLabel}: ${value}${datasetLabel.includes('Time') ? ' min' : ' m'}`;
+                        }
+                    }
+                },
+                title: {
+                    display: true,
+                    text: 'Route Comparison',
+                    font: { size: 10 }
+                }
+            }
+        }
+    });
+
+    // Small label for best route
+    ctx.canvas.nextSibling?.remove();
+    const bestLabel = document.createElement('div');
+    bestLabel.textContent = `Best: Route ${bestRouteIndex + 1} (${times[bestRouteIndex]} min, ${walkDistances[bestRouteIndex]} m)`;
+    bestLabel.style.fontSize = "9px";
+    bestLabel.style.textAlign = "center";
+    bestLabel.style.marginTop = "2px";
+    ctx.canvas.after(bestLabel);
+}
 function haversineDistance(lat1, lon1, lat2, lon2) {
     if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) return 0;
     const R = 6371e3;
@@ -119,113 +231,182 @@ class RouteFinder {
             }
         }
     }
-    async findBusToBusRoute(startStopId, endStopId) {
-        const routes = [];
-        const startStop = this.transit.findStop(startStopId);
-        const endStop = this.transit.findStop(endStopId);
-        if (!startStop || !endStop) {
-            return routes;
-        }
-    
-        // Find direct bus routes
-        const directRoutes = this.findBusRoutes([startStopId], [endStopId]);
-        routes.push(...directRoutes.map(br => {
-            const walkDist = 0; // No walking for direct routes
-            const busTime = (br.stopCount || 1) * 2 + this.BUS_WAIT_TIME_MIN;
-            return {
-                type: 'Bus',
-                busRoute: br,
-                estimatedTime: busTime,
-                walkingDistance: walkDist,
-                boardingStopName: startStop.name_en || `Stop ${br.boardingStop}`,
-                alightingStopName: endStop.name_en || `Stop ${br.alightingStop}`,
-                score: this.evaluateRouteScore({ estimatedTime: busTime, walkingDistance: walkDist, transfers: 0 })
-            };
-        }));
-    
-        // Find transfer routes with walking
-        const WALK_RADIUS = 500; // meters
-        const MAX_STOPS_TO_CONSIDER = 20; // Limit to avoid excessive computation
-    
-        // Get all bus routes passing through the start stop
-        const startRoutes = this.transit.routes.filter(route => {
-            const keyO = `${route.route}-O`;
-            const keyI = `${route.route}-I`;
-            return (this.transit.routeStopsMap[keyO] && this.transit.routeStopsMap[keyO].includes(startStopId)) ||
-                   (this.transit.routeStopsMap[keyI] && this.transit.routeStopsMap[keyI].includes(startStopId));
+    findBusToBusRoute(startStopId, endStopId) {
+    const WALK_RADIUS = 500; // meters
+    const BUS_WAIT_TIME_MIN = 5; // minutes
+    const MAX_STOPS_TO_CONSIDER = 10; // Reduced from 20
+    const MAX_ROUTES = 10; // Limit the number of routes returned
+    let routes = [];
+
+    // Debugging logs
+    console.time("findBusToBusRoute");
+    console.log("Input startStopId:", startStopId, "endStopId:", endStopId);
+
+    // Get stop objects
+    const startStop = this.transit.findStop(startStopId);
+    const endStop = this.transit.findStop(endStopId);
+
+    if (!startStop || !startStop.lat || !startStop.long || !endStop || !endStop.lat || !endStop.long) {
+        console.error("Error: Start or end stop is missing latitude/longitude coordinates.");
+        console.log("Start stop data:", startStop);
+        console.log("End stop data:", endStop);
+        return routes;
+    }
+
+    // Precompute nearby stops once
+    const nearbyStartStops = this.transit.getNearbyStops(startStop, WALK_RADIUS);
+    const nearbyEndStops = this.transit.getNearbyStops(endStop, WALK_RADIUS);
+
+    if (nearbyStartStops.length === 0 || nearbyEndStops.length === 0) {
+        console.error("Error: No stops found within walking radius.");
+        console.timeEnd("findBusToBusRoute");
+        return routes;
+    }
+
+    const nearbyStartIds = nearbyStartStops.map(s => s.stop);
+    const nearbyEndIds = nearbyEndStops.map(s => s.stop);
+    const nearbyEndIdsSet = new Set(nearbyEndIds); // For O(1) lookup
+
+    // Helper function for walking time
+    const calculateWalkDuration = (distance) => {
+        const walkingSpeed = 1.4; // meters per second
+        return Math.round((distance / walkingSpeed) / 60);
+    };
+
+    // Part 1: Find Direct Bus Routes (Optimized)
+    const directRoutes = this.findBusRoutes(nearbyStartIds, nearbyEndIds);
+    for (const br of directRoutes) {
+        const boardingStop = this.transit.findStop(br.boardingStop);
+        const alightingStop = this.transit.findStop(br.alightingStop);
+        if (!boardingStop || !alightingStop) continue;
+
+        const walkToBoarding = haversineDistance(startStop.lat, startStop.long, boardingStop.lat, boardingStop.long);
+        const walkFromAlighting = haversineDistance(alightingStop.lat, alightingStop.long, endStop.lat, endStop.long);
+        const totalWalkDistance = walkToBoarding + walkFromAlighting;
+        const walkTime = calculateWalkDuration(totalWalkDistance);
+        const busTime = (br.stopCount || 1) * 2 + BUS_WAIT_TIME_MIN;
+        const totalTime = walkTime + busTime;
+
+        routes.push({
+            type: 'Bus',
+            busRoute: br,
+            estimatedTime: totalTime,
+            walkingDistance: totalWalkDistance,
+            boardingStopName: boardingStop.name_en || `Stop ${br.boardingStop}`,
+            alightingStopName: alightingStop.name_en || `Stop ${br.alightingStop}`,
+            score: this.evaluateRouteScore({
+                estimatedTime: totalTime,
+                walkingDistance: totalWalkDistance,
+                transfers: 0
+            })
         });
-    
-        for (const r1 of startRoutes) {
-            for (const dir1 of ['outbound', 'inbound']) {
-                const key1 = `${r1.route}-${dir1 === 'outbound' ? 'O' : 'I'}`;
-                const stops1 = this.transit.routeStopsMap[key1] || [];
-                const startIndex1 = stops1.indexOf(startStopId);
-                if (startIndex1 === -1) continue;
-    
-                // Get subsequent stops in the direction after start stop
-                const subsequentStops = stops1.slice(startIndex1 + 1, startIndex1 + 1 + MAX_STOPS_TO_CONSIDER);
-    
+
+        // Early termination if we have enough routes
+        if (routes.length >= MAX_ROUTES) {
+            routes.sort((a, b) => b.score - a.score);
+            console.timeEnd("findBusToBusRoute");
+            return routes.slice(0, MAX_ROUTES);
+        }
+    }
+
+    // Part 2: Find Routes with Transfers (Optimized)
+    const routeStopCache = new Map(); // Cache stops for each route-direction
+    const processedTransfers = new Set(); // Avoid duplicate transfer combinations
+
+    for (const startRoute of this.transit.routes) {
+        for (const dir1 of ['outbound', 'inbound']) {
+            const key1 = `${startRoute.route}-${dir1 === 'outbound' ? 'O' : 'I'}`;
+            const stops1 = this.transit.routeStopsMap[key1] || [];
+            if (stops1.length === 0) continue;
+
+            // Cache stops for this route-direction
+            if (!routeStopCache.has(key1)) {
+                routeStopCache.set(key1, new Set(stops1));
+            }
+            const stopsSet = routeStopCache.get(key1);
+
+            // Check if this route has any nearby start stops
+            const startMatches = nearbyStartIds.filter(id => stopsSet.has(id));
+            if (startMatches.length === 0) continue;
+
+            for (const startStopId of startMatches) {
+                const startIndex = stops1.indexOf(startStopId);
+                const subsequentStops = stops1.slice(startIndex + 1, startIndex + 1 + MAX_STOPS_TO_CONSIDER);
+
                 for (const alightingStopId of subsequentStops) {
+                    const alightingIndex = stops1.indexOf(alightingStopId);
                     const alightingStop = this.transit.findStop(alightingStopId);
                     if (!alightingStop) continue;
-    
-                    // Get nearby stops to alighting stop for second leg
-                    const nearbyStops = this.transit.getNearbyStops(alightingStop, WALK_RADIUS).map(s => s.stop);
-    
-                    // Find second leg routes from nearby stops to end stop
-                    const secondLegRoutes = this.findBusRoutes(nearbyStops, [endStopId]);
-    
+
+                    // Check if this alighting stop is an end stop (direct route case already handled)
+                    if (nearbyEndIdsSet.has(alightingStopId)) continue;
+
+                    // Precompute nearby transfer stops once per alighting stop
+                    const transferStops = this.transit.getNearbyStops(alightingStop, WALK_RADIUS).map(s => s.stop);
+                    const transferStopsSet = new Set(transferStops);
+
+                    const secondLegRoutes = this.findBusRoutes(transferStops, nearbyEndIds);
                     for (const r2 of secondLegRoutes) {
-                        // Ensure it's a different route or different direction
-                        if (r1.route === r2.route && dir1 === r2.direction) continue;
-    
+                        const transferKey = `${key1}-${r2.route}-${r2.direction}`;
+                        if (processedTransfers.has(transferKey) || (startRoute.route === r2.route && dir1 === r2.direction)) continue;
+                        processedTransfers.add(transferKey);
+
                         const boardingStop2 = this.transit.findStop(r2.boardingStop);
-                        const walkingDistance = alightingStopId === r2.boardingStop ? 0 : haversineDistance(
-                            parseFloat(alightingStop.lat), parseFloat(alightingStop.long),
-                            parseFloat(boardingStop2.lat), parseFloat(boardingStop2.long)
-                        );
-    
-                        // Calculate times
-                        const firstLegStopCount = stops1.indexOf(alightingStopId) - startIndex1;
-                        const firstLegTime = (firstLegStopCount * 2) + this.BUS_WAIT_TIME_MIN;
-                        const walkTime = calculateWalkDuration(walkingDistance);
-                        const secondLegTime = (r2.stopCount || 1) * 2 + this.BUS_WAIT_TIME_MIN;
+                        const alightingStop2 = this.transit.findStop(r2.alightingStop);
+                        if (!boardingStop2 || !alightingStop2) continue;
+
+                        const walkToBoarding = haversineDistance(startStop.lat, startStop.long, this.transit.findStop(startStopId).lat, this.transit.findStop(startStopId).long);
+                        const walkTransfer = alightingStopId === r2.boardingStop ? 0 : haversineDistance(alightingStop.lat, alightingStop.long, boardingStop2.lat, boardingStop2.long);
+                        const walkFromAlighting = haversineDistance(alightingStop2.lat, alightingStop2.long, endStop.lat, endStop.long);
+
+                        const totalWalkDistance = walkToBoarding + walkTransfer + walkFromAlighting;
+                        const walkTime = calculateWalkDuration(walkToBoarding) + calculateWalkDuration(walkTransfer) + calculateWalkDuration(walkFromAlighting);
+
+                        const firstLegStopCount = alightingIndex - startIndex;
+                        const firstLegTime = (firstLegStopCount * 2) + BUS_WAIT_TIME_MIN;
+                        const secondLegTime = (r2.stopCount || 1) * 2 + BUS_WAIT_TIME_MIN;
                         const totalTime = firstLegTime + walkTime + secondLegTime;
-    
+
                         routes.push({
                             type: 'transfer',
                             firstLeg: {
-                                route: r1.route,
+                                route: startRoute.route,
                                 direction: dir1,
                                 boardingStop: startStopId,
                                 alightingStop: alightingStopId,
-                                provider: r1.provider,
+                                provider: startRoute.provider,
                                 stopCount: firstLegStopCount
                             },
                             secondLeg: r2,
                             transferStop: alightingStopId,
-                            walkingDistance: walkingDistance,
+                            walkingDistance: totalWalkDistance,
                             estimatedTime: totalTime,
-                            boardingStopName: startStop.name_en || `Stop ${startStopId}`,
-                            alightingStopName: endStop.name_en || `Stop ${endStopId}`,
-                            score: this.evaluateRouteScore({ estimatedTime: totalTime, walkingDistance: walkingDistance, transfers: 1 })
+                            boardingStopName: this.transit.findStop(startStopId).name_en || `Stop ${startStopId}`,
+                            alightingStopName: alightingStop2.name_en || `Stop ${r2.alightingStop}`,
+                            score: this.evaluateRouteScore({
+                                estimatedTime: totalTime,
+                                walkingDistance: totalWalkDistance,
+                                transfers: 1
+                            })
                         });
+
+                        // Early termination
+                        if (routes.length >= MAX_ROUTES) {
+                            routes.sort((a, b) => b.score - a.score);
+                            console.timeEnd("findBusToBusRoute");
+                            return routes.slice(0, MAX_ROUTES);
+                        }
                     }
                 }
             }
         }
-    
-        // Optional: Add taxi route if no routes found
-        if (!routes.length) {
-            const taxiRoute = this.calculateTaxiRoute(startStop, endStop);
-            if (taxiRoute) {
-                taxiRoute.score = this.evaluateRouteScore({ estimatedTime: taxiRoute.estimatedTime, walkingDistance: 0, transfers: 0 });
-                routes.push(taxiRoute);
-            }
-        }
-    
-        return routes.sort((a, b) => a.score - b.score).slice(0, 5);
     }
+
+    // Final sort and limit
+    routes.sort((a, b) => b.score - a.score);
+    console.timeEnd("findBusToBusRoute");
+    return routes.slice(0, MAX_ROUTES);
+}
 
     evaluateRouteScore(route) {
         const timeWeight = 0.7;
@@ -1296,12 +1477,11 @@ function generateDetailedSequenceHtml(route) {
     sequenceHtml += `<span class="sequence-item arrived">Arrived</span>`;
     return sequenceHtml;
 }
-
 function displayRouteSummaries() {
     const optionsDiv = document.getElementById('route-options');
     optionsDiv.innerHTML = '';
     const now = new Date();
-    const routesToDisplay = currentRoutes.slice(0, 5);
+    const routesToDisplay = currentRoutes.slice(0, 5); // Only 5 routes
 
     routesToDisplay.forEach((route, i) => {
         const startTime = now.toTimeString().slice(0, 5);
@@ -1336,6 +1516,7 @@ function displayRouteSummaries() {
     });
 
     showSummaries();
+    displayRouteAnalysisChart(routesToDisplay); // Pass the 5 routes
 }
 
 function displayRouteDetails(routeIndex) {

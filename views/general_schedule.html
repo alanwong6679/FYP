@@ -6,22 +6,21 @@
     <title>General Schedule</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/navbar.css">
-    <link rel="stylesheet" href="/static/css/general_schedule.css"> <!-- Your separated CSS file -->
+    <link rel="stylesheet" href="/static/css/general_schedule.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <header><h1>MTR & Bus Schedule</h1></header> <!-- Or your actual header -->
-<div class="container"> <!-- Or your main page container -->
-
-    <div class="sort-buttons">
-        <button class="sort-button" id="sortByTime">Sort by Time</button>
-        <button class="sort-button" id="sortByWalk">Sort by Walk Distance</button>
-    </div>
-    <div class="options-wrapper">
-        <div id="route-options">
-            
-            <!-- Route summaries will be injected here by JS -->
+    <header><h1>MTR & Bus Schedule</h1></header>
+    
+    <div class="container">
+        <div class="sort-buttons">
+            <button class="sort-button" id="sortByTime">Sort by Time</button>
+            <button class="sort-button" id="sortByWalk">Sort by Walk Distance</button>
         </div>
-    </div>
+        <div style="display: flex; align-items: flex-start; gap: 15px; max-width: 700px; margin: 20px auto;">
+            <div id="route-options" style="flex: 1;"></div>
+            <canvas id="routeAnalysisChart" width="100" height="100"></canvas>
+        </div>
         <div id="schedule" class="schedule-detail"></div>
     </div>
     <div class="news-icon"></div>
@@ -43,5 +42,3 @@
     <div id="details-backdrop" class="details-backdrop"></div>
 </body>
 </html>
-
-

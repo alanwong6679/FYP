@@ -578,4 +578,19 @@ header h1 {
 
 .back-button:active {
     background-color: #5a5a5a;
+}/* Add this to your general_schedule.css */
+
+/* Flex container for route options and chart */
+.container > div[style*="display: flex"] {
+    flex-wrap: wrap; /* Allow wrapping on small screens */
+}
+
+/* Ensure route-options doesn’t shrink too much */
+#route-options {
+    min-width: 300px; /* Prevents it from squashing */
+}
+
+/* Style the chart canvas */
+#routeAnalysisChart {
+    flex-shrink: 0; /* Prevents chart from shrinking */
 }
