@@ -1,5 +1,5 @@
 /* transit.js */
-const API_KEY = 'AIzaSyAibBUUt2uhc8v_82GS3Gxx2TRGyuUjsuc'; // Replace with a new, secure key
+const API_KEY = 'AIzaSyBBY8WRPKMG0sPNFkHAYNcCwkwTn4T5jGw'; // Replace with a new, secure key
 let map;
 let routeMarkers = [];
 let routePolyline = null;

@@ -415,7 +415,7 @@ app.get('/', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
     
-/*     // Spawn Python script as a child process
+    // Spawn Python script as a child process
     const pythonProcess = spawn('python3', ['fetch_transport_data.py'], {
         cwd: __dirname,
         stdio: 'inherit' // Log Python output to server console
@@ -427,5 +427,5 @@ app.listen(PORT, () => {
     
     pythonProcess.on('exit', (code) => {
         console.log(`Python script exited with code ${code}`);
-    }); */
+    });
 });
