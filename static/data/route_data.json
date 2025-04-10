@@ -1863,20 +1863,6 @@
             "provider": "kmb"
         },
         {
-            "route": "52S",
-            "bound": "O",
-            "orig_en": "TUEN MUN ROAD BBI",
-            "dest_en": "TSANG TSUI",
-            "provider": "kmb"
-        },
-        {
-            "route": "52S",
-            "bound": "I",
-            "orig_en": "TSANG TSUI",
-            "dest_en": "TUEN MUN ROAD BBI",
-            "provider": "kmb"
-        },
-        {
             "route": "52X",
             "bound": "O",
             "orig_en": "TUEN MUN CENTRAL",
@@ -1909,20 +1895,6 @@
             "bound": "O",
             "orig_en": "YUEN LONG (WEST)",
             "dest_en": "SHEUNG TSUEN (CIRCULAR)",
-            "provider": "kmb"
-        },
-        {
-            "route": "56S",
-            "bound": "O",
-            "orig_en": "TUEN MUN STATION",
-            "dest_en": "TSANG TSUI",
-            "provider": "kmb"
-        },
-        {
-            "route": "56S",
-            "bound": "I",
-            "orig_en": "TSANG TSUI",
-            "dest_en": "TUEN MUN STATION",
             "provider": "kmb"
         },
         {
@@ -2077,20 +2049,6 @@
             "bound": "I",
             "orig_en": "TSUEN WAN STATION",
             "dest_en": "SO KWUN WAT",
-            "provider": "kmb"
-        },
-        {
-            "route": "61S",
-            "bound": "O",
-            "orig_en": "TUEN MUN CENTRAL",
-            "dest_en": "WO HOP SHEK",
-            "provider": "kmb"
-        },
-        {
-            "route": "61S",
-            "bound": "I",
-            "orig_en": "WO HOP SHEK",
-            "dest_en": "TUEN MUN CENTRAL",
             "provider": "kmb"
         },
         {
@@ -2824,7 +2782,7 @@
         {
             "route": "76",
             "bound": "O",
-            "orig_en": "YAU POK ROAD PUBLIC HOUSING (SOUTH) TERMINUS",
+            "orig_en": "YAU POK ROAD PUBLIC HOUSING (SOUTH)",
             "dest_en": "SHEUNG SHUI STATION (CHOI YUEN ROAD) (CIRCULAR)",
             "provider": "kmb"
         },
@@ -5148,7 +5106,7 @@
         {
             "route": "268",
             "bound": "O",
-            "orig_en": "YAU POK ROAD PUBLIC HOUSING (SOUTH) TERMINUS",
+            "orig_en": "YAU POK ROAD PUBLIC HOUSING (SOUTH)",
             "dest_en": "PAT HEUNG ROAD",
             "provider": "kmb"
         },
@@ -5156,7 +5114,7 @@
             "route": "268",
             "bound": "I",
             "orig_en": "PAT HEUNG ROAD",
-            "dest_en": "YAU POK ROAD PUBLIC HOUSING (SOUTH) TERMINUS",
+            "dest_en": "YAU POK ROAD PUBLIC HOUSING (SOUTH)",
             "provider": "kmb"
         },
         {
@@ -11753,20 +11711,6 @@
             "bound": "O",
             "orig_en": "Kai Tak Sports Park",
             "dest_en": "Mong Kok",
-            "provider": "ctb"
-        },
-        {
-            "route": "SP2A",
-            "bound": "O",
-            "orig_en": "Kai Tak Sports Park",
-            "dest_en": "Tsim Sha Tsui",
-            "provider": "ctb"
-        },
-        {
-            "route": "SP5B",
-            "bound": "O",
-            "orig_en": "Kai Tak Sports Park",
-            "dest_en": "Tuen Mun (Ching Tin and Wo Tin)",
             "provider": "ctb"
         },
         {
@@ -18855,5 +18799,5 @@
             "provider": "minibus"
         }
     ],
-    "timestamp": 1744131461858
+    "timestamp": 1744275433665
 }
