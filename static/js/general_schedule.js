@@ -119,7 +119,6 @@ class RouteFinder {
             }
         }
     }
-
     async findBusToBusRoute(startStopId, endStopId) {
         const routes = [];
         const startStop = this.transit.findStop(startStopId);
@@ -127,84 +126,96 @@ class RouteFinder {
         if (!startStop || !endStop) {
             return routes;
         }
-        const busRoutes = this.findBusRoutes([startStopId], [endStopId]);
-        routes.push(...busRoutes.map(br => {
-            if (br.type === 'direct') {
-                const walkDist = 300;
-                const walkTime = calculateWalkDuration(walkDist);
-                const busTime = (br.stopCount || 1) * 2 + this.BUS_WAIT_TIME_MIN;
-                return {
-                    type: 'Bus',
-                    busRoute: br,
-                    estimatedTime: walkTime + busTime,
-                    walkingDistance: walkDist,
-                    boardingStopName: startStop.name_en || `Stop ${br.boardingStop}`,
-                    alightingStopName: endStop.name_en || `Stop ${br.alightingStop}`,
-                    score: this.evaluateRouteScore({ estimatedTime: walkTime + busTime, walkingDistance: walkDist, transfers: 0 })
-                };
-            } else if (br.type === 'transfer') {
-                return { ...br, score: this.evaluateRouteScore(br) };
-            }
-            return null;
-        }).filter(route => route));
-        const MAX_INTERCHANGE_DISTANCE = 2000;
-        const nearbyStartMTRs = this.mtrStations
-            .map(station => ({
-                station,
-                distance: haversineDistance(
-                    parseFloat(startStop.lat), parseFloat(startStop.long),
-                    parseFloat(station.lat), parseFloat(station.long)
-                )
-            }))
-            .filter(m => m.distance <= MAX_INTERCHANGE_DISTANCE)
-            .sort((a, b) => a.distance - b.distance)
-            .slice(0, 2);
-        const nearbyEndMTRs = this.mtrStations
-            .map(station => ({
-                station,
-                distance: haversineDistance(
-                    parseFloat(endStop.lat), parseFloat(endStop.long),
-                    parseFloat(station.lat), parseFloat(station.long)
-                )
-            }))
-            .filter(m => m.distance <= MAX_INTERCHANGE_DISTANCE)
-            .sort((a, b) => a.distance - b.distance)
-            .slice(0, 2);
-        for (const startMTR of nearbyStartMTRs) {
-            for (const endMTR of nearbyEndMTRs) {
-                const firstLegBus = this.findBusRoutes([startStopId], this.transit.getNearbyStops(startMTR.station, MAX_INTERCHANGE_DISTANCE).map(s => s.stop));
-                const mtrRoute = await this.findMTRRoute(startMTR.station.value, endMTR.station.value);
-                const secondLegBus = this.findBusRoutes(this.transit.getNearbyStops(endMTR.station, MAX_INTERCHANGE_DISTANCE).map(s => s.stop), [endStopId]);
-                for (const firstBus of firstLegBus) {
-                    for (const mtr of mtrRoute) {
-                        for (const secondBus of secondLegBus) {
-                            const firstWalk = startMTR.distance;
-                            const secondWalk = endMTR.distance;
-                            const firstBusTime = (firstBus.stopCount || 1) * 2 + this.BUS_WAIT_TIME_MIN;
-                            const mtrTime = mtr.estimatedTime;
-                            const secondBusTime = (secondBus.stopCount || 1) * 2 + this.BUS_WAIT_TIME_MIN;
-                            const totalWalkTime = calculateWalkDuration(firstWalk) + calculateWalkDuration(secondWalk);
-                            const totalTime = firstBusTime + totalWalkTime + mtrTime + secondBusTime;
-                            const route = {
-                                type: 'Bus-MTR-Bus',
-                                firstBusRoute: firstBus,
-                                mtrRoute: mtr.mtrRoute,
-                                secondBusRoute: secondBus,
-                                estimatedTime: totalTime,
-                                walkingDistance: firstWalk + secondWalk,
-                                boardingStopName: startStop.name_en || `Stop ${startStopId}`,
-                                firstInterchange: startMTR.station.value,
-                                secondInterchange: endMTR.station.value,
-                                alightingStopName: endStop.name_en || `Stop ${endStopId}`,
-                                schedules: mtr.schedules,
-                                score: this.evaluateRouteScore({ estimatedTime: totalTime, walkingDistance: firstWalk + secondWalk, transfers: 2 })
-                            };
-                            routes.push(route);
-                        }
+    
+        // Find direct bus routes
+        const directRoutes = this.findBusRoutes([startStopId], [endStopId]);
+        routes.push(...directRoutes.map(br => {
+            const walkDist = 0; // No walking for direct routes
+            const busTime = (br.stopCount || 1) * 2 + this.BUS_WAIT_TIME_MIN;
+            return {
+                type: 'Bus',
+                busRoute: br,
+                estimatedTime: busTime,
+                walkingDistance: walkDist,
+                boardingStopName: startStop.name_en || `Stop ${br.boardingStop}`,
+                alightingStopName: endStop.name_en || `Stop ${br.alightingStop}`,
+                score: this.evaluateRouteScore({ estimatedTime: busTime, walkingDistance: walkDist, transfers: 0 })
+            };
+        }));
+    
+        // Find transfer routes with walking
+        const WALK_RADIUS = 500; // meters
+        const MAX_STOPS_TO_CONSIDER = 20; // Limit to avoid excessive computation
+    
+        // Get all bus routes passing through the start stop
+        const startRoutes = this.transit.routes.filter(route => {
+            const keyO = `${route.route}-O`;
+            const keyI = `${route.route}-I`;
+            return (this.transit.routeStopsMap[keyO] && this.transit.routeStopsMap[keyO].includes(startStopId)) ||
+                   (this.transit.routeStopsMap[keyI] && this.transit.routeStopsMap[keyI].includes(startStopId));
+        });
+    
+        for (const r1 of startRoutes) {
+            for (const dir1 of ['outbound', 'inbound']) {
+                const key1 = `${r1.route}-${dir1 === 'outbound' ? 'O' : 'I'}`;
+                const stops1 = this.transit.routeStopsMap[key1] || [];
+                const startIndex1 = stops1.indexOf(startStopId);
+                if (startIndex1 === -1) continue;
+    
+                // Get subsequent stops in the direction after start stop
+                const subsequentStops = stops1.slice(startIndex1 + 1, startIndex1 + 1 + MAX_STOPS_TO_CONSIDER);
+    
+                for (const alightingStopId of subsequentStops) {
+                    const alightingStop = this.transit.findStop(alightingStopId);
+                    if (!alightingStop) continue;
+    
+                    // Get nearby stops to alighting stop for second leg
+                    const nearbyStops = this.transit.getNearbyStops(alightingStop, WALK_RADIUS).map(s => s.stop);
+    
+                    // Find second leg routes from nearby stops to end stop
+                    const secondLegRoutes = this.findBusRoutes(nearbyStops, [endStopId]);
+    
+                    for (const r2 of secondLegRoutes) {
+                        // Ensure it's a different route or different direction
+                        if (r1.route === r2.route && dir1 === r2.direction) continue;
+    
+                        const boardingStop2 = this.transit.findStop(r2.boardingStop);
+                        const walkingDistance = alightingStopId === r2.boardingStop ? 0 : haversineDistance(
+                            parseFloat(alightingStop.lat), parseFloat(alightingStop.long),
+                            parseFloat(boardingStop2.lat), parseFloat(boardingStop2.long)
+                        );
+    
+                        // Calculate times
+                        const firstLegStopCount = stops1.indexOf(alightingStopId) - startIndex1;
+                        const firstLegTime = (firstLegStopCount * 2) + this.BUS_WAIT_TIME_MIN;
+                        const walkTime = calculateWalkDuration(walkingDistance);
+                        const secondLegTime = (r2.stopCount || 1) * 2 + this.BUS_WAIT_TIME_MIN;
+                        const totalTime = firstLegTime + walkTime + secondLegTime;
+    
+                        routes.push({
+                            type: 'transfer',
+                            firstLeg: {
+                                route: r1.route,
+                                direction: dir1,
+                                boardingStop: startStopId,
+                                alightingStop: alightingStopId,
+                                provider: r1.provider,
+                                stopCount: firstLegStopCount
+                            },
+                            secondLeg: r2,
+                            transferStop: alightingStopId,
+                            walkingDistance: walkingDistance,
+                            estimatedTime: totalTime,
+                            boardingStopName: startStop.name_en || `Stop ${startStopId}`,
+                            alightingStopName: endStop.name_en || `Stop ${endStopId}`,
+                            score: this.evaluateRouteScore({ estimatedTime: totalTime, walkingDistance: walkingDistance, transfers: 1 })
+                        });
                     }
                 }
             }
         }
+    
+        // Optional: Add taxi route if no routes found
         if (!routes.length) {
             const taxiRoute = this.calculateTaxiRoute(startStop, endStop);
             if (taxiRoute) {
@@ -212,6 +223,7 @@ class RouteFinder {
                 routes.push(taxiRoute);
             }
         }
+    
         return routes.sort((a, b) => a.score - b.score).slice(0, 5);
     }
 
