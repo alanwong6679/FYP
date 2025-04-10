@@ -350,6 +350,13 @@ app.get('/api/route-stops', (req, res) => {
     });
 });
 
+app.get('/api/route-fees', (req, res) => {
+    res.sendFile(path.join(__dirname, 'static', 'data', 'route_fee_data.json'), (err) => {
+        if (err) res.status(500).json({ error: 'Failed to load route fee data' });
+    });
+});
+
+
 // Favorites Endpoints with Consent Check
 app.get('/api/favorites', (req, res) => {
     const consented = req.cookies.consented === 'true';
