@@ -2,8 +2,7 @@ body {
     font-family: 'Roboto', sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f4f4f9;
-    background-image: url("/static/images/mtr.png");
+    background-color: #333;
     color: #333;
     display: flex;
     justify-content: center;
