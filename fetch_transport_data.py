@@ -4,6 +4,8 @@ import time
 import os
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import pandas as pd
+import pyodbc
 
 # Constants
 CACHE_EXPIRY = 24 * 60 * 60  # Cache expiry in seconds (24 hours)
@@ -16,13 +18,25 @@ CTB_ROUTE_STOP_BASE_URL = "https://rt.data.gov.hk/v2/transport/citybus/route-sto
 MINIBUS_STOPS_BASE_URL = "https://data.etagmb.gov.hk/stop/"
 KMB_ROUTE_STOP_URL = "https://data.etabus.gov.hk/v1/transport/kmb/route-stop"
 MINIBUS_STOP_ROUTE_BASE_URL = "https://data.etagmb.gov.hk/stop-route/"
-BUS_FARE_URL = "https://static.data.gov.hk/td/routes-fares-geojson/JSON_BUS.json"
-GMB_FARE_URL = "https://static.data.gov.hk/td/routes-fares-geojson/JSON_GMB.json"
+BUS_FARE_MDB_URL = "https://static.data.gov.hk/td/routes-and-fares/FARE_BUS.mdb"
+BUS_FARE_MDB = "FARE_BUS.mdb"  # Local file path
 ROUTE_JSON_FILE = "static/data/route_data.json"
 STOP_JSON_FILE = "static/data/stop_data.json"
 ROUTE_STOP_JSON_FILE = "static/data/route-stop_data.json"
 ROUTE_FEE_JSON_FILE = "static/data/route_fee_data.json"
 MAX_WORKERS = 5
+
+# Function to download .mdb file
+def download_mdb_file(url, filename):
+    if not os.path.exists(filename) or (time.time() - os.path.getmtime(filename)) > CACHE_EXPIRY:
+        print(f"Downloading {url} to {filename}...")
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        with open(filename, 'wb') as f:
+            f.write(response.content)
+        print(f"Downloaded {filename}")
+    else:
+        print(f"{filename} is up-to-date, skipping download")
 
 # Function to fetch data with retry logic and BOM handling
 def fetch_with_retry(url, retries=5, backoff=1000):
@@ -57,6 +71,20 @@ def fetch_with_retry(url, retries=5, backoff=1000):
                 return None
             time.sleep(backoff * (2 ** i) / 1000)
     return None
+
+# Function to read .mdb file (Windows-specific with pyodbc)
+def read_mdb_file(file_path, table_name):
+    try:
+        conn_str = f"DRIVER={{Microsoft Access Driver (*.mdb, *.accdb)}};DBQ={file_path};"
+        conn = pyodbc.connect(conn_str)
+        query = f"SELECT * FROM {table_name}"
+        df = pd.read_sql(query, conn)
+        conn.close()
+        print(f"Loaded {file_path} table {table_name} with {len(df)} rows")
+        return df
+    except pyodbc.Error as e:
+        print(f"Error loading {file_path}: {e}")
+        return None
 
 # Process KMB data
 def process_kmb_data(data):
@@ -154,7 +182,7 @@ def process_minibus_data():
     print(f"Minibus processed: {len(unique_routes)} unique routes")
     return unique_routes
 
-# Process stop data (full implementation)
+# Process stop data
 def process_stop_data(ctb_routes, minibus_routes):
     stop_data = {
         'kmb_stops': {},
@@ -177,7 +205,7 @@ def process_stop_data(ctb_routes, minibus_routes):
     else:
         print("Failed to fetch KMB stops")
 
-    # Fetch CTB stops (using route data to get stop IDs)
+    # Fetch CTB stops
     print("Fetching CTB stops...")
     ctb_stops_map = {}
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
@@ -254,90 +282,50 @@ def process_route_stop_data(kmb_routes, ctb_routes, minibus_routes):
         'timestamp': int(time.time() * 1000)
     }
 
-# Process route fare data with multithreading
-def process_route_fee_data():
+# Process route fare data using FARE_BUS.mdb only
+def process_route_fee_data(kmb_routes, ctb_routes, minibus_routes):
     route_fee_data = {
         'kmb_routes': [],
         'ctb_routes': [],
-        'minibus_routes': [],
+        'minibus_routes': [],  # Empty since no GMB fare data
         'timestamp': int(time.time() * 1000)
     }
 
-    def fetch_bus_fare():
-        print("Fetching Bus fare data...")
-        response = fetch_with_retry(BUS_FARE_URL)
-        if not response or 'features' not in response:
-            print(f"Bus fare data invalid or no response: {json.dumps(response, indent=2)[:1000] if response else 'None'}")
-            return None
-        print(f"Bus fare data fetched with {len(response['features'])} features")
-        return response
+    # Download FARE_BUS.mdb
+    download_mdb_file(BUS_FARE_MDB_URL, BUS_FARE_MDB)
 
-    def fetch_gmb_fare():
-        print("Fetching GMB fare data...")
-        response = fetch_with_retry(GMB_FARE_URL)
-        if not response or 'features' not in response:
-            print(f"GMB fare data invalid or no response: {json.dumps(response, indent=2)[:1000] if response else 'None'}")
-            return None
-        print(f"GMB fare data fetched with {len(response['features'])} features")
-        return response
+    # Load bus fare data from FARE_BUS.mdb
+    bus_fare_df = read_mdb_file(BUS_FARE_MDB, "FARE_BUS")
+    if bus_fare_df is not None:
+        try:
+            for _, row in bus_fare_df.iterrows():
+                provider = row.get('COMPANY_CODE', '').strip()  # e.g., 'KMB', 'CTB'
+                if provider not in ['KMB', 'CTB']:
+                    continue  # Skip non-KMB/CTB
 
-    with ThreadPoolExecutor(max_workers=2) as executor:
-        future_bus = executor.submit(fetch_bus_fare)
-        future_gmb = executor.submit(fetch_gmb_fare)
+                route_id = str(row.get('ROUTE_ID', ''))
+                route_seq = int(row.get('ROUTE_SEQ', 1))
+                bound = 'O' if route_seq == 1 else 'I' if route_seq == 2 else str(route_seq)
+                on_seq = int(row.get('ON_SEQ', 1))
+                price = f"HK${float(row.get('PRICE', '0.00')):.2f}"  # Convert PRICE to HK$ format
 
-        bus_fare_response = future_bus.result()
-        if bus_fare_response:
-            try:
-                for feature in bus_fare_response['features']:
-                    props = feature['properties']
-                    provider = props['companyCode']
-                    route_seq = props['routeSeq']
-                    if provider in ['KMB', 'CTB']:
-                        bound = 'O' if route_seq == 1 else 'I' if route_seq == 2 else route_seq
-                    else:
-                        bound = route_seq
-                    
-                    route_entry = {
-                        'route': props['routeNameE'],
-                        'orig_en': props['locStartNameE'],
-                        'dest_en': props['locEndNameE'],
-                        'full_fare': props['fullFare'],
-                        'provider': provider,
-                        'seq': props['stopSeq'],
-                        'bound': bound
-                    }
-                    
-                    if provider == 'KMB':
-                        route_fee_data['kmb_routes'].append(route_entry)
-                    elif provider == 'CTB':
-                        route_fee_data['ctb_routes'].append(route_entry)
-                print(f"Bus fare data processed: {len(bus_fare_response['features'])} entries")
-                print(f"KMB routes: {len(route_fee_data['kmb_routes'])}, CTB routes: {len(route_fee_data['ctb_routes'])}")
-            except Exception as err:
-                print(f"Error processing Bus fare data: {err}")
+                route_entry = {
+                    'route': route_id,
+                    'orig_en': next((r['orig_en'] for r in (kmb_routes if provider == 'KMB' else ctb_routes) if r['route'] == route_id and r['bound'] == bound), 'Unknown'),
+                    'dest_en': next((r['dest_en'] for r in (kmb_routes if provider == 'KMB' else ctb_routes) if r['route'] == route_id and r['bound'] == bound), 'Unknown'),
+                    'full_fare': price,  # Use PRICE from FARE_BUS.mdb
+                    'provider': provider,
+                    'seq': on_seq,
+                    'bound': bound
+                }
 
-        gmb_fare_response = future_gmb.result()
-        if gmb_fare_response:
-            try:
-                for feature in gmb_fare_response['features']:
-                    props = feature['properties']
-                    route_seq = props['routeSeq']
-                    bound = route_seq
-                    
-                    route_entry = {
-                        'route': props['routeNameE'],
-                        'orig_en': props['locStartNameE'],
-                        'dest_en': props['locEndNameE'],
-                        'full_fare': props['fullFare'],
-                        'provider': 'minibus',
-                        'seq': props['stopSeq'],
-                        'bound': bound
-                    }
-                    
-                    route_fee_data['minibus_routes'].append(route_entry)
-                print(f"GMB fare data processed: {len(gmb_fare_response['features'])} entries")
-            except Exception as err:
-                print(f"Error processing GMB fare data: {err}")
+                if provider == 'KMB':
+                    route_fee_data['kmb_routes'].append(route_entry)
+                elif provider == 'CTB':
+                    route_fee_data['ctb_routes'].append(route_entry)
+            print(f"Processed bus fares: KMB={len(route_fee_data['kmb_routes'])}, CTB={len(route_fee_data['ctb_routes'])}")
+        except Exception as err:
+            print(f"Error processing bus fare data from {BUS_FARE_MDB}: {err}")
 
     print(f"Route fee data summary: KMB={len(route_fee_data['kmb_routes'])}, CTB={len(route_fee_data['ctb_routes'])}, Minibus={len(route_fee_data['minibus_routes'])}")
     return route_fee_data
@@ -363,7 +351,7 @@ def is_cache_valid(file_path):
         print(f"Error reading cache file {file_path}: {err}")
         return False
 
-# Fetch and store data with multithreading
+# Fetch and store data
 def fetch_and_store_data():
     os.makedirs(os.path.dirname(ROUTE_JSON_FILE), exist_ok=True)
     os.makedirs(os.path.dirname(STOP_JSON_FILE), exist_ok=True)
@@ -431,7 +419,7 @@ def fetch_and_store_data():
     print(f"Route-stop data saved to {ROUTE_STOP_JSON_FILE}")
 
     # Route-fee data
-    route_fee_data = process_route_fee_data()
+    route_fee_data = process_route_fee_data(route_data['kmb_routes'], route_data['ctb_routes'], route_data['minibus_routes'])
     with open(ROUTE_FEE_JSON_FILE, 'w', encoding='utf-8') as f:
         json.dump(route_fee_data, f, ensure_ascii=False, indent=4)
     print(f"Route-fee data saved to {ROUTE_FEE_JSON_FILE}")
