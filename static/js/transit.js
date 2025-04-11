@@ -1,5 +1,5 @@
 /* transit.js */
-const API_KEY = 'AIzaSyAibBUUt2uhc8v_82GS3Gxx2TRGyuUjsuc'; // Replace with a new, secure key
+const API_KEY = 'AIzaSyBBY8WRPKMG0sPNFkHAYNcCwkwTn4T5jGw'; // Replace with a new, secure key
 let map;
 let routeMarkers = [];
 let routePolyline = null;
@@ -11,7 +11,6 @@ let ctbRouteList = null;
 let minibusRouteList = null;
 let stopData = null;
 let routeStopData = null;
-let routeFeeData = null;
 let selectedRoute = null;
 let selectedBound = null;
 let selectedProvider = null;
@@ -119,22 +118,19 @@ async function fetchWithRetry(url, options = {}, retries = 5, backoff = 1000) {
 async function loadRouteData() {
     const loadingMessage = document.getElementById('loadingMessage');
     try {
-        const [routeResponse, stopResponse, routeStopResponse, feeResponse] = await Promise.all([
+        const [routeResponse, stopResponse, routeStopResponse] = await Promise.all([
             fetch('/api/routes'),
             fetch('/api/stops'),
-            fetch('/api/route-stops'),
-            fetch('/api/route-fees')
+            fetch('/api/route-stops')
         ]);
 
         if (!routeResponse.ok) throw new Error(`Failed to fetch route data: ${routeResponse.statusText}`);
         if (!stopResponse.ok) throw new Error(`Failed to fetch stop data: ${stopResponse.statusText}`);
         if (!routeStopResponse.ok) throw new Error(`Failed to fetch route-stop data: ${routeStopResponse.statusText}`);
-        if (!feeResponse.ok) throw new Error(`Failed to fetch route fee data: ${feeResponse.statusText}`);
 
         const routeData = await routeResponse.json();
         stopData = await stopResponse.json();
         routeStopData = await routeStopResponse.json();
-        routeFeeData = await feeResponse.json();
 
         kmbRouteList = routeData.kmb_routes || [];
         ctbRouteList = routeData.ctb_routes || [];
@@ -149,13 +145,10 @@ async function loadRouteData() {
         console.log("KMB route-stops loaded:", Object.keys(routeStopData.kmb_route_stops).length);
         console.log("CTB route-stops loaded:", Object.keys(routeStopData.ctb_route_stops).length);
         console.log("Minibus route-stops loaded:", Object.keys(routeStopData.minibus_route_stops).length);
-        console.log("KMB route fees loaded:", routeFeeData.kmb_routes.length);
-        console.log("CTB route fees loaded:", routeFeeData.ctb_routes.length);
-        console.log("Minibus route fees loaded:", routeFeeData.minibus_routes.length);
 
         if (kmbRouteList.length || ctbRouteList.length || minibusRouteList.length) {
             if (loadingMessage) {
-                loadingMessage.textContent = "Route, stop, route-stop, and fee data loaded successfully!";
+                loadingMessage.textContent = "Route, stop, and route-stop data loaded successfully!";
                 setTimeout(() => loadingMessage.style.display = 'none', 2000);
             }
         } else if (loadingMessage) {
@@ -163,7 +156,7 @@ async function loadRouteData() {
         }
     } catch (err) {
         console.error("Failed to load data:", err);
-        showError("Failed to load route, stop, route-stop, or fee data from server.");
+        showError("Failed to load route, stop, or route-stop data from server.");
         if (loadingMessage) loadingMessage.textContent = "Failed to load data.";
     }
 }
@@ -373,46 +366,21 @@ function displayFavoriteRoutes() {
 function getFormattedStops(stopsForRoute) {
     return stopsForRoute.map((item, index) => {
         const stop = getStopDetails(selectedProvider, item.stop || item.stop_id);
-        if (!stop) {
-            console.warn(`No stop details for ${selectedProvider} stop ${item.stop || item.stop_id}`);
-            return null;
-        }
+        if (!stop) return null;
         const coords = { lat: stop.lat, lng: stop.long };
-        if (isNaN(coords.lat) || isNaN(coords.lng)) {
-            console.warn(`Invalid coords for ${stop.name_en}: lat=${coords.lat}, lng=${coords.lng}`);
-            return null;
-        }
-
-        // Find fare using route, bound, and provider (case-insensitive provider match)
-        let fare = "N/A";
-        const feeList = routeFeeData[`${selectedProvider}_routes`];
-        if (feeList) {
-            const feeEntry = feeList.find(f => 
-                f.route === selectedRoute && 
-                f.bound === selectedBound && 
-                f.provider.toLowerCase() === selectedProvider.toLowerCase()
-            );
-            fare = feeEntry ? `$${feeEntry.full_fare.toFixed(1)}` : "N/A";
-            if (!feeEntry) {
-                console.log(`No fare found for ${selectedRoute} (${selectedBound}) in ${selectedProvider}`);
-            }
-        } else {
-            console.warn(`No fee list for ${selectedProvider}`);
-        }
-
+        if (isNaN(coords.lat) || isNaN(coords.lng)) return null;
         return {
             name: stop.name_en,
             lat: coords.lat,
             lng: coords.lng,
             stopId: item.stop || item.stop_id,
-            index: index + 1,
-            fare: fare
+            index: index + 1
         };
     }).filter(s => s !== null);
 }
 
 function selectRoute(route) {
-    if (!stopData || !routeStopData || !routeFeeData) {
+    if (!stopData || !routeStopData) {
         showError("Route data not loaded yet. Please wait...");
         loadRouteData().then(() => selectRoute(route));
         return;
@@ -460,10 +428,10 @@ function selectRoute(route) {
 function displayStopList(stops) {
     const stopListUl = document.getElementById("stopList");
     if (!stopListUl) return;
-    stopListUl.innerHTML = '';
+    stopListUl.innerHTML = ''; // Clear existing content
     stops.forEach(stop => {
         const li = document.createElement('li');
-        li.textContent = `${stop.index}. ${stop.name} - ${stop.fare}`;
+        li.textContent = `${stop.index}. ${stop.name}`;
         li.addEventListener('click', () => {
             const marker = stopMarkers[stop.stopId];
             if (marker) {
@@ -495,7 +463,7 @@ async function displayRouteOnMap(stops) {
             totalETAs++;
             const etaTime = new Date(eta.eta);
             if (etaTime && !isNaN(etaTime.getTime())) {
-                const timeDiff = (etaTime - now) / 60000;
+                const timeDiff = (etaTime - now) / 60000; // Minutes until arrival
                 console.log(`ETA for ${eta.route}: timeDiff=${timeDiff.toFixed(2)}, diff=${eta.diff}`);
                 if (timeDiff < -5) delayedETAs++;
                 if (timeDiff >= -1 && eta.diff !== undefined && eta.diff >= 0) {
@@ -511,29 +479,29 @@ async function displayRouteOnMap(stops) {
 
     const isOffPeak = currentHour >= 0 && currentHour < 6;
     let routeStatus = 'free';
-    let strokeColor = '#00FF00';
+    let strokeColor = '#00FF00'; // Green
 
     if (isOffPeak) {
         if (avgInterval < 3 || busyScore > 0.5) {
             routeStatus = 'busy';
-            strokeColor = '#FF0000';
+            strokeColor = '#FF0000'; // Red
         } else if (avgInterval < 4 || busyScore > 0.35) {
             routeStatus = 'busy half';
-            strokeColor = '#FF8C00';
+            strokeColor = '#FF8C00'; // Dark Orange
         } else if (avgInterval < 6 || busyScore > 0.2) {
             routeStatus = 'moderate';
-            strokeColor = '#FFA500';
+            strokeColor = '#FFA500'; // Light Orange
         }
     } else {
         if (avgInterval < 5 || busyScore > 0.3) {
             routeStatus = 'busy';
-            strokeColor = '#FF0000';
+            strokeColor = '#FF0000'; // Red
         } else if (avgInterval < 7 || busyScore > 0.2) {
             routeStatus = 'busy half';
-            strokeColor = '#FF8C00';
+            strokeColor = '#FF8C00'; // Dark Orange
         } else if (avgInterval < 10 || busyScore > 0.1) {
             routeStatus = 'moderate';
-            strokeColor = '#FFA500';
+            strokeColor = '#FFA500'; // Light Orange
         }
     }
 
@@ -549,7 +517,7 @@ async function displayRouteOnMap(stops) {
 
         marker.stopId = stop.stopId;
         const infoWindow = new google.maps.InfoWindow({
-            content: `<strong>${stop.name}</strong><br/>Fare: ${stop.fare}<br/>Loading ETA...`
+            content: `<strong>${stop.name}</strong><br/>Loading ETA...`
         });
 
         marker.infoWindow = infoWindow;
@@ -572,7 +540,7 @@ async function displayRouteOnMap(stops) {
                     return `${providerShort} ${bus.route}: ${displayTime}${bus.remark_en ? ' - ' + bus.remark_en : ''}`;
                 }).join('<br>')
                 : "No ETA available.";
-            infoWindow.setContent(`<strong>${stop.name}</strong><br/>Fare: ${stop.fare}<br/>${etaInfo}`);
+            infoWindow.setContent(`<strong>${stop.name}</strong><br/>${etaInfo}`);
         });
 
         stopMarkers[stop.stopId] = marker;

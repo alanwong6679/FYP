@@ -17,7 +17,8 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "ejs": "^3.1.10",
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "pandas": "^0.0.3"
   },
   "repository": {
     "type": "git",
