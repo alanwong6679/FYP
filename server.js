@@ -22,7 +22,7 @@ app.use('/static', express.static(path.join(__dirname, 'static')));
 app.use(express.static(path.join(__dirname, 'views')));
 app.use(express.json());
 app.use(cookieParser());
-const PORT = process.env.PORT || 2000;
+const PORT = process.env.PORT || 5000;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -349,6 +349,13 @@ app.get('/api/route-stops', (req, res) => {
         if (err) res.status(500).json({ error: 'Failed to load route-stop data' });
     });
 });
+
+app.get('/api/route-fees', (req, res) => {
+    res.sendFile(path.join(__dirname, 'static', 'data', 'route_fee_data.json'), (err) => {
+        if (err) res.status(500).json({ error: 'Failed to load route fee data' });
+    });
+});
+
 
 // Favorites Endpoints with Consent Check
 app.get('/api/favorites', (req, res) => {

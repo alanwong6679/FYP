@@ -752,76 +752,22 @@ class RouteFinder {
     }
 
     async findMTRRoute(start, end) {
-        const routes = [];
         const response = await this.fetchMTRSchedule(start, end);
         if (response.error || !response.bestRoute) {
             console.error("MTR Route Error:", response.error || "No route found", "from", start, "to", end);
             return [];
         }
-    
-        // Add best route
-        const bestRouteTime = response.bestRoute.totalDuration || this.calculateMTRTime(response.bestRoute);
-        routes.push({
+        
+        return [{
             type: 'MTR',
             mtrRoute: response.bestRoute,
-            estimatedTime: bestRouteTime,
+            estimatedTime: response.bestRoute.totalDuration || this.calculateMTRTime(response.bestRoute),
             schedules: response.schedules,
             currentStation: start,
-            destinationStation: end,
-            score: this.evaluateRouteScore({
-                estimatedTime: bestRouteTime,
-                walkingDistance: 0,
-                transfers: response.bestRoute.interchanges?.length || 0
-            })
-        });
-    
-        // Alternative 1: Add an extra transfer
-        if (response.bestRoute.interchanges?.length > 0) {
-            const altRoute = JSON.parse(JSON.stringify(response.bestRoute)); // Deep copy
-            // Ensure totalDuration is a valid number before incrementing
-            altRoute.totalDuration = typeof altRoute.totalDuration === 'number' ? altRoute.totalDuration : bestRouteTime;
-            altRoute.interchanges.push(altRoute.interchanges[0]); // Duplicate an interchange
-            altRoute.totalDuration += 5; // Add interchange delay
-            routes.push({
-                type: 'MTR',
-                mtrRoute: altRoute,
-                estimatedTime: altRoute.totalDuration,
-                schedules: response.schedules,
-                currentStation: start,
-                destinationStation: end,
-                score: this.evaluateRouteScore({
-                    estimatedTime: altRoute.totalDuration,
-                    walkingDistance: 0,
-                    transfers: altRoute.interchanges.length
-                })
-            });
-        }
-    
-        // Alternative 2: Use a different line
-        const altLineMap = { 'ISL': 'TWL', 'TWL': 'ISL', 'AEL': 'TCL', 'TCL': 'AEL' };
-        if (response.bestRoute.route[0] in altLineMap) {
-            const altRoute = JSON.parse(JSON.stringify(response.bestRoute));
-            // Ensure totalDuration is a valid number before incrementing
-            altRoute.totalDuration = typeof altRoute.totalDuration === 'number' ? altRoute.totalDuration : bestRouteTime;
-            altRoute.route[0] = altLineMap[response.bestRoute.route[0]];
-            altRoute.totalDuration += 3; // Assume slightly longer
-            routes.push({
-                type: 'MTR',
-                mtrRoute: altRoute,
-                estimatedTime: altRoute.totalDuration,
-                schedules: response.schedules,
-                currentStation: start,
-                destinationStation: end,
-                score: this.evaluateRouteScore({
-                    estimatedTime: altRoute.totalDuration,
-                    walkingDistance: 0,
-                    transfers: altRoute.interchanges?.length || 0
-                })
-            });
-        }
-    
-        return routes.slice(0, 3);
+            destinationStation: end
+        }];
     }
+
     findNearestMTR(point) {
         if (!point?.lat || !point?.long) return { station: null, distance: Infinity };
         const pointLat = parseFloat(point.lat);
@@ -844,15 +790,15 @@ class RouteFinder {
     calculateMTRSegmentDetails(startStationCode, endStationCode) {
         const startCoords = this.getMTRStationCoords(startStationCode);
         const endCoords = this.getMTRStationCoords(endStationCode);
-    
+
         if (!startCoords || !endCoords) {
             console.warn(`Missing coordinates for MTR segment: ${startStationCode} -> ${endStationCode}`);
             return { distance: undefined, duration: undefined };
         }
-    
+
         const distance = haversineDistance(startCoords.lat, startCoords.long, endCoords.lat, endCoords.long);
         if (distance === 0) return { distance: 0, duration: 0 };
-    
+
         const durationSeconds = distance / this.MTR_AVG_SPEED_MS;
         const durationMinutes = Math.max(1, Math.round(durationSeconds / 60));
         return { distance: Math.round(distance), duration: durationMinutes };
@@ -1530,7 +1476,8 @@ function generateDetailedSequenceHtml(route) {
 
     sequenceHtml += `<span class="sequence-item arrived">Arrived</span>`;
     return sequenceHtml;
-}function displayRouteSummaries() {
+}
+function displayRouteSummaries() {
     const optionsDiv = document.getElementById('route-options');
     optionsDiv.innerHTML = '';
     const now = new Date();
@@ -1569,7 +1516,7 @@ function generateDetailedSequenceHtml(route) {
     });
 
     showSummaries();
-    displayRouteAnalysisChart(routesToDisplay);
+    displayRouteAnalysisChart(routesToDisplay); // Pass the 5 routes
 }
 
 function displayRouteDetails(routeIndex) {
@@ -1777,5 +1724,3 @@ window.onload = async () => {
         backdrop.addEventListener('click', showSummaries);
     }
 };
-
-
