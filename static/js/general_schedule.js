@@ -752,21 +752,67 @@ class RouteFinder {
     }
 
     async findMTRRoute(start, end) {
+        const routes = [];
         const response = await this.fetchMTRSchedule(start, end);
         if (response.error || !response.bestRoute) {
             console.error("MTR Route Error:", response.error || "No route found", "from", start, "to", end);
             return [];
-        }
-        
-        return [{
-            type: 'MTR',
-            mtrRoute: response.bestRoute,
+        }// Add best route
+    routes.push({
+        type: 'MTR',
+        mtrRoute: response.bestRoute,
+        estimatedTime: response.bestRoute.totalDuration || this.calculateMTRTime(response.bestRoute),
+        schedules: response.schedules,
+        currentStation: start,
+        destinationStation: end,
+        score: this.evaluateRouteScore({
             estimatedTime: response.bestRoute.totalDuration || this.calculateMTRTime(response.bestRoute),
+            walkingDistance: 0,
+            transfers: response.bestRoute.interchanges?.length || 0
+        })
+    });
+    // Alternative 1: Add an extra transfer
+    if (response.bestRoute.interchanges?.length > 0) {
+        const altRoute = JSON.parse(JSON.stringify(response.bestRoute)); // Deep copy
+        altRoute.interchanges.push(altRoute.interchanges[0]); // Duplicate an interchange
+        altRoute.totalDuration += 5; // Add interchange delay
+        routes.push({
+            type: 'MTR',
+            mtrRoute: altRoute,
+            estimatedTime: altRoute.totalDuration,
             schedules: response.schedules,
             currentStation: start,
-            destinationStation: end
-        }];
+            destinationStation: end,
+            score: this.evaluateRouteScore({
+                estimatedTime: altRoute.totalDuration,
+                walkingDistance: 0,
+                transfers: altRoute.interchanges.length
+            })
+        });
     }
+       // Alternative 2: Use a different line (simplified)
+    const altLineMap = { 'ISL': 'TWL', 'TWL': 'ISL', 'AEL': 'TCL', 'TCL': 'AEL' }; // Example mapping
+    if (response.bestRoute.route[0] in altLineMap) {
+        const altRoute = JSON.parse(JSON.stringify(response.bestRoute));
+        altRoute.route[0] = altLineMap[response.bestRoute.route[0]];
+        altRoute.totalDuration += 3; // Assume slightly longer
+        routes.push({
+            type: 'MTR',
+            mtrRoute: altRoute,
+            estimatedTime: altRoute.totalDuration,
+            schedules: response.schedules,
+            currentStation: start,
+            destinationStation: end,
+            score: this.evaluateRouteScore({
+                estimatedTime: altRoute.totalDuration,
+                walkingDistance: 0,
+                transfers: altRoute.interchanges?.length || 0
+            })
+        });
+    }
+
+    return routes.slice(0, 3);
+}
 
     findNearestMTR(point) {
         if (!point?.lat || !point?.long) return { station: null, distance: Infinity };
@@ -786,6 +832,9 @@ class RouteFinder {
         }
         return closest;
     }
+
+
+
 
     calculateMTRSegmentDetails(startStationCode, endStationCode) {
         const startCoords = this.getMTRStationCoords(startStationCode);
@@ -1724,111 +1773,3 @@ window.onload = async () => {
         backdrop.addEventListener('click', showSummaries);
     }
 };
-
-function displayRouteAnalysisChart(routesToDisplay) {
-    const ctx = document.getElementById('routeAnalysisChart')?.getContext('2d');
-    if (!ctx) {
-        console.error("Canvas element 'routeAnalysisChart' not found.");
-        return;
-    }
-
-    if (!routesToDisplay || routesToDisplay.length === 0) {
-        console.warn("No routes to analyze.");
-        ctx.canvas.nextSibling?.remove();
-        const noDataLabel = document.createElement('div');
-        noDataLabel.textContent = "No data";
-        noDataLabel.style.fontSize = "10px";
-        noDataLabel.style.color = "#555";
-        ctx.canvas.after(noDataLabel);
-        return;
-    }}
-    const routeLabels = routesToDisplay.map((_, i) => `Route ${i + 1}`);
-    const times = routesToDisplay.map(route => route.estimatedTime || 0);
-    const walkDistances = routesToDisplay.map(route => route.walkingDistance || 0);
-
-    // Normalize and score routes (similar to evaluateRouteScore but simpler)
-    const maxTime = Math.max(...times, 1); // Avoid division by zero
-    const maxWalk = Math.max(...walkDistances, 1);
-    const scores = routesToDisplay.map((route, i) => {
-        const timeScore = times[i] / maxTime; // Lower is better (0-1)
-        const walkScore = walkDistances[i] / maxWalk; // Lower is better (0-1)
-        return 0.6 * timeScore + 0.4 * walkScore; // Weighted: 60% time, 40% walk
-    });
-// Find the best route (lowest combined score)
-const bestRouteIndex = scores.indexOf(Math.min(...scores));
-const backgroundColors = times.map((_, i) =>
-    i === bestRouteIndex ? 'rgba(75, 192, 192, 0.8)' : 'rgba(54, 162, 235, 0.6)'
-);
-const borderColors = times.map((_, i) =>
-    i === bestRouteIndex ? 'rgba(75, 192, 192, 1)' : 'rgba(54, 162, 235, 1)'
-);
-
-// Destroy existing chart
-if (window.routeChart instanceof Chart) {
-    window.routeChart.destroy();
-}
-// Compact pie chart
-window.routeChart = new Chart(ctx, {
-    type: 'pie',
-    data: {
-        labels: routeLabels,
-        datasets: [
-            {
-                label: 'Time (min)',
-                data: times,
-                backgroundColor: backgroundColors,
-                borderColor: borderColors,
-                borderWidth: 1
-            },
-            {
-                label: 'Walk (m)',
-                data: walkDistances,
-                hidden: true, // Toggle via legend
-                backgroundColor: backgroundColors,
-                borderColor: borderColors,
-                borderWidth: 1
-            }
-        ]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        plugins: {
-            legend: {
-                position: 'bottom',
-                labels: {
-                    font: { size: 8 }, // Tiny legend
-                    padding: 2
-                },
-                onClick: (e, legendItem, legend) => {
-                    const index = legendItem.datasetIndex;
-                    const ci = legend.chart;
-                    ci.getDatasetMeta(index).hidden = !ci.getDatasetMeta(index).hidden;
-                    ci.update();
-                }
-            },
-            tooltip: {
-                callbacks: {
-                    label: function (context) {
-                        const datasetLabel = context.dataset.label || '';
-                        const value = context.parsed;
-                        return `${datasetLabel}: ${value}${datasetLabel.includes('Time') ? ' min' : ' m'}`;
-                    }
-                }
-            },
-            title: {
-                display: true,
-                text: 'Route Comparison',
-                font: { size: 10 }
-            }
-        }
-    }
-});
-// Small label for best route
-ctx.canvas.nextSibling?.remove();
-const bestLabel = document.createElement('div');
-bestLabel.textContent = `Best: Route ${bestRouteIndex + 1} (${times[bestRouteIndex]} min, ${walkDistances[bestRouteIndex]} m)`;
-bestLabel.style.fontSize = "9px";
-bestLabel.style.textAlign = "center";
-bestLabel.style.marginTop = "2px";
-ctx.canvas.after(bestLabel);
