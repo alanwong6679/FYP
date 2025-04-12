@@ -3312,6 +3312,20 @@
             "provider": "kmb"
         },
         {
+            "route": "87C",
+            "bound": "O",
+            "orig_en": "KAM YING COURT",
+            "dest_en": "HUNG HOM STATION",
+            "provider": "kmb"
+        },
+        {
+            "route": "87C",
+            "bound": "I",
+            "orig_en": "HUNG HOM STATION",
+            "dest_en": "KAM YING COURT",
+            "provider": "kmb"
+        },
+        {
             "route": "87D",
             "bound": "O",
             "orig_en": "KAM YING COURT",
@@ -18799,5 +18813,5 @@
             "provider": "minibus"
         }
     ],
-    "timestamp": 1744395277451
+    "timestamp": 1744471704340
 }

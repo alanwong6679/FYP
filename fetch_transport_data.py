@@ -4,6 +4,11 @@ import time
 import os
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import tempfile
+import shutil
+import signal
+import sys
+from contextlib import contextmanager
 
 # Constants
 CACHE_EXPIRY = 24 * 60 * 60  # Cache expiry in seconds (24 hours)
@@ -23,6 +28,19 @@ STOP_JSON_FILE = "static/data/stop_data.json"
 ROUTE_STOP_JSON_FILE = "static/data/route-stop_data.json"
 ROUTE_FEE_JSON_FILE = "static/data/route_fee_data.json"
 MAX_WORKERS = 10
+
+# Context manager for interrupt handling
+@contextmanager
+def timeout_handler():
+    def signal_handler(sig, frame):
+        print("\nReceived interrupt signal, shutting down gracefully...")
+        raise SystemExit(0)
+    
+    signal.signal(signal.SIGINT, signal_handler)
+    try:
+        yield
+    finally:
+        signal.signal(signal.SIGINT, signal.SIG_DFL)  # Restore default handler
 
 # Function to fetch data with retry logic and BOM handling
 def fetch_with_retry(url, retries=5, backoff=1000):
@@ -61,7 +79,7 @@ def fetch_with_retry(url, retries=5, backoff=1000):
             time.sleep(backoff * (2 ** i) / 1000)
     return None
 
-# Process KMB data
+# Process KMB data (unchanged)
 def process_kmb_data(data):
     if not data:
         print("No KMB data to process")
@@ -86,7 +104,7 @@ def process_kmb_data(data):
     print(f"KMB processed: {len(unique_routes)} unique routes")
     return unique_routes
 
-# Process CTB data
+# Process CTB data (unchanged)
 def process_ctb_data(data):
     if not data:
         print("No CTB data to process")
@@ -113,7 +131,7 @@ def process_ctb_data(data):
     print(f"CTB processed: {len(unique_routes)} unique routes")
     return unique_routes
 
-# Process Minibus data
+# Process Minibus data (unchanged)
 def process_minibus_data():
     minibus_route_response = fetch_with_retry(MINIBUS_URL)
     if not minibus_route_response or 'data' not in minibus_route_response:
@@ -157,7 +175,7 @@ def process_minibus_data():
     print(f"Minibus processed: {len(unique_routes)} unique routes")
     return unique_routes
 
-# Process stop data
+# Process stop data (provided version, cleaned up)
 def process_stop_data(ctb_routes, minibus_routes):
     stop_data = {
         'kmb_stops': {},
@@ -165,6 +183,52 @@ def process_stop_data(ctb_routes, minibus_routes):
         'minibus_stops': {},
         'timestamp': int(time.time() * 1000)
     }
+
+    # Validate CTB route IDs
+    print("Validating CTB route IDs...")
+    ctb_validation_start = time.time()
+    ctb_route_response = fetch_with_retry(CTB_URL)
+    valid_ctb_route_ids = set()
+    if ctb_route_response and 'data' in ctb_route_response:
+        for route in ctb_route_response['data']:
+            valid_ctb_route_ids.add(route.get('route'))
+    
+    valid_ctb_routes = [route for route in ctb_routes if route.get('route') in valid_ctb_route_ids]
+    invalid_ctb_routes = [route.get('route') for route in ctb_routes if route.get('route') not in valid_ctb_route_ids]
+    if invalid_ctb_routes:
+        print(f"Warning: {len(invalid_ctb_routes)} invalid CTB routes skipped:")
+        for route_id in invalid_ctb_routes[:10]:
+            print(f"- {route_id}")
+    print(f"Valid CTB routes: {len(valid_ctb_routes)} in {time.time() - ctb_validation_start:.2f}s")
+
+    # Validate Minibus route IDs
+    print("Validating Minibus route IDs...")
+    minibus_validation_start = time.time()
+    minibus_route_response = fetch_with_retry(MINIBUS_URL)
+    valid_minibus_route_ids = set()
+
+    def fetch_minibus_route_details(region, route):
+        url = f"https://data.etagmb.gov.hk/route/{region}/{route}"
+        response = fetch_with_retry(url)
+        return region, route, response
+
+    if minibus_route_response and 'data' in minibus_route_response:
+        route_tasks = [(region, route) for region, routes in minibus_route_response['data']['routes'].items() for route in routes]
+        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+            future_to_task = {executor.submit(fetch_minibus_route_details, region, route): (region, route) for region, route in route_tasks}
+            for future in as_completed(future_to_task):
+                region, route, response = future.result()
+                if response and 'data' in response and response['data']:
+                    for service in response['data']:
+                        valid_minibus_route_ids.add((region, service['route_id']))
+
+    valid_minibus_routes = [route for route in minibus_routes if (route.get('region'), route.get('route_id')) in valid_minibus_route_ids]
+    invalid_minibus_routes = [(route.get('region'), route.get('route_id')) for route in minibus_routes if (route.get('region'), route.get('route_id')) not in valid_minibus_route_ids]
+    if invalid_minibus_routes:
+        print(f"Warning: {len(invalid_minibus_routes)} invalid Minibus routes skipped:")
+        for region, route_id in invalid_minibus_routes[:10]:
+            print(f"- {region}/{route_id}")
+    print(f"Valid Minibus routes: {len(valid_minibus_routes)} in {time.time() - minibus_validation_start:.2f}s")
 
     # Fetch KMB stops
     print("Fetching KMB stops...")
@@ -175,92 +239,11 @@ def process_stop_data(ctb_routes, minibus_routes):
             stop_id = stop.get('stop')
             if stop_id:
                 stop_data['kmb_stops'][stop_id] = {
-                    'stop': stop_id,  # Include stop ID as a field
                     'name_en': stop.get('name_en', ''),
                     'lat': stop.get('lat', ''),
                     'long': stop.get('long', '')
                 }
     print(f"KMB stops fetched: {len(stop_data['kmb_stops'])} stops in {time.time() - kmb_start:.2f}s")
-
-    # Fetch CTB stops
-    print("Fetching CTB stops...")
-    ctb_start = time.time()
-    ctb_stop_ids = set()
-    def fetch_ctb_route_stop(route_id, direction):
-        url = f"{CTB_ROUTE_STOP_BASE_URL}{route_id}/{direction}"
-        response = fetch_with_retry(url)
-        return route_id, direction, response
-
-    ctb_route_tasks = [(route['route'], direction) for route in ctb_routes for direction in ['outbound', 'inbound']]
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        future_to_task = {executor.submit(fetch_ctb_route_stop, route_id, direction): (route_id, direction) for route_id, direction in ctb_route_tasks}
-        for future in as_completed(future_to_task):
-            route_id, direction, response = future.result()
-            if response and 'data' in response:
-                for stop in response['data']:
-                    stop_id = stop.get('stop')
-                    if stop_id:
-                        ctb_stop_ids.add(stop_id)
-
-    def fetch_ctb_stop(stop_id):
-        url = f"{CTB_STOPS_BASE_URL}{stop_id}"
-        response = fetch_with_retry(url)
-        return stop_id, response
-
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        future_to_stop = {executor.submit(fetch_ctb_stop, stop_id): stop_id for stop_id in ctb_stop_ids}
-        for future in as_completed(future_to_stop):
-            stop_id, response = future.result()
-            if response and 'data' in response:
-                data = response['data']
-                stop_data['ctb_stops'][stop_id] = {
-                    'stop': stop_id,  # Include stop ID as a field
-                    'name_en': data.get('name_en', ''),
-                    'lat': data.get('lat', ''),
-                    'long': data.get('long', '')
-                }
-    print(f"CTB stops fetched: {len(stop_data['ctb_stops'])} stops in {time.time() - ctb_start:.2f}s")
-
-    # Fetch Minibus stops
-    print("Fetching Minibus stops...")
-    minibus_start = time.time()
-    minibus_stop_ids = set()
-    def fetch_minibus_route_stop(region, route_id):
-        url = f"{MINIBUS_STOP_ROUTE_BASE_URL}{region}/{route_id}"
-        response = fetch_with_retry(url)
-        return region, route_id, response
-
-    minibus_tasks = [(route['region'], route['route_id']) for route in minibus_routes if route.get('region') and route.get('route_id')]
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        future_to_route = {executor.submit(fetch_minibus_route_stop, region, route_id): (region, route_id) for region, route_id in minibus_tasks}
-        for future in as_completed(future_to_route):
-            region, route_id, response = future.result()
-            if response and 'data' in response:
-                for stop in response['data'].get('stops', []):
-                    stop_id = stop.get('stop_id')
-                    if stop_id:
-                        minibus_stop_ids.add(stop_id)
-
-    def fetch_minibus_stop(stop_id):
-        url = f"{MINIBUS_STOPS_BASE_URL}{stop_id}"
-        response = fetch_with_retry(url)
-        return stop_id, response
-
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        future_to_stop = {executor.submit(fetch_minibus_stop, stop_id): stop_id for stop_id in minibus_stop_ids}
-        for future in as_completed(future_to_stop):
-            stop_id, response = future.result()
-            if response and 'data' in response:
-                data = response['data']
-                stop_data['minibus_stops'][stop_id] = {
-                    'stop': stop_id,  # Include stop ID as a field
-                    'name_en': data.get('name_en', ''),
-                    'lat': data.get('lat', ''),
-                    'long': data.get('long', '')
-                }
-    print(f"Minibus stops fetched: {len(stop_data['minibus_stops'])} stops in {time.time() - minibus_start:.2f}s")
-
-    return stop_data
 
     # Fetch CTB stops
     print("Fetching CTB stops...")
@@ -311,11 +294,9 @@ def process_stop_data(ctb_routes, minibus_routes):
         response = fetch_with_retry(url)
         return region, route_id, response
 
+    minibus_tasks = [(route['region'], route['route_id']) for route in valid_minibus_routes if route.get('region') and route.get('route_id')]
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        future_to_route = {
-            executor.submit(fetch_minibus_route_stop, route['region'], route['route_id']): route
-            for route in valid_minibus_routes if route.get('region') and route.get('route_id')
-        }
+        future_to_route = {executor.submit(fetch_minibus_route_stop, region, route_id): (region, route_id) for region, route_id in minibus_tasks}
         for future in as_completed(future_to_route):
             region, route_id, response = future.result()
             if response and 'data' in response:
@@ -344,7 +325,7 @@ def process_stop_data(ctb_routes, minibus_routes):
 
     return stop_data
 
-# Process route-stop data (updated to output flat stop ID arrays)
+# Process route-stop data (updated to output stop_id and seq objects)
 def process_route_stop_data(kmb_routes, ctb_routes, minibus_routes):
     print(f"Processing route-stop data: KMB={len(kmb_routes)}, CTB={len(ctb_routes)}, Minibus={len(minibus_routes)}")
     route_stop_data = {
@@ -369,12 +350,12 @@ def process_route_stop_data(kmb_routes, ctb_routes, minibus_routes):
                 key = f"{route}-{bound}"
                 if key not in stop_map:
                     stop_map[key] = []
-                stop_map[key].append({'stop_id': stop_id, 'seq': str(seq)})  # Ensure seq is string for sorting
+                stop_map[key].append({'stop_id': stop_id, 'seq': str(seq)})  # Store as object
         
-        # Sort by seq and flatten to stop_id array
+        # Sort by seq and keep as list of objects
         for key in stop_map:
             sorted_stops = sorted(stop_map[key], key=lambda x: float(x['seq']))  # Sort by sequence
-            route_stop_data['kmb_route_stops'][key] = [stop['stop_id'] for stop in sorted_stops]
+            route_stop_data['kmb_route_stops'][key] = sorted_stops  # Keep stop_id and seq
         print(f"KMB route stops processed: {len(route_stop_data['kmb_route_stops'])} routes in {time.time() - kmb_start:.2f}s")
     else:
         print("Failed to fetch KMB route stops")
@@ -394,9 +375,9 @@ def process_route_stop_data(kmb_routes, ctb_routes, minibus_routes):
             route_id, direction, response = future.result()
             if response and 'data' in response:
                 key = f"{route_id}-{'O' if direction == 'outbound' else 'I'}"
-                # Sort by sequence
+                # Sort by sequence and create objects
                 sorted_stops = sorted(response['data'], key=lambda x: float(x.get('seq', float('inf'))))
-                stops = [stop.get('stop') for stop in sorted_stops if stop.get('stop')]
+                stops = [{'stop_id': stop.get('stop'), 'seq': str(stop.get('seq', ''))} for stop in sorted_stops if stop.get('stop')]
                 if stops:
                     route_stop_data['ctb_route_stops'][key] = stops
     print(f"CTB route stops processed: {len(route_stop_data['ctb_route_stops'])} routes in {time.time() - ctb_start:.2f}s")
@@ -417,14 +398,14 @@ def process_route_stop_data(kmb_routes, ctb_routes, minibus_routes):
             if response and 'data' in response:
                 key = f"{route_id}-{response['data'].get('route_seq', '1')}"
                 sorted_stops = sorted(response['data'].get('stops', []), key=lambda x: float(x.get('seq', float('inf'))))
-                stops = [stop.get('stop_id') for stop in sorted_stops if stop.get('stop_id')]
+                stops = [{'stop_id': stop.get('stop_id'), 'seq': str(stop.get('seq', ''))} for stop in sorted_stops if stop.get('stop_id')]
                 if stops:
                     route_stop_data['minibus_route_stops'][key] = stops
     print(f"Minibus route stops processed: {len(route_stop_data['minibus_route_stops'])} routes in {time.time() - minibus_start:.2f}s")
 
     return route_stop_data
 
-# Process route fare data
+# Process route fare data (enhanced for robustness)
 def process_route_fee_data():
     route_fee_data = {
         'kmb_routes': [],
@@ -459,21 +440,27 @@ def process_route_fee_data():
         if bus_fare_response:
             try:
                 for feature in bus_fare_response['features']:
-                    props = feature['properties']
-                    provider = props['companyCode']
-                    route_seq = props['routeSeq']
+                    props = feature.get('properties', {})
+                    if not props:
+                        print("Skipping bus fare feature with missing properties")
+                        continue
+                    provider = props.get('companyCode')
+                    if not provider:
+                        print("Skipping bus fare feature with missing companyCode")
+                        continue
+                    route_seq = props.get('routeSeq')
                     if provider in ['KMB', 'CTB']:
-                        bound = 'O' if route_seq == 1 else 'I' if route_seq == 2 else route_seq
+                        bound = 'O' if route_seq == 1 else 'I' if route_seq == 2 else str(route_seq)
                     else:
-                        bound = route_seq
+                        bound = str(route_seq)
                     
                     route_entry = {
-                        'route': props['routeNameE'],
-                        'orig_en': props['locStartNameE'],
-                        'dest_en': props['locEndNameE'],
-                        'full_fare': props['fullFare'],
+                        'route': props.get('routeNameE', ''),
+                        'orig_en': props.get('locStartNameE', ''),
+                        'dest_en': props.get('locEndNameE', ''),
+                        'full_fare': props.get('fullFare', None),
                         'provider': provider,
-                        'seq': props['stopSeq'],
+                        'seq': props.get('stopSeq', ''),
                         'bound': bound
                     }
                     
@@ -485,22 +472,26 @@ def process_route_fee_data():
                 print(f"KMB routes: {len(route_fee_data['kmb_routes'])}, CTB routes: {len(route_fee_data['ctb_routes'])}")
             except Exception as err:
                 print(f"Error processing Bus fare data: {err}")
+                print(f"Partial bus fare response: {json.dumps(bus_fare_response, indent=2)[:1000]}")
 
         gmb_fare_response = future_gmb.result()
         if gmb_fare_response:
             try:
                 for feature in gmb_fare_response['features']:
-                    props = feature['properties']
-                    route_seq = props['routeSeq']
-                    bound = route_seq
+                    props = feature.get('properties', {})
+                    if not props:
+                        print("Skipping GMB fare feature with missing properties")
+                        continue
+                    route_seq = props.get('routeSeq')
+                    bound = str(route_seq)
                     
                     route_entry = {
-                        'route': props['routeNameE'],
-                        'orig_en': props['locStartNameE'],
-                        'dest_en': props['locEndNameE'],
-                        'full_fare': props['fullFare'],
+                        'route': props.get('routeNameE', ''),
+                        'orig_en': props.get('locStartNameE', ''),
+                        'dest_en': props.get('locEndNameE', ''),
+                        'full_fare': props.get('fullFare', None),
                         'provider': 'minibus',
-                        'seq': props['stopSeq'],
+                        'seq': props.get('stopSeq', ''),
                         'bound': bound
                     }
                     
@@ -508,11 +499,12 @@ def process_route_fee_data():
                 print(f"GMB fare data processed: {len(gmb_fare_response['features'])} entries")
             except Exception as err:
                 print(f"Error processing GMB fare data: {err}")
+                print(f"Partial GMB fare response: {json.dumps(gmb_fare_response, indent=2)[:1000]}")
 
     print(f"Route fee data summary: KMB={len(route_fee_data['kmb_routes'])}, CTB={len(route_fee_data['ctb_routes'])}, Minibus={len(route_fee_data['minibus_routes'])}")
     return route_fee_data
 
-# Check cache validity
+# Check cache validity (unchanged)
 def is_cache_valid(file_path):
     if not os.path.exists(file_path):
         print(f"Cache file {file_path} does not exist")
@@ -533,7 +525,7 @@ def is_cache_valid(file_path):
         print(f"Error reading cache file {file_path}: {err}")
         return False
 
-# Fetch and store data
+# Fetch and store data (updated with atomic writes and interrupt handling)
 def fetch_and_store_data():
     os.makedirs(os.path.dirname(ROUTE_JSON_FILE), exist_ok=True)
     os.makedirs(os.path.dirname(STOP_JSON_FILE), exist_ok=True)
@@ -572,51 +564,85 @@ def fetch_and_store_data():
             print(f"Failed to load Minibus routes: {err}")
             return []
 
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        futures = {
-            'kmb': executor.submit(fetch_kmb_routes),
-            'ctb': executor.submit(fetch_ctb_routes),
-            'minibus': executor.submit(fetch_minibus_routes)
-        }
+    try:
+        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+            futures = {
+                'kmb': executor.submit(fetch_kmb_routes),
+                'ctb': executor.submit(fetch_ctb_routes),
+                'minibus': executor.submit(fetch_minibus_routes)
+            }
 
-        for key, future in futures.items():
-            result = future.result()
-            route_data[f"{key}_routes"] = result
-            print(f"{key.upper()} routes fetched: {len(result)} routes")
+            for key, future in futures.items():
+                try:
+                    result = future.result()
+                    route_data[f"{key}_routes"] = result
+                    print(f"{key.upper()} routes fetched: {len(result)} routes")
+                except Exception as err:
+                    print(f"Error fetching {key.upper()} routes: {err}")
+                    route_data[f"{key}_routes"] = []
 
-    with open(ROUTE_JSON_FILE, 'w', encoding='utf-8') as f:
-        json.dump(route_data, f, ensure_ascii=False, indent=4)
-    print(f"Route data saved to {ROUTE_JSON_FILE}")
+        # Save route data atomically
+        with tempfile.NamedTemporaryFile('w', delete=False, encoding='utf-8') as temp:
+            json.dump(route_data, temp, ensure_ascii=False, indent=4)
+            temp.flush()
+            os.fsync(temp.fileno())
+        shutil.move(temp.name, ROUTE_JSON_FILE)
+        print(f"Route data saved to {ROUTE_JSON_FILE}")
 
-    # Stop data
-    stop_data = process_stop_data(route_data['ctb_routes'], route_data['minibus_routes'])
-    with open(STOP_JSON_FILE, 'w', encoding='utf-8') as f:
-        json.dump(stop_data, f, ensure_ascii=False, indent=4)
-    print(f"Stop data saved to {STOP_JSON_FILE}")
+        # Stop data
+        stop_data = process_stop_data(route_data['ctb_routes'], route_data['minibus_routes'])
+        with tempfile.NamedTemporaryFile('w', delete=False, encoding='utf-8') as temp:
+            json.dump(stop_data, temp, ensure_ascii=False, indent=4)
+            temp.flush()
+            os.fsync(temp.fileno())
+        shutil.move(temp.name, STOP_JSON_FILE)
+        print(f"Stop data saved to {STOP_JSON_FILE}")
 
-    # Route-stop data
-    route_stop_data = process_route_stop_data(route_data['kmb_routes'], route_data['ctb_routes'], route_data['minibus_routes'])
-    with open(ROUTE_STOP_JSON_FILE, 'w', encoding='utf-8') as f:
-        json.dump(route_stop_data, f, ensure_ascii=False, indent=4)
-    print(f"Route-stop data saved to {ROUTE_STOP_JSON_FILE}")
+        # Route-stop data
+        route_stop_data = process_route_stop_data(route_data['kmb_routes'], route_data['ctb_routes'], route_data['minibus_routes'])
+        with tempfile.NamedTemporaryFile('w', delete=False, encoding='utf-8') as temp:
+            json.dump(route_stop_data, temp, ensure_ascii=False, indent=4)
+            temp.flush()
+            os.fsync(temp.fileno())
+        shutil.move(temp.name, ROUTE_STOP_JSON_FILE)
+        print(f"Route-stop data saved to {ROUTE_STOP_JSON_FILE}")
 
-    # Route-fee data
-    route_fee_data = process_route_fee_data()
-    with open(ROUTE_FEE_JSON_FILE, 'w', encoding='utf-8') as f:
-        json.dump(route_fee_data, f, ensure_ascii=False, indent=4)
-    print(f"Route-fee data saved to {ROUTE_FEE_JSON_FILE}")
+        # Route-fee data
+        route_fee_data = process_route_fee_data()
+        with tempfile.NamedTemporaryFile('w', delete=False, encoding='utf-8') as temp:
+            json.dump(route_fee_data, temp, ensure_ascii=False, indent=4)
+            temp.flush()
+            os.fsync(temp.fileno())
+        shutil.move(temp.name, ROUTE_FEE_JSON_FILE)
+        print(f"Route-fee data saved to {ROUTE_FEE_JSON_FILE}")
 
-# Main loop
+    except SystemExit:
+        print("Data fetching interrupted, cleaning up...")
+        raise
+    except Exception as err:
+        print(f"Unexpected error during data fetching: {err}")
+        raise
+
+# Main loop (updated with interrupt handling)
 def main():
-    while True:
-        files = [ROUTE_JSON_FILE, STOP_JSON_FILE, ROUTE_STOP_JSON_FILE, ROUTE_FEE_JSON_FILE]
-        if not all(is_cache_valid(file) for file in files):
-            print("Cache expired or missing, fetching new data...")
-            fetch_and_store_data()
-        else:
-            print("Cache is still valid, skipping fetch...")
-        print(f"Sleeping for {CACHE_EXPIRY} seconds (24 hours)...")
-        time.sleep(CACHE_EXPIRY)
+    with timeout_handler():
+        while True:
+            try:
+                files = [ROUTE_JSON_FILE, STOP_JSON_FILE, ROUTE_STOP_JSON_FILE, ROUTE_FEE_JSON_FILE]
+                if not all(is_cache_valid(file) for file in files):
+                    print("Cache expired or missing, fetching new data...")
+                    fetch_and_store_data()
+                else:
+                    print("Cache is still valid, skipping fetch...")
+                print(f"Sleeping for {CACHE_EXPIRY} seconds (24 hours)...")
+                time.sleep(CACHE_EXPIRY)
+            except SystemExit:
+                print("Exiting main loop...")
+                break
+            except Exception as err:
+                print(f"Error in main loop: {err}")
+                print("Retrying after a short delay...")
+                time.sleep(60)  # Wait before retrying
 
 if __name__ == "__main__":
     main()
