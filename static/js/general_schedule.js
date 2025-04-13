@@ -1553,14 +1553,14 @@ function displayRouteSummaries() {
                     <div class="summary-tags"></div>
                 </div>
                 <div class="summary-details">
-                    <span class="detail-item fare">Fare: ${fareDisplay}</span>
+                   
                     <span class="detail-item transfers">~${transfers} Transfers</span>
                 </div>
                 <div class="summary-sequence">
                     ${sequenceHtml}
                 </div>
             </div>
-        `;
+        `; /* <span class="detail-item fare">Fare: ${fareDisplay}</span> */
         optionsDiv.innerHTML += summaryHtml;
     });
 
@@ -1590,11 +1590,11 @@ function displayRouteDetails(routeIndex) {
                 <span class="duration">(${Math.round(selectedRoute.estimatedTime)} mins)</span>
             </div>
             <div class="cost-transfers">
-                <div class="fare">Fare: ${fareDisplay}</div>
+             
                 <div class="transfers">${transfers} Transfers</div>
             </div>
         </div>
-    `;
+    `;  /*  <div class="fare">Fare: ${fareDisplay}</div> */
     const timelineHtml = TimelineGenerator.generate(selectedRoute);
 
     const routeContainer = document.createElement('div');
