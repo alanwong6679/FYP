@@ -752,67 +752,91 @@ class RouteFinder {
     }
 
     async findMTRRoute(start, end) {
+        // Handle same-station case
+        if (start === end) {
+            return [{
+                type: 'MTR',
+                mtrRoute: { route: [], interchanges: [] },
+                estimatedTime: 0,
+                schedules: [],
+                currentStation: start,
+                destinationStation: end,
+                score: 0
+            }];
+        }
+
         const routes = [];
         const response = await this.fetchMTRSchedule(start, end);
         if (response.error || !response.bestRoute) {
             console.error("MTR Route Error:", response.error || "No route found", "from", start, "to", end);
             return [];
-        }// Add best route
-    routes.push({
-        type: 'MTR',
-        mtrRoute: response.bestRoute,
-        estimatedTime: response.bestRoute.totalDuration || this.calculateMTRTime(response.bestRoute),
-        schedules: response.schedules,
-        currentStation: start,
-        destinationStation: end,
-        score: this.evaluateRouteScore({
-            estimatedTime: response.bestRoute.totalDuration || this.calculateMTRTime(response.bestRoute),
-            walkingDistance: 0,
-            transfers: response.bestRoute.interchanges?.length || 0
-        })
-    });
-    // Alternative 1: Add an extra transfer
-    if (response.bestRoute.interchanges?.length > 0) {
-        const altRoute = JSON.parse(JSON.stringify(response.bestRoute)); // Deep copy
-        altRoute.interchanges.push(altRoute.interchanges[0]); // Duplicate an interchange
-        altRoute.totalDuration += 5; // Add interchange delay
-        routes.push({
-            type: 'MTR',
-            mtrRoute: altRoute,
-            estimatedTime: altRoute.totalDuration,
-            schedules: response.schedules,
-            currentStation: start,
-            destinationStation: end,
-            score: this.evaluateRouteScore({
-                estimatedTime: altRoute.totalDuration,
-                walkingDistance: 0,
-                transfers: altRoute.interchanges.length
-            })
-        });
-    }
-       // Alternative 2: Use a different line (simplified)
-    const altLineMap = { 'ISL': 'TWL', 'TWL': 'ISL', 'AEL': 'TCL', 'TCL': 'AEL' }; // Example mapping
-    if (response.bestRoute.route[0] in altLineMap) {
-        const altRoute = JSON.parse(JSON.stringify(response.bestRoute));
-        altRoute.route[0] = altLineMap[response.bestRoute.route[0]];
-        altRoute.totalDuration += 3; // Assume slightly longer
-        routes.push({
-            type: 'MTR',
-            mtrRoute: altRoute,
-            estimatedTime: altRoute.totalDuration,
-            schedules: response.schedules,
-            currentStation: start,
-            destinationStation: end,
-            score: this.evaluateRouteScore({
-                estimatedTime: altRoute.totalDuration,
-                walkingDistance: 0,
-                transfers: altRoute.interchanges?.length || 0
-            })
-        });
-    }
+        }
 
-    return routes.slice(0, 3);
-}
+        const bestRoute = response.bestRoute;
+        const bestEstimatedTime = bestRoute.totalDuration || this.calculateMTRTime(bestRoute);
+        if (!isNaN(bestEstimatedTime) && bestEstimatedTime > 0) {
+            routes.push({
+                type: 'MTR',
+                mtrRoute: bestRoute,
+                estimatedTime: bestEstimatedTime,
+                schedules: response.schedules,
+                currentStation: start,
+                destinationStation: end,
+                score: this.evaluateRouteScore({
+                    estimatedTime: bestEstimatedTime,
+                    walkingDistance: 0,
+                    transfers: bestRoute.interchanges?.length || 0
+                })
+            });
+        }
+
+        // Alternative 1: Add an extra transfer
+        if (bestRoute.interchanges?.length > 0) {
+            const altRoute = JSON.parse(JSON.stringify(bestRoute));
+            altRoute.interchanges.push(altRoute.interchanges[0]);
+            const altEstimatedTime = (altRoute.totalDuration || this.calculateMTRTime(altRoute)) + 5;
+            if (!isNaN(altEstimatedTime) && altEstimatedTime > 0) {
+                routes.push({
+                    type: 'MTR',
+                    mtrRoute: altRoute,
+                    estimatedTime: altEstimatedTime,
+                    schedules: response.schedules,
+                    currentStation: start,
+                    destinationStation: end,
+                    score: this.evaluateRouteScore({
+                        estimatedTime: altEstimatedTime,
+                        walkingDistance: 0,
+                        transfers: altRoute.interchanges.length
+                    })
+                });
+            }
+        }
+
+        // Alternative 2: Use a different line
+        const altLineMap = { 'ISL': 'TWL', 'TWL': 'ISL', 'AEL': 'TCL', 'TCL': 'AEL' };
+        if (bestRoute.route[0] in altLineMap) {
+            const altRoute = JSON.parse(JSON.stringify(bestRoute));
+            altRoute.route[0] = altLineMap[bestRoute.route[0]];
+            const altEstimatedTime = (altRoute.totalDuration || this.calculateMTRTime(altRoute)) + 3;
+            if (!isNaN(altEstimatedTime) && altEstimatedTime > 0) {
+                routes.push({
+                    type: 'MTR',
+                    mtrRoute: altRoute,
+                    estimatedTime: altEstimatedTime,
+                    schedules: response.schedules,
+                    currentStation: start,
+                    destinationStation: end,
+                    score: this.evaluateRouteScore({
+                        estimatedTime: altEstimatedTime,
+                        walkingDistance: 0,
+                        transfers: altRoute.interchanges?.length || 0
+                    })
+                });
+            }
+        }
+
+        return routes.slice(0, 3);
+    }
 
     findNearestMTR(point) {
         if (!point?.lat || !point?.long) return { station: null, distance: Infinity };
@@ -909,12 +933,10 @@ class RouteFinder {
     }
 
     calculateMTRTime(route) {
-        if (route?.totalDuration) return route.totalDuration;
-        if (!route || !route.route) return 0;
-        const interchangeCount = route.interchanges?.length || (route.route.length > 1 ? route.route.length - 1 : 0);
-        const lineTimeEstimate = route.route.length * 3;
-        const interchangeTimeEstimate = interchangeCount * 5;
-        return lineTimeEstimate + interchangeTimeEstimate;
+        if (!route || !Array.isArray(route.route)) return 0;
+        const lineCount = route.route.length;
+        const interchangeCount = Array.isArray(route.interchanges) ? route.interchanges.length : 0;
+        return lineCount * 3 + interchangeCount * 5;
     }
 }
 
@@ -1530,11 +1552,13 @@ function displayRouteSummaries() {
     const optionsDiv = document.getElementById('route-options');
     optionsDiv.innerHTML = '';
     const now = new Date();
-    const routesToDisplay = currentRoutes.slice(0, 5); // Only 5 routes
+    const routesToDisplay = currentRoutes.slice(0, 5);
 
     routesToDisplay.forEach((route, i) => {
         const startTime = now.toTimeString().slice(0, 5);
-        const arrivalTime = new Date(now.getTime() + route.estimatedTime * 60000).toTimeString().slice(0, 5);
+        const estimatedTime = !isNaN(route.estimatedTime) && route.estimatedTime >= 0 ? route.estimatedTime : 0;
+        const arrivalDate = new Date(now.getTime() + estimatedTime * 60000);
+        const arrivalTime = isNaN(arrivalDate.getTime()) ? '--:--' : arrivalDate.toTimeString().slice(0, 5);
         const items = TimelineGenerator.getItems(route);
         let transfers = 0;
         items.forEach(item => { if (item.interchange || (item.mode === 'Walk' && item.type === 'segment')) transfers++; });
@@ -1548,26 +1572,24 @@ function displayRouteSummaries() {
                         <span class="time-departure">${startTime}</span>
                         <span class="arrow">→</span>
                         <span class="time-arrival">${arrivalTime}</span>
-                        <span class="duration">(${Math.round(route.estimatedTime)} mins)</span>
+                        <span class="duration">(${Math.round(estimatedTime)} mins)</span>
                     </div>
                     <div class="summary-tags"></div>
                 </div>
                 <div class="summary-details">
-                   
                     <span class="detail-item transfers">~${transfers} Transfers</span>
                 </div>
                 <div class="summary-sequence">
                     ${sequenceHtml}
                 </div>
             </div>
-        `; /* <span class="detail-item fare">Fare: ${fareDisplay}</span> */
+        `;
         optionsDiv.innerHTML += summaryHtml;
     });
 
     showSummaries();
-    displayRouteAnalysisChart(routesToDisplay); // Pass the 5 routes
+    displayRouteAnalysisChart(routesToDisplay);
 }
-
 function displayRouteDetails(routeIndex) {
     const scheduleDiv = document.getElementById('schedule');
     const optionsDiv = document.getElementById('route-options');
