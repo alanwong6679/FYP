@@ -2563,20 +2563,6 @@
             "provider": "kmb"
         },
         {
-            "route": "73S",
-            "bound": "O",
-            "orig_en": "FANLING STATION",
-            "dest_en": "WO HOP SHEK (KIU TAU ROAD)",
-            "provider": "kmb"
-        },
-        {
-            "route": "73S",
-            "bound": "I",
-            "orig_en": "WO HOP SHEK (KIU TAU ROAD)",
-            "dest_en": "FANLING STATION",
-            "provider": "kmb"
-        },
-        {
             "route": "73X",
             "bound": "O",
             "orig_en": "TSUEN WAN (NINA TOWER)",
@@ -2798,20 +2784,6 @@
             "bound": "I",
             "orig_en": "LONG PING ESTATE",
             "dest_en": "SHEUNG SHUI (CHING HO)",
-            "provider": "kmb"
-        },
-        {
-            "route": "76S",
-            "bound": "O",
-            "orig_en": "FANLING STATION",
-            "dest_en": "WO HOP SHEK",
-            "provider": "kmb"
-        },
-        {
-            "route": "76S",
-            "bound": "I",
-            "orig_en": "WO HOP SHEK",
-            "dest_en": "FANLING STATION",
             "provider": "kmb"
         },
         {
@@ -11756,13 +11728,6 @@
             "provider": "ctb"
         },
         {
-            "route": "X797",
-            "bound": "O",
-            "orig_en": "Tiu Keng Leng Station",
-            "dest_en": "Fire and Ambulance Services Academy",
-            "provider": "ctb"
-        },
-        {
             "route": "X8",
             "bound": "O",
             "orig_en": "Happy Valley (Upper)",
@@ -18813,5 +18778,5 @@
             "provider": "minibus"
         }
     ],
-    "timestamp": 1744553870099
+    "timestamp": 1744697874923
 }
