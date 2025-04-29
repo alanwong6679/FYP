@@ -1,5 +1,4 @@
-/* transit.js */
-const API_KEY = 'AIzaSyAibBUUt2uhc8v_82GS3Gxx2TRGyuUjsuc'; // Replace with a new, secure key
+/* /static/js/transit.js */
 let map;
 let routeMarkers = [];
 let routePolyline = null;
@@ -103,7 +102,7 @@ async function fetchWithRetry(url, options = {}, retries = 5, backoff = 1000) {
                     'Accept': 'application/json',
                     ...options.headers
                 },
-                signal: AbortSignal.timeout(10000) // 10s timeout
+                signal: AbortSignal.timeout(10000)
             });
             if (response.status === 429) {
                 const delay = backoff * Math.pow(2, i) + Math.random() * 100;
@@ -275,7 +274,7 @@ async function fetchETA(stopId, provider, route, routeId, bound) {
         } else if (provider === 'minibus') {
             url = `https://data.etagmb.gov.hk/eta/stop/${stopId}`;
             try {
-                data = await fetchWithRetry(url, {}, 5); // Increased retries for GMB
+                data = await fetchWithRetry(url, {}, 5);
                 console.log(`Minibus ETA response for ${stopId}:`, data);
                 if (!data || !data.data || !Array.isArray(data.data)) {
                     console.warn(`Invalid minibus ETA response for ${stopId}:`, data);
@@ -310,7 +309,6 @@ async function fetchETA(stopId, provider, route, routeId, bound) {
     }
 }
 
-// For stop list: one ETA
 function formatETA(etaData, route, provider) {
     if (!etaData.data || !etaData.data.length) {
         return "No ETA available";
@@ -326,14 +324,12 @@ function formatETA(etaData, route, provider) {
         const timeDiff = Math.round((arriveTime - new Date()) / 60000);
         displayTime = timeDiff > 0 ? `${timeDiff} mins` : "Arrived";
     }
-    // Omit remark_en for minibus
     if (provider === 'minibus') {
         return displayTime;
     }
     return `${displayTime}${eta.remark_en ? ' - ' + eta.remark_en : ''}`;
 }
 
-// For map markers: up to three ETAs
 function formatETAForMarkers(etaData, route, provider) {
     if (!etaData.data || !etaData.data.length) {
         return "No ETA available";
@@ -349,22 +345,12 @@ function formatETAForMarkers(etaData, route, provider) {
                 const timeDiff = Math.round((arriveTime - new Date()) / 60000);
                 displayTime = timeDiff > 0 ? `${timeDiff} mins` : "Arrived";
             }
-            // Omit remark_en for minibus
             if (provider === 'minibus') {
                 return displayTime;
             }
             return `${displayTime}${eta.remark_en ? ' - ' + eta.remark_en : ''}`;
         });
     return etas.length > 0 ? etas.join('<br/>') : "No ETA available";
-}
-
-const routeListUl = document.getElementById("routeList");
-const selectedRouteDisplay = document.getElementById("selectedRouteDisplay");
-const keypad = document.getElementById("keypad");
-const inputDisplay = document.getElementById("input-display");
-
-if (inputDisplay && inputDisplay.value === "undefined") {
-    inputDisplay.value = "Enter Route Number";
 }
 
 function isFavorite(route) {
@@ -376,8 +362,8 @@ function isFavorite(route) {
 }
 
 function displayAllRoutes() {
-    if (!routeListUl) return;
-    routeListUl.innerHTML = '';
+    if (!routeList) return;
+    routeList.innerHTML = '';
     const allRoutes = [
         ...(kmbRouteList || []),
         ...(ctbRouteList || []),
@@ -387,10 +373,10 @@ function displayAllRoutes() {
 }
 
 function displayRoutes(routes) {
-    if (!routeListUl) return;
-    routeListUl.innerHTML = '';
+    if (!routeList) return;
+    routeList.innerHTML = '';
     if (!routes.length) {
-        routeListUl.innerHTML = '<li>No routes available</li>';
+        routeList.innerHTML = '<li>No routes available</li>';
         return;
     }
     routes.forEach(route => {
@@ -410,7 +396,7 @@ function displayRoutes(routes) {
         li.appendChild(starBtn);
         li.setAttribute('role', 'option');
         li.addEventListener('click', () => selectRoute(route));
-        routeListUl.appendChild(li);
+        routeList.appendChild(li);
     });
 }
 
@@ -457,10 +443,9 @@ function getFormattedStops(stopsForRoute) {
             return null;
         }
 
-        // Find fee for marker info window and stop list
         let fee = "N/A";
         if (selectedProvider === 'minibus') {
-            fee = "$10.9"; // Hardcoded for GMB until fee data provided
+            fee = "$10.9";
         } else {
             const feeList = routeFeeData[`${selectedProvider}_routes`];
             if (feeList) {
@@ -503,7 +488,6 @@ function selectRoute(route) {
         selectedRouteDisplay.textContent = `Selected Route: ${route.route} from ${route.orig_en} to ${route.dest_en} (${route.provider.toUpperCase()})`;
     }
 
-    // Clear all map elements
     routeMarkers.forEach(marker => marker.setMap(null));
     routeMarkers = [];
     stopMarkers = {};
@@ -520,7 +504,6 @@ function selectRoute(route) {
         userLocationCircle.setMap(null);
     }
 
-    // Clear stop list
     const stopListUl = document.getElementById("stopList");
     if (stopListUl) {
         stopListUl.innerHTML = '<li>Loading stops...</li>';
@@ -552,13 +535,11 @@ async function displayStopList(stops) {
     if (!stopListUl) return;
     stopListUl.innerHTML = '<li>Loading ETAs...</li>';
 
-    // Fetch all ETAs
     const etaPromises = stops.map(stop => 
         fetchETA(stop.stopId, selectedProvider, selectedRoute, selectedRouteId, selectedBound)
     );
     const etaResults = await Promise.all(etaPromises);
 
-    // Populate stop list with fee and one ETA
     stopListUl.innerHTML = '';
     stops.forEach((stop, index) => {
         const etaData = etaResults[index];
@@ -578,7 +559,6 @@ async function displayStopList(stops) {
 }
 
 async function displayRouteOnMap(stops) {
-    // Clear any lingering map elements
     routeMarkers.forEach(marker => marker.setMap(null));
     routeMarkers = [];
     stopMarkers = {};
@@ -592,7 +572,6 @@ async function displayRouteOnMap(stops) {
         currentInfoWindow = null;
     }
 
-    // Fetch ETAs for status calculation
     const etaPromises = stops.map(stop => 
         fetchETA(stop.stopId, selectedProvider, selectedRoute, selectedRouteId, selectedBound)
     );
@@ -655,7 +634,6 @@ async function displayRouteOnMap(stops) {
 
     console.log(`Route ${selectedRoute} at ${currentHour}:00 - Status: ${routeStatus}, Avg Interval: ${avgInterval.toFixed(2)} mins, Busy Score: ${busyScore.toFixed(2)}, Total ETAs: ${totalETAs}, Delayed: ${delayedETAs}, Valid ETAs: ${validETACount}`);
 
-    // Create markers with up to three ETAs
     routeMarkers = stops.map(stop => {
         const marker = new google.maps.Marker({
             position: { lat: stop.lat, lng: stop.lng },
@@ -684,7 +662,6 @@ async function displayRouteOnMap(stops) {
         return marker;
     });
 
-    // Draw route polyline
     const pathCoordinates = stops.map(stop => ({ lat: stop.lat, lng: stop.lng }));
     const sampledPath = samplePath(pathCoordinates, 100);
     const pathString = sampledPath.map(coord => `${coord.lat},${coord.lng}`).join('|');
@@ -693,7 +670,7 @@ async function displayRouteOnMap(stops) {
 
     try {
         if (sampledPath.length < 2) throw new Error("Sampled path has fewer than 2 points.");
-        const response = await fetch(`https://roads.googleapis.com/v1/snapToRoads?path=${encodeURIComponent(pathString)}&interpolate=true&key=${API_KEY}`);
+        const response = await fetch(`https://roads.googleapis.com/v1/snapToRoads?path=${encodeURIComponent(pathString)}&interpolate=true&key=${window.GOOGLE_MAPS_API_KEY}`);
         if (!response.ok) {
             const errorText = await response.text();
             throw new Error(`Roads API request failed: ${response.status} - ${errorText}`);
@@ -727,12 +704,10 @@ async function displayRouteOnMap(stops) {
         console.log("New unsnapped routePolyline set on map");
     }
 
-    // Update selected route display with status
     if (selectedRouteDisplay) {
         selectedRouteDisplay.textContent = `Selected Route: ${selectedRoute} from ${stops[0].name} to ${stops[stops.length - 1].name} (${selectedProvider.toUpperCase()}) - Status: ${routeStatus}`;
     }
 
-    // Adjust map bounds
     const bounds = new google.maps.LatLngBounds();
     stops.forEach(stop => bounds.extend({ lat: stop.lat, lng: stop.lng }));
     map.fitBounds(bounds);
@@ -874,10 +849,67 @@ function displayNearbyStops(stops) {
     map.fitBounds(bounds);
 }
 
+// Status modal setup
+function setupStatusModal() {
+    const statusButton = document.querySelector('.status-button');
+    const statusModal = document.getElementById('statusModal');
+    const closeButton = statusModal?.querySelector('.close-button');
+
+    if (statusButton && statusModal) {
+        statusButton.addEventListener('click', async () => {
+            try {
+                const response = await fetch('/api/routes'); // Example: Fetch route status
+                const data = await response.json();
+                const statusContent = document.getElementById('statusContent');
+                const providers = ['kmb', 'ctb', 'minibus'];
+                let content = '';
+                providers.forEach(provider => {
+                    const routes = data[`${provider}_routes`] || [];
+                    const status = routes.length > 0 ? 'Operational' : 'No data';
+                    content += `
+                        <div class="status-row">
+                            <div class="color-bar color-${provider}"></div>
+                            <div class="line-info">
+                                <div class="line-name">${provider.toUpperCase()} Routes</div>
+                                <div class="line-status">${status}</div>
+                            </div>
+                            <div class="update-time">${new Date().toLocaleTimeString()}</div>
+                        </div>
+                    `;
+                });
+                statusContent.innerHTML = content || 'No status available.';
+                statusModal.style.display = 'flex';
+            } catch (error) {
+                document.getElementById('statusContent').innerHTML = 'Failed to load transit status.';
+                statusModal.style.display = 'flex';
+            }
+        });
+
+        closeButton?.addEventListener('click', () => {
+            statusModal.style.display = 'none';
+        });
+
+        statusModal.addEventListener('click', (event) => {
+            if (event.target === statusModal) {
+                statusModal.style.display = 'none';
+            }
+        });
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const isHomePage = window.location.pathname.includes('home.html');
     const isTransitPlannerPage = window.location.pathname.includes('transit_planner.html');
     
+    const routeList = document.getElementById("routeList");
+    const selectedRouteDisplay = document.getElementById("selectedRouteDisplay");
+    const keypad = document.getElementById("keypad");
+    const inputDisplay = document.getElementById("input-display");
+
+    if (inputDisplay && inputDisplay.value === "undefined") {
+        inputDisplay.value = "Enter Route Number";
+    }
+
     const allRoutesBtn = document.getElementById('allRoutesBtn');
     const kmbRoutesBtn = document.getElementById('kmbRoutesBtn');
     const ctbRoutesBtn = document.getElementById('ctbRoutesBtn');
@@ -1007,15 +1039,18 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
+
+    setupStatusModal();
 });
 
 function filterRoutes() {
     clearTimeout(debounceTimeout);
     debounceTimeout = setTimeout(() => {
-        if (!routeListUl) return;
-        routeListUl.innerHTML = '';
+        const routeList = document.getElementById("routeList");
+        if (!routeList) return;
+        routeList.innerHTML = '';
         if (!kmbRouteList && !ctbRouteList && !minibusRouteList) {
-            routeListUl.innerHTML = '<li>Please wait for data to load...</li>';
+            routeList.innerHTML = '<li>Please wait for data to load...</li>';
             return;
         }
         const input = currentInput.toLowerCase();

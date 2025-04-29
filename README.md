@@ -111,36 +111,33 @@ FYP/
 ├── node_modules/                     # Node.js dependencies
 ├── static/                          # Frontend assets
 │   ├── css/                        # Stylesheets
+│   │   ├── base.css                # Shared styles (modals, bottom bar)
 │   │   ├── ferry.css               # Ferry page styling
-│   │   ├── general_schedule.css    # General schedule styling
-│   │   ├── mtr_schedule.css        # MTR schedule styling
-│   │   ├── mtr.css                 # MTR page styling
+│   │   ├── mtr_schedule.css        # MTR schedule styling (general_schedule.css)
+│   │   ├── mtr.css                 # MTR route planner styling (simple_route_planner.css)
 │   │   ├── navbar.css              # Navigation bar styling
-│   │   ├── route_planner.css       # Route planner styling
-│   │   ├── styles.css              # General styling
-│   │   ├── temperature.css         # Weather display styling
+│   │   ├── route_planner.css       # Advanced route planner styling
 │   │   ├── tram_schedule.css       # Tram schedule styling
-│   │   └── transit.css             # Transit page styling
+│   │   ├── tram_stop_finder.css    # Tram stop finder styling
+│   │   └── temperature.css         # Weather display styling
 │   ├── js/                         # JavaScript for interactivity
 │   │   ├── citybusstop.js          # Citybus stop functionality
 │   │   ├── directloca.js           # Direct location search
 │   │   ├── ferry.js                # Ferry schedule and data
-│   │   ├── general_schedule.js     # General schedule functionality
 │   │   ├── hkostation.js           # Hong Kong station data
 │   │   ├── kmbusstop.js            # KMB bus stop functionality
 │   │   ├── minibus.js              # Minibus schedule and data
 │   │   ├── mtr_schedule.js         # MTR schedule functionality
-│   │   ├── mtr.js                  # MTR-specific functionality
+│   │   ├── mtr.js                  # MTR route planner functionality
 │   │   ├── navbar.js               # Navigation bar interactivity
-│   │   ├── route_planner.js        # Route planning logic
-│   │   ├── RTHK.js                # News or real-time updates
+│   │   ├── route_planner.js        # Advanced route planning logic
+│   │   ├── RTHK.js                # RTHK news updates
 │   │   ├── script.js               # General scripting
 │   │   ├── stations.js             # Station data handling
 │   │   ├── temperature.js          # Weather data display
 │   │   ├── tram_schedule.js        # Tram schedule functionality
-│   │   ├── tramData.js             # Tram data handling
-│   │   └── transit.js              # General transit functionality
-│   └── images/                     # Images for UI
+│   │   └── tramData.js             # Tram data handling
+│   └── images/                     # UI images
 │       ├── citybus_button.png      # Citybus button
 │       ├── citybus.png             # Citybus logo
 │       ├── ferry_button.png        # Ferry button
@@ -154,6 +151,7 @@ FYP/
 │       ├── mtr_button.png          # MTR button
 │       ├── mtr.png                 # MTR logo
 │       ├── news_icon.png           # News icon
+│       ├── rthk.png                # RTHK icon
 │       ├── route_planning.png      # Route planner image
 │       ├── switch.png              # UI switch icon
 │       ├── tram_button.png         # Tram button
@@ -162,11 +160,10 @@ FYP/
 │   ├── citybus.html                # Citybus schedule/info page
 │   ├── cookie.html                 # Cookie consent page
 │   ├── ferry.html                  # Ferry schedule/info page
-│   ├── general_schedule.html       # General schedules page
 │   ├── home.html                   # Homepage
 │   ├── minibus_schedule.html       # Minibus schedule page
-│   ├── mtr.html                    # MTR schedule/info page
-│   ├── route_planner.html          # Route planning page
+│   ├── mtr_schedule.html           # MTR schedule page
+│   ├── route_planner.html          # MTR route planning page
 │   ├── tram_schedule.html          # Tram schedule page
 │   └── transit_planner.html        # Transit planning page
 ├── data/                           # Transport data in JSON format

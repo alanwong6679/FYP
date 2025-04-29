@@ -356,7 +356,6 @@ app.get('/api/route-fees', (req, res) => {
     });
 });
 
-
 // Favorites Endpoints with Consent Check
 app.get('/api/favorites', (req, res) => {
     const consented = req.cookies.consented === 'true';
@@ -408,7 +407,7 @@ app.post('/api/consent', (req, res) => {
     res.json({ success: true });
 });
 
-// HTML Endpoint with Cookie Notice
+// HTML Endpoints
 app.get('/', (req, res) => {
     const consented = req.cookies.consented === 'true';
     if (consented) {
@@ -418,6 +417,19 @@ app.get('/', (req, res) => {
     }
 });
 
+app.get('/transit_planner', (req, res) => {
+    res.render('transit_planner', {
+        GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'
+    });
+});
+
+app.get('/mtr_schedule', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'mtr_schedule.html'));
+});
+
+app.get('/route_planner', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'route_planner.html'));
+});
 
 // Start the server
 app.listen(PORT, () => {
@@ -426,7 +438,7 @@ app.listen(PORT, () => {
     // Spawn Python script as a child process
     const pythonProcess = spawn('python3', ['fetch_transport_data.py'], {
         cwd: __dirname,
-        stdio: 'inherit' // Log Python output to server console
+        stdio: 'inherit'
     });
     
     pythonProcess.on('error', (err) => {
