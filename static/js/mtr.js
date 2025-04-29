@@ -319,6 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 input.addEventListener('focus', () => {
                     if (input.value) options.style.display = 'block';
                 });
+                
             }
         });
     }

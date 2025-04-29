@@ -1,153 +1,3 @@
-/* Define custom properties for consistency */
-:root {
-    --border-radius: 8px;
-    --transition-default: 0.3s ease;
-    --shadow-light: 0 2px 10px rgba(0,0,0,0.1);
-    --shadow-dark: 0 2px 10px rgba(0,0,0,0.3);
-    --primary-blue: #007bff;
-    --min-touch-size: 44px; /* Minimum touch target size */
-}
-
-body {
-    font-family: 'Roboto', sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f4f4f9;
-    color: #333;
-    /* New: Account for potential sidebar */
-    box-sizing: border-box;
-    padding-left: 170px; /* Matches navbar.css */
-}
-
-/* Mobile: Remove sidebar offset and adjust padding */
-@media (max-width: 768px) {
-    body {
-        padding-left: 0;
-        padding: 10px;
-    }
-}
-
-header {
-    background-color: var(--primary-blue);
-    padding: 20px;
-    color: #fff;
-    text-align: center;
-}
-
-/* Mobile: Reduce header padding */
-@media (max-width: 768px) {
-    header {
-        padding: 15px;
-    }
-}
-
-.container {
-    max-width: 1200px;
-    margin: 20px auto;
-    padding: 20px;
-    background-color: #fff;
-    box-shadow: var(--shadow-light);
-    border-radius: var(--border-radius);
-    /* New: Space for bottom bar */
-    margin-bottom: 80px;
-}
-
-/* Mobile: Adjust container padding and margins */
-@media (max-width: 768px) {
-    .container {
-        max-width: 100%;
-        margin: 15px 10px 60px;
-        padding: 15px;
-    }
-}
-
-h1 {
-    margin-bottom: 20px;
-    font-size: 2rem;
-    text-align: center;
-}
-
-/* Mobile: Adjust h1 font size */
-@media (max-width: 768px) {
-    h1 {
-        font-size: 1.5rem;
-        margin-bottom: 15px;
-    }
-}
-
-.route-option {
-    border: 1px solid #ccc;
-    padding: 15px;
-    margin: 10px 0;
-    cursor: pointer;
-    border-radius: var(--border-radius);
-    transition: background-color var(--transition-default);
-    /* New: Touch-friendly size */
-    min-height: var(--min-touch-size);
-}
-
-/* Mobile: Increase route option padding */
-@media (max-width: 768px) {
-    .route-option {
-        padding: 12px;
-        margin: 8px 0;
-        min-height: 48px;
-    }
-}
-
-.route-option:hover {
-    background-color: #f0f0f0;
-}
-
-.schedule-detail h2, .schedule-detail h3 {
-    color: var(--primary-blue);
-}
-
-/* Mobile: Adjust schedule detail headings */
-@media (max-width: 768px) {
-    .schedule-detail h2 {
-        font-size: 1.3em;
-    }
-    .schedule-detail h3 {
-        font-size: 1.1em;
-    }
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    /* New: Enable horizontal scrolling on mobile */
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
-}
-
-/* Mobile: Optimize table */
-@media (max-width: 768px) {
-    table {
-        font-size: 14px;
-        margin-top: 15px;
-    }
-}
-
-th, td {
-    padding: 10px;
-    border: 1px solid #ccc;
-}
-
-/* Mobile: Reduce table cell padding */
-@media (max-width: 768px) {
-    th, td {
-        padding: 8px;
-    }
-}
-
-th {
-    background-color: var(--primary-blue);
-    color: #fff;
-}
-
 .modal {
     display: none;
     position: fixed;
@@ -158,18 +8,6 @@ th {
     height: 100%;
     overflow: auto;
     background-color: rgba(0,0,0,0.4);
-    /* New: Center content */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 10px;
-}
-
-/* Mobile: Adjust modal padding */
-@media (max-width: 768px) {
-    .modal {
-        padding: 8px;
-    }
 }
 
 .modal-content {
@@ -179,21 +17,10 @@ th {
     border: 1px solid #888;
     width: 80%;
     max-width: 600px;
-    border-radius: var(--border-radius);
+    border-radius: 8px;
     overflow-y: auto;
     max-height: 70vh;
     position: relative;
-}
-
-/* Mobile: Optimize modal size */
-@media (max-width: 768px) {
-    .modal-content {
-        width: 90%;
-        max-width: 320px;
-        padding: 15px;
-        margin: 10% auto;
-        max-height: 80vh;
-    }
 }
 
 .news-item {
@@ -202,41 +29,18 @@ th {
     border-bottom: 1px solid #ccc;
 }
 
-/* Mobile: Adjust news item padding */
-@media (max-width: 768px) {
-    .news-item {
-        padding: 8px;
-        font-size: 14px;
-    }
-}
-
 .close {
     color: #aaa;
     float: right;
     font-size: 28px;
     font-weight: bold;
-    cursor: pointer;
-    /* New: Touch-friendly size */
-    min-width: var(--min-touch-size);
-    min-height: var(--min-touch-size);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Mobile: Adjust close button size */
-@media (max-width: 768px) {
-    .close {
-        font-size: 24px;
-        min-width: 40px;
-        min-height: 40px;
-    }
 }
 
 .close:hover,
 .close:focus {
     color: black;
     text-decoration: none;
+    cursor: pointer;
 }
 
 .language-switch {
@@ -247,41 +51,8 @@ th {
     gap: 10px;
 }
 
-/* Mobile: Adjust language switch position and gap */
-@media (max-width: 768px) {
-    .language-switch {
-        top: 8px;
-        right: 8px;
-        gap: 8px;
-    }
-}
-
 .language-switch button {
     cursor: pointer;
-    /* New: Define button styles for consistency */
-    background-color: #f0f0f0;
-    color: #333;
-    border: 1px solid #ccc;
-    padding: 5px 10px;
-    border-radius: var(--border-radius);
-    font-size: 12px;
-    transition: background-color var(--transition-default);
-    min-width: var(--min-touch-size);
-    min-height: var(--min-touch-size);
-}
-
-/* Mobile: Adjust language button padding and font size */
-@media (max-width: 768px) {
-    .language-switch button {
-        padding: 4px 8px;
-        font-size: 11px;
-        min-width: 40px;
-        min-height: 40px;
-    }
-}
-
-.language-switch button:hover {
-    background-color: #e0e0e0;
 }
 
 .source-reference {
@@ -291,10 +62,65 @@ th {
     text-align: center;
 }
 
-/* Mobile: Increase source reference font size */
-@media (max-width: 768px) {
-    .source-reference {
-        font-size: 14px;
-        margin-top: 15px;
-    }
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f9;
+    color: #333;
+}
+
+header {
+    background-color: #007dc5;
+    padding: 20px;
+    color: #fff;
+    text-align: center;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border-radius: 8px;
+}
+
+h1 {
+    margin-bottom: 20px;
+    font-size: 2rem;
+    text-align: center;
+}
+
+.route-option {
+    border: 1px solid #ccc;
+    padding: 15px;
+    margin: 10px 0;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background-color 0.3s;
+}
+
+.route-option:hover {
+    background-color: #f0f0f0;
+}
+
+.schedule-detail h2, .schedule-detail h3 {
+    color: #007dc5;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+
+th {
+    background-color: #007dc5;
+    color: #fff;
 }

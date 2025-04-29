@@ -1,36 +1,24 @@
 // RTHK.js
 function createRTHKButton() {
-    // Create the RTHK button (as an icon)
-    const rthkIcon = document.createElement('div');
-    rthkIcon.classList.add('rthk-icon');
-    document.body.appendChild(rthkIcon);
-
-    // Create the modal
-    const modal = document.createElement('div');
-    modal.id = 'newsModal';
-    modal.classList.add('modal');
-    modal.innerHTML = `
-        <div class="modal-content">
-            <span class="close">×</span>
-            <div class="language-switch">
-                <button id="btnChinese">中文</button>
-                <button id="btnEnglish">English</button>
-            </div>
-            <div id="newsContent">Loading news content...</div>
-            <div class="source-reference">Source: RTHK</div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-
-    // Variables for news content
-    let originalContent = '';
-
-    // Toggle modal function
-    function toggleModal() {
-        modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+    if (!document.querySelector('.rthk-icon')) {
+        const rthkIcon = document.createElement('div');
+        rthkIcon.classList.add('rthk-icon');
+        document.body.appendChild(rthkIcon);
+        rthkIcon.addEventListener('click', fetchNewsContent);
     }
 
-    // Fetch news content function
+    const modal = document.getElementById('newsModal');
+    if (!modal) {
+        console.warn('RTHK modal not found in HTML. Ensure #newsModal is included.');
+        return;
+    }
+
+    let originalContent = '';
+
+    function toggleModal() {
+        modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+    }
+
     function fetchNewsContent() {
         fetch('https://programme.rthk.hk/channel/radio/trafficnews/index.php')
             .then(response => response.text())
@@ -47,21 +35,40 @@ function createRTHKButton() {
                 document.getElementById('newsContent').innerHTML = originalContent || 'No news content found.';
                 toggleModal();
             })
-            .catch(error => console.error('Error fetching news content:', error));
+            .catch(error => {
+                console.error('Error fetching news content:', error);
+                document.getElementById('newsContent').innerHTML = 'Failed to load news.';
+            });
     }
 
-    // Event listeners
-    rthkIcon.addEventListener('click', fetchNewsContent);
-    modal.querySelector('.close').addEventListener('click', toggleModal);
+    const closeButton = modal.querySelector('.close');
+    if (closeButton) {
+        closeButton.addEventListener('click', toggleModal);
+    }
+
     modal.addEventListener('click', (event) => {
         if (event.target === modal) {
             toggleModal();
         }
     });
-    document.getElementById('btnChinese').addEventListener('click', () => {
-        document.getElementById('newsContent').innerHTML = originalContent || 'No news content found.';
-    });
+
+    const btnChinese = document.getElementById('btnChinese');
+    const btnEnglish = document.getElementById('btnEnglish');
+    if (btnChinese) {
+        btnChinese.addEventListener('click', () => {
+            document.getElementById('newsContent').innerHTML = originalContent || 'No news content found.';
+        });
+    }
+    if (btnEnglish) {
+        btnEnglish.addEventListener('click', () => {
+            document.getElementById('newsContent').innerHTML = originalContent || 'No news content found.';
+        });
+    }
 }
 
-// Call the function when the DOM is fully loaded
-document.addEventListener('DOMContentLoaded', createRTHKButton);
+document.addEventListener('DOMContentLoaded', () => {
+    if (!window.rthkInitialized) {
+        createRTHKButton();
+        window.rthkInitialized = true;
+    }
+});
