@@ -88,9 +88,9 @@ npm start
 Access the Web App:
 Open your browser and go to:
 
-http://localhost:3000
+http://localhost:5000
 
-Note: Replace 3000 with the port specified in server.js if it differs.
+Note: Replace 5000 with the port specified in server.js if it differs.
 
 Navigating the App
 Home: Begin at home.html for a project overview.

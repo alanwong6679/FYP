@@ -8366,13 +8366,6 @@
             "provider": "kmb"
         },
         {
-            "route": "N681",
-            "bound": "O",
-            "orig_en": "CENTRAL (CENTRAL FERRY PIERS)",
-            "dest_en": "MA ON SHAN TOWN CENTRE",
-            "provider": "kmb"
-        },
-        {
             "route": "N691",
             "bound": "O",
             "orig_en": "TIU KENG LENG",
@@ -15219,7 +15212,7 @@
             "route_id": 2006674,
             "region": "NT",
             "orig_en": "Po Lam Station",
-            "dest_en": "Po Hong Road",
+            "dest_en": "Tseung Kwan O Village",
             "provider": "minibus"
         },
         {
@@ -15227,7 +15220,7 @@
             "bound": 2,
             "route_id": 2006674,
             "region": "NT",
-            "orig_en": "Po Hong Road",
+            "orig_en": "Tseung Kwan O Village",
             "dest_en": "Po Lam Station",
             "provider": "minibus"
         },
@@ -16435,6 +16428,24 @@
             "region": "NT",
             "orig_en": "Ma Sik Road ",
             "dest_en": "Fanling Station (Circular)",
+            "provider": "minibus"
+        },
+        {
+            "route": "508",
+            "bound": 1,
+            "route_id": 2010929,
+            "region": "NT",
+            "orig_en": "Sheung Shui Station",
+            "dest_en": "Kwu Tung North Multi-Welfare Services Complex Terminus",
+            "provider": "minibus"
+        },
+        {
+            "route": "508",
+            "bound": 2,
+            "route_id": 2010929,
+            "region": "NT",
+            "orig_en": "Kwu Tung North Multi-Welfare Services Complex Terminus",
+            "dest_en": "Sheung Shui Station",
             "provider": "minibus"
         },
         {
@@ -18778,5 +18789,5 @@
             "provider": "minibus"
         }
     ],
-    "timestamp": 1744803544436
+    "timestamp": 1745912932592
 }

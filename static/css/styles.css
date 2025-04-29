@@ -1,10 +1,35 @@
+/* Tentatively named simple_route_planner.css */
+:root {
+    --border-radius: 8px;
+    --transition-default: 0.3s ease;
+    --shadow-light: 0 2px 10px rgba(0,0,0,0.1);
+    --shadow-dark: 0 2px 10px rgba(0,0,0,0.3);
+    --primary-blue: #007bff;
+    --primary-blue-dark: #1e90ff;
+    --primary-green: #28a745;
+    --primary-green-dark: #2ecc71;
+    --min-touch-size: 44px; /* Minimum touch target size */
+    --container-bg: #fff;
+    --container-bg-dark: #333;
+    --text-color: #333;
+    --text-color-dark: #e0e0e0;
+    --input-border: #ccc;
+    --input-border-dark: #666;
+    --input-bg: #fff;
+    --input-bg-dark: #444;
+    --options-hover-bg: #f0f0f0;
+    --options-hover-bg-dark: #555;
+    --bottom-bar-bg: rgba(51, 51, 51, 0.8);
+    --bottom-bar-bg-dark: rgba(80, 80, 80, 0.9);
+}
+
 body {
     font-family: 'Roboto', sans-serif;
     margin: 0;
     padding: 0;
     background-color: #f4f4f9;
     background-image: url("/static/images/index.png");
-    color: #333;
+    color: var(--text-color);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -12,13 +37,31 @@ body {
     flex-direction: column;
     background-size: cover;
     background-repeat: no-repeat;
+    /* New: Account for sidebar */
+    box-sizing: border-box;
+    padding-left: 160px; /* Matches container margin */
+}
+
+/* New: Dark theme support */
+:where([data-theme="dark"]) body {
+    background-color: #1a1a1a;
+    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("/static/images/index.png");
+    color: var(--text-color-dark);
+}
+
+/* Mobile: Remove sidebar offset and adjust padding */
+@media (max-width: 768px) {
+    body {
+        padding-left: 0;
+        padding: 10px;
+    }
 }
 
 .container {
-    background-color: #fff;
+    background-color: var(--container-bg);
     padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-light);
     width: 100%;
     max-width: 500px;
     margin-bottom: 60px;
@@ -26,17 +69,53 @@ body {
     position: relative;
 }
 
+/* New: Dark theme support */
+:where([data-theme="dark"]) .container {
+    background-color: var(--container-bg-dark);
+    box-shadow: var(--shadow-dark);
+}
+
+/* Mobile: Remove margin and adjust container */
+@media (max-width: 768px) {
+    .container {
+        margin-left: 0;
+        max-width: 100%;
+        padding: 15px;
+        margin-bottom: 80px; /* Extra space for bottom bar */
+    }
+}
+
 h1 {
     text-align: center;
     font-size: 2rem;
     margin-bottom: 20px;
-    color: #007dc5;
+    color: var(--primary-blue);
+}
+
+/* New: Dark theme support */
+:where([data-theme="dark"]) h1 {
+    color: var(--primary-blue-dark);
+}
+
+/* Mobile: Adjust h1 font size */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+    }
 }
 
 form {
     display: flex;
     flex-direction: column;
     gap: 15px;
+}
+
+/* Mobile: Adjust form gap */
+@media (max-width: 768px) {
+    form {
+        gap: 12px;
+    }
 }
 
 .place-container {
@@ -46,11 +125,25 @@ form {
     position: relative;
 }
 
+/* Mobile: Adjust place container gap */
+@media (max-width: 768px) {
+    .place-container {
+        gap: 12px;
+    }
+}
+
 .station-row {
     display: flex;
     align-items: center;
     gap: 10px;
     width: 100%;
+}
+
+/* Mobile: Adjust station row gap */
+@media (max-width: 768px) {
+    .station-row {
+        gap: 8px;
+    }
 }
 
 .station-row dt {
@@ -70,9 +163,26 @@ form {
 .searchable-select input {
     width: 100%;
     padding: 10px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--input-border);
     border-radius: 4px;
     box-sizing: border-box;
+    background-color: var(--input-bg);
+    color: var(--text-color);
+}
+
+/* New: Dark theme support */
+:where([data-theme="dark"]) .searchable-select input {
+    border-color: var(--input-border-dark);
+    background-color: var(--input-bg-dark);
+    color: var(--text-color-dark);
+}
+
+/* Mobile: Adjust input padding and font size */
+@media (max-width: 768px) {
+    .searchable-select input {
+        padding: 8px;
+        font-size: 14px;
+    }
 }
 
 .searchable-select .options {
@@ -80,23 +190,53 @@ form {
     top: 100%;
     left: 0;
     right: 0;
-    border: 1px solid #ccc;
-    background-color: #fff;
+    border: 1px solid var(--input-border);
+    background-color: var(--container-bg);
     z-index: 1000;
     max-height: 200px;
     overflow-y: auto;
     display: none;
-    border-radius: 4px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-light);
+}
+
+/* New: Dark theme support */
+:where([data-theme="dark"]) .searchable-select .options {
+    border-color: var(--input-border-dark);
+    background-color: var(--container-bg-dark);
+    box-shadow: var(--shadow-dark);
+}
+
+/* Mobile: Adjust options max-height */
+@media (max-width: 768px) {
+    .searchable-select .options {
+        max-height: 150px;
+    }
 }
 
 .searchable-select .options div {
     padding: 10px;
     cursor: pointer;
+    /* New: Touch-friendly size */
+    min-height: var(--min-touch-size);
+}
+
+/* Mobile: Adjust option padding */
+@media (max-width: 768px) {
+    .searchable-select .options div {
+        padding: 8px;
+        font-size: 14px;
+        min-height: 40px;
+    }
 }
 
 .searchable-select .options div:hover {
-    background-color: #f0f0f0;
+    background-color: var(--options-hover-bg);
+}
+
+/* New: Dark theme support */
+:where([data-theme="dark"]) .searchable-select .options div:hover {
+    background-color: var(--options-hover-bg-dark);
 }
 
 .input-change {
@@ -107,6 +247,21 @@ form {
     cursor: pointer;
     padding: 5px;
     z-index: 10;
+    /* New: Touch-friendly size */
+    min-width: var(--min-touch-size);
+    min-height: var(--min-touch-size);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Mobile: Adjust input-change padding */
+@media (max-width: 768px) {
+    .input-change {
+        padding: 4px;
+        min-width: 40px;
+        min-height: 40px;
+    }
 }
 
 .input-change img {
@@ -114,19 +269,48 @@ form {
     height: 24px;
 }
 
+/* Mobile: Adjust input-change image size */
+@media (max-width: 768px) {
+    .input-change img {
+        width: 20px;
+        height: 20px;
+    }
+}
+
 button {
     padding: 10px;
     border: none;
     border-radius: 4px;
-    background-color: #007bff;
+    background-color: var(--primary-blue);
     color: #fff;
     font-size: 16px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: background-color var(--transition-default);
+    /* New: Touch-friendly size */
+    min-height: var(--min-touch-size);
+}
+
+/* New: Dark theme support */
+:where([data-theme="dark"]) button {
+    background-color: var(--primary-blue-dark);
+}
+
+/* Mobile: Adjust button padding and font size */
+@media (max-width: 768px) {
+    button {
+        padding: 8px;
+        font-size: 14px;
+        min-height: 40px;
+    }
 }
 
 button:hover {
     background-color: #0056b3;
+}
+
+/* New: Dark theme support */
+:where([data-theme="dark"]) button:hover {
+    background-color: #4169e1;
 }
 
 .status-button {
@@ -135,11 +319,41 @@ button:hover {
     right: 10px;
     padding: 8px 12px;
     font-size: 14px;
-    background-color: #28a745;
+    background-color: var(--primary-green);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color var(--transition-default);
+    /* New: Touch-friendly size */
+    min-width: var(--min-touch-size);
+    min-height: var(--min-touch-size);
+}
+
+/* New: Dark theme support */
+:where([data-theme="dark"]) .status-button {
+    background-color: var(--primary-green-dark);
+}
+
+/* Mobile: Adjust status button padding and position */
+@media (max-width: 768px) {
+    .status-button {
+        padding: 6px 10px;
+        font-size: 13px;
+        top: 8px;
+        right: 8px;
+        min-width: 40px;
+        min-height: 40px;
+    }
 }
 
 .status-button:hover {
     background-color: #218838;
+}
+
+/* New: Dark theme support */
+:where([data-theme="dark"]) .status-button:hover {
+    background-color: #27ae60;
 }
 
 .modal {
@@ -153,17 +367,50 @@ button:hover {
     z-index: 2000;
     justify-content: center;
     align-items: center;
+    /* New: Add padding for small screens */
+    padding: 10px;
+}
+
+/* New: Dark theme support */
+:where([data-theme="dark"]) .modal {
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+/* Mobile: Adjust modal padding */
+@media (max-width: 768px) {
+    .modal {
+        padding: 8px;
+    }
 }
 
 .modal-content {
-    background-color: #fff;
+    background-color: var(--container-bg);
     padding: 20px;
-    border-radius: 8px;
+    border-radius: var(--border-radius);
     width: 80%;
     max-width: 400px;
     max-height: 80vh;
     overflow-y: auto;
     position: relative;
+    color: var(--text-color);
+    box-shadow: var(--shadow-light);
+}
+
+/* New: Dark theme support */
+:where([data-theme="dark"]) .modal-content {
+    background-color: var(--container-bg-dark);
+    color: var(--text-color-dark);
+    box-shadow: var(--shadow-dark);
+}
+
+/* Mobile: Optimize modal size */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 90%;
+        max-width: 320px;
+        padding: 15px;
+        max-height: 75vh;
+    }
 }
 
 .close-button {
@@ -172,7 +419,27 @@ button:hover {
     right: 10px;
     font-size: 24px;
     cursor: pointer;
-    color: #333;
+    color: var(--text-color);
+    /* New: Touch-friendly size */
+    min-width: var(--min-touch-size);
+    min-height: var(--min-touch-size);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* New: Dark theme support */
+:where([data-theme="dark"]) .close-button {
+    color: var(--text-color-dark);
+}
+
+/* Mobile: Adjust close button size */
+@media (max-width: 768px) {
+    .close-button {
+        font-size: 20px;
+        min-width: 40px;
+        min-height: 40px;
+    }
 }
 
 .status-row {
@@ -180,6 +447,18 @@ button:hover {
     align-items: center;
     padding: 10px 0;
     border-bottom: 1px solid #eee;
+}
+
+/* New: Dark theme support */
+:where([data-theme="dark"]) .status-row {
+    border-bottom: 1px solid #555;
+}
+
+/* Mobile: Adjust status row padding */
+@media (max-width: 768px) {
+    .status-row {
+        padding: 8px 0;
+    }
 }
 
 .status-row:last-child {
@@ -193,6 +472,15 @@ button:hover {
     flex-shrink: 0;
 }
 
+/* Mobile: Adjust color bar size */
+@media (max-width: 768px) {
+    .color-bar {
+        width: 6px;
+        height: 32px;
+        margin-right: 8px;
+    }
+}
+
 .line-info {
     flex-grow: 1;
 }
@@ -200,11 +488,36 @@ button:hover {
 .line-name {
     font-weight: bold;
     font-size: 16px;
+    color: var(--text-color);
+}
+
+/* New: Dark theme support */
+:where([data-theme="dark"]) .line-name {
+    color: var(--text-color-dark);
+}
+
+/* Mobile: Adjust line name font size */
+@media (max-width: 768px) {
+    .line-name {
+        font-size: 14px;
+    }
 }
 
 .line-status {
     font-size: 14px;
     color: #666;
+}
+
+/* New: Dark theme support */
+:where([data-theme="dark"]) .line-status {
+    color: #bbb;
+}
+
+/* Mobile: Adjust line status font size */
+@media (max-width: 768px) {
+    .line-status {
+        font-size: 13px;
+    }
 }
 
 .update-time {
@@ -214,6 +527,20 @@ button:hover {
     white-space: nowrap;
 }
 
+/* New: Dark theme support */
+:where([data-theme="dark"]) .update-time {
+    color: #aaa;
+}
+
+/* Mobile: Adjust update time font size and margin */
+@media (max-width: 768px) {
+    .update-time {
+        font-size: 13px;
+        margin-left: 10px;
+    }
+}
+
+/* Line Colors */
 .color-ael { background-color: #009688; }
 .color-tcl { background-color: #ff9800; }
 .color-tml { background-color: #8b4513; }
@@ -224,9 +551,10 @@ button:hover {
 .color-isl { background-color: #2196f3; }
 .color-ktl { background-color: #4caf50; }
 
+/* Bottom Bar */
 .bottom-bar {
-    background-color: rgba(51, 51, 51, 0.8);
-    color: white;
+    background-color: var(--bottom-bar-bg);
+    color: #fff;
     padding: 10px;
     position: fixed;
     bottom: 0;
@@ -237,9 +565,29 @@ button:hover {
     z-index: 1000;
 }
 
+/* New: Dark theme support */
+:where([data-theme="dark"]) .bottom-bar {
+    background-color: var(--bottom-bar-bg-dark);
+}
+
+/* Mobile: Adjust bottom bar padding */
+@media (max-width: 768px) {
+    .bottom-bar {
+        padding: 8px;
+    }
+}
+
 #temperature {
     font-size: 16px;
     margin-left: 20px;
+}
+
+/* Mobile: Adjust temperature font size and margin */
+@media (max-width: 768px) {
+    #temperature {
+        font-size: 14px;
+        margin-left: 10px;
+    }
 }
 
 #loading {
@@ -248,21 +596,70 @@ button:hover {
     margin-top: 10px;
 }
 
+/* New: Dark theme support */
+:where([data-theme="dark"]) #loading {
+    color: #bbb;
+}
+
+/* Mobile: Adjust loading font size */
+@media (max-width: 768px) {
+    #loading {
+        font-size: 14px;
+        margin-top: 8px;
+    }
+}
+
 #route {
     margin-top: 20px;
+}
+
+/* Mobile: Adjust route margin */
+@media (max-width: 768px) {
+    #route {
+        margin-top: 15px;
+    }
 }
 
 .route-option {
     padding: 10px;
     border-bottom: 1px solid #eee;
     cursor: pointer;
-    color: #007bff;
+    color: var(--primary-blue);
+    /* New: Touch-friendly size */
+    min-height: var(--min-touch-size);
+}
+
+/* New: Dark theme support */
+:where([data-theme="dark"]) .route-option {
+    border-bottom: 1px solid #555;
+    color: var(--primary-blue-dark);
+}
+
+/* Mobile: Adjust route option padding */
+@media (max-width: 768px) {
+    .route-option {
+        padding: 8px;
+        min-height: 40px;
+    }
 }
 
 .route-details {
     display: none;
     margin-left: 20px;
     padding: 10px;
+}
+
+/* New: Dark theme support */
+:where([data-theme="dark"]) .route-details {
+    color: var(--text-color-dark);
+}
+
+/* Mobile: Adjust route details padding and margin */
+@media (max-width: 768px) {
+    .route-details {
+        margin-left: 15px;
+        padding: 8px;
+    }
 }
 
 .stop-list {
@@ -275,16 +672,38 @@ button:hover {
     border-bottom: 1px solid #eee;
 }
 
+/* New: Dark theme support */
+:where([data-theme="dark"]) .stop-list li {
+    border-bottom: 1px solid #555;
+}
+
+/* Mobile: Adjust stop list item padding */
+@media (max-width: 768px) {
+    .stop-list li {
+        padding: 6px 0;
+    }
+}
+
 .boarding-stop {
-    color: blue;
+    color: var(--primary-blue);
     font-weight: bold;
     animation: pulse 1.5s infinite;
 }
 
+/* New: Dark theme support */
+:where([data-theme="dark"]) .boarding-stop {
+    color: var(--primary-blue-dark);
+}
+
 .alighting-stop {
-    color: red;
+    color: #dc3545;
     font-weight: bold;
     animation: pulse 1.5s infinite;
+}
+
+/* New: Dark theme support */
+:where([data-theme="dark"]) .alighting-stop {
+    color: #ff5555;
 }
 
 @keyframes pulse {

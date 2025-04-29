@@ -27,11 +27,12 @@
     --loading-color: #666;
     --swap-button-bg: var(--container-bg);
     --swap-button-shadow: 0 1px 4px rgba(0,0,0,0.15);
-    /* Add accent color for active mode */
     --primary-accent-color: #007bff;
     --mode-button-text: #555;
     --mode-button-active-text: var(--primary-accent-color);
     --mode-button-active-border: var(--primary-accent-color);
+    /* New: Touch-friendly size */
+    --min-touch-size: 44px;
 }
 
 :where([data-theme="dark"]) {
@@ -62,7 +63,6 @@
     --loading-color: #bbb;
     --swap-button-bg: var(--container-bg);
     --swap-button-shadow: 0 1px 4px rgba(0,0,0,0.5);
-     /* Add accent color for active mode */
     --primary-accent-color: #1e90ff;
     --mode-button-text: #aaa;
     --mode-button-active-text: var(--primary-accent-color);
@@ -72,40 +72,54 @@
 body {
     font-family: 'Roboto', sans-serif;
     margin: 0;
-    padding: 0; /* Remove body padding if page structure handles it */
-    background-color: #f4f4f9; /* Fallback */
+    padding: 0;
+    background-color: #f4f4f9;
     color: var(--text-color);
-    /* Changed: Setup main layout context if body is the direct parent */
-    /* display: flex; */ /* Remove flex from body if sidebar exists */
     min-height: 100vh;
     background-size: cover;
     background-repeat: no-repeat;
     box-sizing: border-box;
+    /* New: Account for sidebar */
+    padding-left: 250px; /* Matches main-page-area margin */
 }
 
+/* Mobile: Remove body padding */
+@media (max-width: 768px) {
+    body {
+        padding-left: 0;
+    }
+}
 
 :where([data-theme="dark"]) body {
     background-color: #1a1a1a;
 }
-.main-page-area { /* Hypothetical class for area next to sidebar */
-    display: flex;
-    justify-content: center; /* Center container HORIZONTALLY */
-    align-items: center;    /* Center container VERTICALLY */
-    min-height: calc(100vh - 40px); /* Adjust based on header/footer height */
-    padding: 20px; /* Padding for the content area */
-    box-sizing: border-box;
-    margin-left: 250px; /* Adjust based on actual sidebar width */
-    /* If using CSS Grid for overall layout, this margin isn't needed */
-}
-:where([data-theme="dark"]) body {
-    background-color: #1a1a1a;
-}
+
 @media (prefers-color-scheme: dark) {
     body:not([data-theme="light"]) {
         background: linear-gradient(135deg, #1e293b, #334155);
         color: var(--text-color);
     }
 }
+
+.main-page-area {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 40px);
+    padding: 20px;
+    box-sizing: border-box;
+    margin-left: 250px;
+}
+
+/* Mobile: Remove sidebar offset and adjust padding */
+@media (max-width: 768px) {
+    .main-page-area {
+        margin-left: 0;
+        padding: 15px;
+        min-height: calc(100vh - 60px); /* Account for bottom bar */
+    }
+}
+
 .container {
     background-color: var(--container-bg);
     padding: 25px 30px;
@@ -113,18 +127,36 @@ body {
     box-shadow: var(--container-shadow);
     width: 100%;
     max-width: 600px;
-    margin: 0 auto; /* Horizontal centering within its parent */
+    margin: 0 auto;
     position: relative;
     box-sizing: border-box;
+    /* New: Space for bottom bar */
+    margin-bottom: 80px;
 }
 
+/* Mobile: Adjust container padding and margins */
+@media (max-width: 768px) {
+    .container {
+        max-width: 100%;
+        padding: 20px;
+        margin-bottom: 60px;
+    }
+}
 
 h1 {
     text-align: center;
     font-size: 2rem;
-    margin-top: 0; /* Remove top margin if already centered */
-    margin-bottom: 20px; /* Reduced margin */
+    margin-top: 0;
+    margin-bottom: 20px;
     color: var(--heading-color);
+}
+
+/* Mobile: Adjust h1 font size */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+    }
 }
 
 form {
@@ -132,14 +164,25 @@ form {
     flex-direction: column;
     gap: 0;
 }
+
 .mode-selection-bar {
     display: flex;
-    justify-content: center; /* Center buttons */
+    justify-content: center;
     gap: 10px;
-    margin-bottom: 25px; /* Space below the bar */
+    margin-bottom: 25px;
     padding-bottom: 10px;
-    border-bottom: 1px solid var(--input-border); /* Separator line */
+    border-bottom: 1px solid var(--input-border);
 }
+
+/* Mobile: Adjust mode selection bar */
+@media (max-width: 768px) {
+    .mode-selection-bar {
+        gap: 8px;
+        margin-bottom: 20px;
+        padding-bottom: 8px;
+    }
+}
+
 .mode-button {
     background: none;
     border: none;
@@ -149,43 +192,85 @@ form {
     color: var(--mode-button-text);
     cursor: pointer;
     border-radius: 4px;
-    border-bottom: 3px solid transparent; /* Placeholder for active border */
+    border-bottom: 3px solid transparent;
     transition: color 0.2s ease, border-color 0.2s ease;
+    /* New: Touch-friendly size */
+    min-width: var(--min-touch-size);
+    min-height: var(--min-touch-size);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
+
+/* Mobile: Adjust mode button padding and font size */
+@media (max-width: 768px) {
+    .mode-button {
+        padding: 6px 10px;
+        font-size: 0.9rem;
+        min-width: 40px;
+        min-height: 40px;
+    }
+}
+
 .mode-button:hover {
-    color: var(--mode-button-active-text); /* Use active text color on hover */
+    color: var(--mode-button-active-text);
 }
+
 .mode-button.active {
     color: var(--mode-button-active-text);
-    font-weight: 700; /* Bolder active text */
-    border-bottom-color: var(--mode-button-active-border); /* Highlight active */
+    font-weight: 700;
+    border-bottom-color: var(--mode-button-active-border);
 }
+
 .place-container {
     display: flex;
     flex-direction: column;
-    gap: 15px; /* Gap between form groups */
-    position: relative; /* For swap button positioning */
-    margin-bottom: 25px; /* Space before Find Route button */
+    gap: 15px;
+    position: relative;
+    margin-bottom: 25px;
+}
+
+/* Mobile: Adjust place container gap and margin */
+@media (max-width: 768px) {
+    .place-container {
+        gap: 12px;
+        margin-bottom: 20px;
+    }
 }
 
 .form-group {
     display: grid;
-    grid-template-columns: 140px 1fr; /* Label column, Input column */
+    grid-template-columns: 140px 1fr;
     gap: 10px;
-    align-items: center; /* Vertically align label and input */
+    align-items: center;
 }
 
-.station-label { /* Replaces dt styling */
+/* Mobile: Adjust form group grid */
+@media (max-width: 768px) {
+    .form-group {
+        grid-template-columns: 100px 1fr;
+        gap: 8px;
+    }
+}
+
+.station-label {
     font-weight: 500;
     color: var(--text-color);
-    text-align: left; /* Or 'right' if preferred */
-    grid-column: 1 / 2; /* Explicitly place in first column */
+    text-align: left;
+    grid-column: 1 / 2;
 }
 
-.searchable-select { /* Container for input and options */
+/* Mobile: Adjust station label font size */
+@media (max-width: 768px) {
+    .station-label {
+        font-size: 0.9rem;
+    }
+}
+
+.searchable-select {
     position: relative;
     width: 100%;
-    grid-column: 2 / 3; /* Explicitly place in second column */
+    grid-column: 2 / 3;
 }
 
 .searchable-select input {
@@ -199,13 +284,21 @@ form {
     font-size: 1rem;
 }
 
+/* Mobile: Adjust input padding and font size */
+@media (max-width: 768px) {
+    .searchable-select input {
+        padding: 8px 10px;
+        font-size: 0.95rem;
+    }
+}
+
 .searchable-select .options {
     position: absolute;
     top: 100%;
     left: 0;
     right: 0;
     border: 1px solid var(--options-border);
-    border-top: none; /* Remove top border as it connects to input */
+    border-top: none;
     background-color: var(--options-bg);
     z-index: 1000;
     max-height: 200px;
@@ -214,9 +307,18 @@ form {
     border-radius: 0 0 4px 4px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
+
+/* Mobile: Adjust options max-height and padding */
+@media (max-width: 768px) {
+    .searchable-select .options {
+        max-height: 150px;
+    }
+}
+
 :where([data-theme="dark"]) .searchable-select .options {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
+
 .searchable-select .options div {
     padding: 10px 12px;
     cursor: pointer;
@@ -224,18 +326,28 @@ form {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    /* New: Touch-friendly size */
+    min-height: var(--min-touch-size);
+}
+
+/* Mobile: Adjust option padding */
+@media (max-width: 768px) {
+    .searchable-select .options div {
+        padding: 8px 10px;
+        font-size: 0.9rem;
+        min-height: 40px;
+    }
 }
 
 .searchable-select .options div:hover {
     background-color: var(--options-hover-bg);
     color: var(--options-hover-text);
 }
+
 .input-change {
     position: absolute;
     left: 50%;
-    /* Adjust based on label width + gap + half input (approx) */
-    /* Or more dynamically calc(140px + 10px - 15px); label+gap-half_btn_width */
-    top: 52px; /* Approximate vertical center between inputs */
+    top: 52px;
     transform: translate(-50%, -50%);
     cursor: pointer;
     padding: 5px;
@@ -247,6 +359,19 @@ form {
     justify-content: center;
     box-shadow: var(--swap-button-shadow);
     border: 1px solid var(--input-border);
+    /* New: Touch-friendly size */
+    min-width: var(--min-touch-size);
+    min-height: var(--min-touch-size);
+}
+
+/* Mobile: Adjust input-change padding */
+@media (max-width: 768px) {
+    .input-change {
+        padding: 4px;
+        min-width: 40px;
+        min-height: 40px;
+        top: 48px; /* Adjust for smaller inputs */
+    }
 }
 
 .input-change img {
@@ -254,19 +379,40 @@ form {
     height: 20px;
     display: block;
 }
-button[type="submit"] { /* Be more specific for the submit button */
+
+/* Mobile: Adjust input-change image size */
+@media (max-width: 768px) {
+    .input-change img {
+        width: 18px;
+        height: 18px;
+    }
+}
+
+button[type="submit"] {
     padding: 12px 15px;
     border: none;
     border-radius: 4px;
     background-color: var(--button-bg);
     color: var(--button-text);
-    font-size: 1.05rem; /* Slightly larger */
+    font-size: 1.05rem;
     font-weight: 500;
     cursor: pointer;
     transition: background-color 0.2s ease-in-out;
     width: 100%;
     margin-top: 5px;
+    /* New: Touch-friendly size */
+    min-height: var(--min-touch-size);
 }
+
+/* Mobile: Adjust submit button padding and font size */
+@media (max-width: 768px) {
+    button[type="submit"] {
+        padding: 10px 12px;
+        font-size: 1rem;
+        min-height: 40px;
+    }
+}
+
 button[type="submit"]:hover {
     background-color: var(--button-hover-bg);
 }
@@ -289,11 +435,26 @@ button:hover {
     border-radius: 4px;
     cursor: pointer;
     transition: background-color 0.2s ease-in-out;
+    /* New: Touch-friendly size */
+    min-width: var(--min-touch-size);
+    min-height: var(--min-touch-size);
 }
+
+/* Mobile: Adjust status button padding and position */
+@media (max-width: 768px) {
+    .status-button {
+        padding: 6px 10px;
+        font-size: 0.85rem;
+        top: 15px;
+        right: 15px;
+        min-width: 40px;
+        min-height: 40px;
+    }
+}
+
 .status-button:hover {
     background-color: var(--status-button-hover-bg);
 }
-
 
 /* --- Modal Styles --- */
 .modal {
@@ -303,12 +464,19 @@ button:hover {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.6); /* Slightly darker overlay */
+    background-color: rgba(0, 0, 0, 0.6);
     z-index: 2000;
     justify-content: center;
     align-items: center;
-    padding: 20px; /* Add padding for small screens */
+    padding: 20px;
     box-sizing: border-box;
+}
+
+/* Mobile: Adjust modal padding */
+@media (max-width: 768px) {
+    .modal {
+        padding: 10px;
+    }
 }
 
 :where([data-theme="dark"]) .modal {
@@ -320,38 +488,69 @@ button:hover {
     padding: 25px;
     border-radius: 8px;
     width: 100%;
-    max-width: 450px; /* Slightly wider modal */
-    max-height: 85vh; /* Adjust max height */
+    max-width: 450px;
+    max-height: 85vh;
     overflow-y: auto;
     position: relative;
     color: var(--modal-text-color);
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
 
+/* Mobile: Optimize modal size */
+@media (max-width: 768px) {
+    .modal-content {
+        max-width: 320px;
+        padding: 20px;
+        max-height: 80vh;
+    }
+}
+
 .modal-content h2 {
     margin-top: 0;
     margin-bottom: 20px;
     text-align: center;
-    color: var(--heading-color); /* Use heading color */
+    color: var(--heading-color);
 }
 
+/* Mobile: Adjust modal h2 font size */
+@media (max-width: 768px) {
+    .modal-content h2 {
+        font-size: 1.3rem;
+        margin-bottom: 15px;
+    }
+}
 
 .close-button {
     position: absolute;
     top: 10px;
     right: 15px;
-    font-size: 28px; /* Larger close button */
+    font-size: 28px;
     font-weight: bold;
     line-height: 1;
     cursor: pointer;
     color: var(--text-color);
     opacity: 0.7;
     transition: opacity 0.2s;
+    /* New: Touch-friendly size */
+    min-width: var(--min-touch-size);
+    min-height: var(--min-touch-size);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
+
+/* Mobile: Adjust close button size */
+@media (max-width: 768px) {
+    .close-button {
+        font-size: 24px;
+        min-width: 40px;
+        min-height: 40px;
+    }
+}
+
 .close-button:hover {
     opacity: 1;
 }
-
 
 .status-row {
     display: flex;
@@ -360,16 +559,31 @@ button:hover {
     border-bottom: 1px solid var(--status-row-border);
 }
 
+/* Mobile: Adjust status row padding */
+@media (max-width: 768px) {
+    .status-row {
+        padding: 10px 0;
+    }
+}
+
 .status-row:last-child {
     border-bottom: none;
 }
 
 .color-bar {
-    width: 6px; /* Slightly thinner */
-    height: 36px; /* Adjusted height */
+    width: 6px;
+    height: 36px;
     margin-right: 12px;
-    border-radius: 3px; /* Rounded bar */
+    border-radius: 3px;
     flex-shrink: 0;
+}
+
+/* Mobile: Adjust color bar size */
+@media (max-width: 768px) {
+    .color-bar {
+        height: 32px;
+        margin-right: 10px;
+    }
 }
 
 .line-info {
@@ -377,27 +591,49 @@ button:hover {
 }
 
 .line-name {
-    font-weight: 500; /* Medium weight */
-    font-size: 1rem; /* 16px */
-    color: var(--modal-text-color); /* Use modal text color */
+    font-weight: 500;
+    font-size: 1rem;
+    color: var(--modal-text-color);
+}
+
+/* Mobile: Adjust line name font size */
+@media (max-width: 768px) {
+    .line-name {
+        font-size: 0.95rem;
+    }
 }
 
 .line-status {
-    font-size: 0.875rem; /* 14px */
-    color: var(--loading-color); /* Use loading/subtle color */
+    font-size: 0.875rem;
+    color: var(--loading-color);
     margin-top: 2px;
 }
 
+/* Mobile: Adjust line status font size */
+@media (max-width: 768px) {
+    .line-status {
+        font-size: 0.85rem;
+    }
+}
+
 .update-time {
-    font-size: 0.8125rem; /* 13px */
-    color: var(--loading-color); /* Use loading/subtle color */
+    font-size: 0.8125rem;
+    color: var(--loading-color);
     margin-left: 15px;
     white-space: nowrap;
     text-align: right;
     flex-shrink: 0;
 }
 
-/* --- Line Colors (Keep as is) --- */
+/* Mobile: Adjust update time font size */
+@media (max-width: 768px) {
+    .update-time {
+        font-size: 0.8rem;
+        margin-left: 10px;
+    }
+}
+
+/* --- Line Colors --- */
 .color-ael { background-color: #009688; }
 .color-tcl { background-color: #ff9800; }
 .color-tml { background-color: #8b4513; }
@@ -412,10 +648,10 @@ button:hover {
 .bottom-bar {
     background-color: var(--bottom-bar-bg);
     color: var(--bottom-bar-text);
-    padding: 10px 20px; /* Adjusted padding */
+    padding: 10px 20px;
     position: fixed;
     bottom: 0;
-    left: 0; /* Ensure it spans full width */
+    left: 0;
     width: 100%;
     display: flex;
     align-items: center;
@@ -424,22 +660,40 @@ button:hover {
     box-sizing: border-box;
 }
 
-#temperature {
-    font-size: 0.9375rem; /* 15px */
-    margin-left: 0; /* Remove default margin if navbar handles spacing */
+/* Mobile: Adjust bottom bar padding */
+@media (max-width: 768px) {
+    .bottom-bar {
+        padding: 8px 15px;
+    }
 }
 
-/* --- Loading / Route (Keep as is, route display handled on next page) --- */
+#temperature {
+    font-size: 0.9375rem;
+    margin-left: 0;
+}
+
+/* Mobile: Adjust temperature font size */
+@media (max-width: 768px) {
+    #temperature {
+        font-size: 0.875rem;
+    }
+}
+
+/* --- Loading --- */
 #loading {
     text-align: center;
     color: var(--loading-color);
-    margin-top: 20px; /* Add space */
+    margin-top: 20px;
     font-style: italic;
 }
 
-/* Route Option/Details styles might be needed on general_schedule.html */
-/* Styles for .route-option, .route-details, .stop-list etc. */
-/* ... (Can be moved primarily to general_schedule.css) ... */
+/* Mobile: Adjust loading font size */
+@media (max-width: 768px) {
+    #loading {
+        font-size: 0.9rem;
+        margin-top: 15px;
+    }
+}
 
 .boarding-stop {
     color: var(--boarding-color);
@@ -458,9 +712,10 @@ button:hover {
     50% { opacity: 0.6; }
     100% { opacity: 1; }
 }
+
 .search-history {
     position: fixed;
-    bottom: 50px; /* Above bottom bar */
+    bottom: 50px;
     right: 20px;
     width: 300px;
     max-height: 200px;
@@ -468,14 +723,33 @@ button:hover {
     border-radius: 8px;
     box-shadow: var(--container-shadow);
     padding: 15px;
-    z-index: 1500; /* Above bottom bar, below modal */
+    z-index: 1500;
     overflow-y: auto;
+}
+
+/* Mobile: Adjust search history size and position */
+@media (max-width: 768px) {
+    .search-history {
+        width: 90%;
+        max-width: 280px;
+        bottom: 60px;
+        right: 10px;
+        max-height: 150px;
+        padding: 10px;
+    }
 }
 
 .search-history h3 {
     font-size: 1.1rem;
     margin: 0 0 10px 0;
     color: var(--heading-color);
+}
+
+/* Mobile: Adjust search history h3 font size */
+@media (max-width: 768px) {
+    .search-history h3 {
+        font-size: 1rem;
+    }
 }
 
 .history-item {
@@ -485,6 +759,16 @@ button:hover {
     cursor: pointer;
     background-color: var(--options-bg);
     transition: background-color 0.2s ease;
+    /* New: Touch-friendly size */
+    min-height: var(--min-touch-size);
+}
+
+/* Mobile: Adjust history item padding */
+@media (max-width: 768px) {
+    .history-item {
+        padding: 6px 8px;
+        min-height: 40px;
+    }
 }
 
 .history-item:hover {
@@ -500,11 +784,25 @@ button:hover {
     text-overflow: ellipsis;
 }
 
+/* Mobile: Adjust history item span font size */
+@media (max-width: 768px) {
+    .history-item span {
+        font-size: 0.9rem;
+    }
+}
+
 .history-item small {
     font-size: 0.8rem;
     color: var(--loading-color);
     display: block;
     margin-top: 2px;
+}
+
+/* Mobile: Adjust history item small font size */
+@media (max-width: 768px) {
+    .history-item small {
+        font-size: 0.75rem;
+    }
 }
 
 :where([data-theme="dark"]) .search-history {
@@ -518,10 +816,11 @@ button:hover {
 :where([data-theme="dark"]) .history-item:hover {
     background-color: var(--options-hover-bg);
 }
+
 .gps-toggle {
-    margin-left: 10px; 
-    padding: 8px 12px; 
-    font-size: 0.95rem; 
+    margin-left: 10px;
+    padding: 8px 12px;
+    font-size: 0.95rem;
     cursor: pointer;
     border: 1px solid var(--input-border);
     border-radius: 4px;
@@ -531,6 +830,19 @@ button:hover {
     align-items: center;
     justify-content: center;
     transition: background-color 0.2s ease, color 0.2s ease;
+    /* New: Touch-friendly size */
+    min-width: var(--min-touch-size);
+    min-height: var(--min-touch-size);
+}
+
+/* Mobile: Adjust GPS toggle padding and font size */
+@media (max-width: 768px) {
+    .gps-toggle {
+        padding: 6px 10px;
+        font-size: 0.9rem;
+        min-width: 40px;
+        min-height: 40px;
+    }
 }
 
 .gps-toggle.active {
@@ -550,10 +862,19 @@ button:hover {
 }
 
 :where([data-theme="dark"]) .gps-toggle.active {
-    background-color: var(--primary-accent-color); 
+    background-color: var(--primary-accent-color);
     color: var(--button-text);
 }
+
 #gpsToggle.active {
-    background-color: #ff0000 !important; /* Bright red to confirm visibility */
+    background-color: #ff0000 !important;
     color: #fff !important;
+}
+
+/* Mobile: Ensure theme consistency for gpsToggle */
+@media (max-width: 768px) {
+    #gpsToggle.active {
+        background-color: var(--primary-accent-color) !important; /* Respect theme */
+        color: var(--button-text) !important;
+    }
 }

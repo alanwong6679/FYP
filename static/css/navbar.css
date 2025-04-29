@@ -1,3 +1,25 @@
+/* Define custom properties for consistency */
+:root {
+  --border-radius: 8px;
+  --transition-default: 0.3s ease;
+  --shadow-light: 0 2px 10px rgba(0,0,0,0.1);
+  --shadow-dark: 0 2px 10px rgba(0,0,0,0.3);
+  --primary-blue: #007bff;
+  --primary-blue-dark: #1e90ff;
+  --min-touch-size: 44px; /* Minimum touch target size */
+}
+
+body {
+  padding-left: 170px; /* Width of navbar + padding */
+}
+
+/* Mobile: Remove body padding */
+@media (max-width: 768px) {
+  body {
+      padding-left: 0;
+  }
+}
+
 .nav-bar {
   position: fixed;
   top: 0;
@@ -9,7 +31,19 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  transition: background-color 0.3s ease;
+  transition: background-color var(--transition-default), transform 0.3s ease;
+}
+
+/* Mobile: Collapse navbar off-screen */
+@media (max-width: 768px) {
+  .nav-bar {
+      transform: translateX(-150px);
+      width: 200px; /* Wider for mobile */
+      z-index: 2000;
+  }
+  .nav-bar.active {
+      transform: translateX(0);
+  }
 }
 
 :where([data-theme="dark"]) .nav-bar {
@@ -23,7 +57,15 @@
   text-align: center;
   padding: 10px 0;
   text-decoration: none;
-  transition: color 0.3s ease;
+  transition: color var(--transition-default);
+}
+
+/* Mobile: Adjust nav-title font size */
+@media (max-width: 768px) {
+  .nav-title {
+      font-size: 1.3rem;
+      padding: 8px 0;
+  }
 }
 
 :where([data-theme="dark"]) .nav-title {
@@ -31,21 +73,33 @@
 }
 
 .nav-bar button {
-  background-color: #007bff;
+  background-color: var(--primary-blue);
   padding: 10px 20px;
-  border-radius: 4px;
+  border-radius: var(--border-radius);
   color: #fff;
   font-size: 16px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color var(--transition-default);
   border: none;
   width: 100%;
   text-align: center;
   margin-top: 20px;
+  /* New: Touch-friendly size */
+  min-height: var(--min-touch-size);
+}
+
+/* Mobile: Adjust nav button padding and font size */
+@media (max-width: 768px) {
+  .nav-bar button {
+      padding: 8px 15px;
+      font-size: 14px;
+      margin-top: 15px;
+      min-height: 40px;
+  }
 }
 
 :where([data-theme="dark"]) .nav-bar button {
-  background-color: #1e90ff;
+  background-color: var(--primary-blue-dark);
 }
 
 .nav-bar button.active {
@@ -68,14 +122,26 @@
   background-color: #f1c40f;
   color: #333;
   padding: 10px 20px;
-  border-radius: 4px;
+  border-radius: var(--border-radius);
   border: none;
   cursor: pointer;
   font-size: 16px;
   width: 100%;
   text-align: center;
   margin-top: 20px;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color var(--transition-default), color var(--transition-default);
+  /* New: Touch-friendly size */
+  min-height: var(--min-touch-size);
+}
+
+/* Mobile: Adjust dark mode toggle padding and font size */
+@media (max-width: 768px) {
+  .dark-mode-toggle {
+      padding: 8px 15px;
+      font-size: 14px;
+      margin-top: 15px;
+      min-height: 40px;
+  }
 }
 
 :where([data-theme="dark"]) .dark-mode-toggle {
@@ -97,14 +163,57 @@
   height: 40px;
   background-image: url('https://cdn-icons-png.flaticon.com/512/2571/2571101.png');
   background-size: cover;
-  border-radius: 4px;
+  border-radius: var(--border-radius);
   position: fixed;
   top: 10px;
   right: 10px;
   cursor: pointer;
   z-index: 2000;
+  /* New: Touch-friendly size */
+  min-width: var(--min-touch-size);
+  min-height: var(--min-touch-size);
 }
 
+/* Mobile: Adjust RTHK icon size and position */
+@media (max-width: 768px) {
+  .rthk-icon {
+      width: 36px;
+      height: 36px;
+      top: 8px;
+      right: 8px;
+      min-width: 40px;
+      min-height: 40px;
+  }
+}
+
+/* Hamburger menu toggle for mobile */
+.menu-toggle {
+  display: none; /* Hidden on desktop */
+}
+
+/* Mobile: Show hamburger menu */
+@media (max-width: 768px) {
+  .menu-toggle {
+      display: flex;
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 2500;
+      background: var(--primary-blue);
+      color: white;
+      padding: 8px;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      min-width: var(--min-touch-size);
+      min-height: var(--min-touch-size);
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+  }
+  :where([data-theme="dark"]) .menu-toggle {
+      background: var(--primary-blue-dark);
+  }
+}
 
 /* Modal styling */
 .modal {
@@ -117,6 +226,18 @@
   height: 100%;
   overflow: auto;
   background-color: rgba(0,0,0,0.4);
+  /* New: Center content */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+}
+
+/* Mobile: Adjust modal padding */
+@media (max-width: 768px) {
+  .modal {
+      padding: 8px;
+  }
 }
 
 :where([data-theme="dark"]) .modal {
@@ -130,12 +251,24 @@
   border: 1px solid #888;
   width: 80%;
   max-width: 600px;
-  border-radius: 8px;
+  border-radius: var(--border-radius);
   overflow-y: auto;
   max-height: 70vh;
   position: relative;
   padding-top: 40px;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color var(--transition-default), color var(--transition-default);
+}
+
+/* Mobile: Optimize modal size */
+@media (max-width: 768px) {
+  .modal-content {
+      width: 90%;
+      max-width: 320px;
+      padding: 15px;
+      padding-top: 35px;
+      max-height: 80vh;
+      margin: 10% auto;
+  }
 }
 
 :where([data-theme="dark"]) .modal-content {
@@ -148,7 +281,15 @@
   margin-bottom: 10px;
   padding: 10px;
   border-bottom: 1px solid #ccc;
-  transition: border-color 0.3s ease;
+  transition: border-color var(--transition-default);
+}
+
+/* Mobile: Adjust news item padding and font size */
+@media (max-width: 768px) {
+  .news-item {
+      padding: 8px;
+      font-size: 14px;
+  }
 }
 
 :where([data-theme="dark"]) .news-item {
@@ -164,7 +305,22 @@
   font-weight: bold;
   cursor: pointer;
   z-index: 1100;
-  transition: color 0.3s ease;
+  transition: color var(--transition-default);
+  /* New: Touch-friendly size */
+  min-width: var(--min-touch-size);
+  min-height: var(--min-touch-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mobile: Adjust close button size */
+@media (max-width: 768px) {
+  .close {
+      font-size: 24px;
+      min-width: 40px;
+      min-height: 40px;
+  }
 }
 
 :where([data-theme="dark"]) .close {
@@ -189,14 +345,36 @@
   gap: 5px;
 }
 
+/* Mobile: Adjust language switch position and gap */
+@media (max-width: 768px) {
+  .language-switch {
+      top: 8px;
+      right: 35px;
+      gap: 4px;
+  }
+}
+
 .language-switch button {
   padding: 3px 6px;
   font-size: 12px;
   background-color: #f0f0f0;
   border: 1px solid #ccc;
-  border-radius: 4px;
+  border-radius: var(--border-radius);
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color var(--transition-default);
+  /* New: Touch-friendly size */
+  min-width: var(--min-touch-size);
+  min-height: var(--min-touch-size);
+}
+
+/* Mobile: Adjust language button padding and font size */
+@media (max-width: 768px) {
+  .language-switch button {
+      padding: 4px 5px;
+      font-size: 11px;
+      min-width: 40px;
+      min-height: 40px;
+  }
 }
 
 :where([data-theme="dark"]) .language-switch button {
@@ -218,14 +396,17 @@
   font-size: 12px;
   color: gray;
   text-align: center;
-  transition: color 0.3s ease;
+  transition: color var(--transition-default);
+}
+
+/* Mobile: Increase source reference font size */
+@media (max-width: 768px) {
+  .source-reference {
+      font-size: 14px;
+      margin-top: 15px;
+  }
 }
 
 :where([data-theme="dark"]) .source-reference {
   color: #aaaaaa;
-}
-
-/* Adjust body padding to avoid overlap */
-body {
-  padding-left: 170px; /* Width of navbar + padding */
 }

@@ -1,3 +1,14 @@
+/* Define custom properties for consistency */
+:root {
+    --border-radius: 8px;
+    --transition-default: 0.3s ease;
+    --shadow-light: 0 2px 5px rgba(0,0,0,0.1);
+    --shadow-dark: 0 2px 5px rgba(0,0,0,0.5);
+    --primary-blue: #007bff;
+    --primary-blue-dark: #1e90ff;
+    --min-touch-size: 44px; /* Minimum touch target size */
+}
+
 /* =========================================== */
 /* Global Styles & Body                       */
 /* =========================================== */
@@ -6,8 +17,19 @@ body {
     font-family: 'Roboto', sans-serif;
     margin: 0;
     padding: 10px;
-    background-color: #000000; /* Black background as per image */
+    background-color: #000000;
     color: #e0e0e0;
+    /* New: Account for potential sidebar */
+    box-sizing: border-box;
+    padding-left: 170px; /* Matches navbar.css */
+}
+
+/* Mobile: Remove sidebar offset and adjust padding */
+@media (max-width: 768px) {
+    body {
+        padding-left: 0;
+        padding: 8px;
+    }
 }
 
 header h1 {
@@ -17,9 +39,28 @@ header h1 {
     margin-bottom: 20px;
 }
 
+/* Mobile: Adjust header font size */
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 1.5em;
+        margin: 15px 0;
+    }
+}
+
 .sort-buttons {
     text-align: center;
     margin-bottom: 25px;
+}
+
+/* Mobile: Adjust sort buttons layout */
+@media (max-width: 768px) {
+    .sort-buttons {
+        margin-bottom: 15px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+    }
 }
 
 .sort-button {
@@ -32,13 +73,27 @@ header h1 {
     margin: 0 5px;
     font-size: 0.9em;
     transition: background-color 0.2s ease, border-color 0.2s ease;
+    /* New: Touch-friendly size */
+    min-width: var(--min-touch-size);
+    min-height: var(--min-touch-size);
 }
+
 .sort-button:hover {
     background-color: #4a4a4a;
     border-color: #777;
 }
+
 .sort-button:active {
     background-color: #5a5a5a;
+}
+
+/* Mobile: Adjust sort button padding and font size */
+@media (max-width: 768px) {
+    .sort-button {
+        padding: 10px 12px;
+        font-size: 0.85em;
+        margin: 0;
+    }
 }
 
 /* =========================================== */
@@ -48,27 +103,47 @@ header h1 {
 .options-wrapper {
     max-width: 700px;
     margin: 20px auto;
+    /* New: Space for bottom bar */
+    margin-bottom: 80px;
+}
+
+/* Mobile: Adjust wrapper margins */
+@media (max-width: 768px) {
+    .options-wrapper {
+        max-width: 100%;
+        margin: 15px 10px 60px;
+    }
 }
 
 #route-options {
     display: block;
+    min-width: 300px;
 }
 
 /* =========================================== */
-/* Route Option Summary Styles (Visible First) */
+/* Route Option Summary Styles                */
 /* =========================================== */
 
 .route-summary-option {
-    background-color: #1a1a1a; /* Dark gray from image */
+    background-color: #1a1a1a;
     color: #e0e0e0;
-    border-radius: 8px;
+    border-radius: var(--border-radius);
     padding: 15px 20px;
     margin-bottom: 30px;
     cursor: pointer;
     transition: background-color 0.15s ease-in-out;
     border: 1px solid #333;
-    box-shadow: 0 1px 3px rgba(255, 255, 255, 0.05);
+    box-shadow: var(--shadow-dark);
 }
+
+/* Mobile: Adjust padding and font size */
+@media (max-width: 768px) {
+    .route-summary-option {
+        padding: 12px 15px;
+        margin-bottom: 20px;
+    }
+}
+
 .route-summary-option:hover {
     background-color: #2a2a2a;
 }
@@ -85,18 +160,34 @@ header h1 {
     font-weight: bold;
     display: flex;
     align-items: center;
-    color: #00d9ff; /* White text from image */
+    color: #00d9ff;
 }
+
+/* Mobile: Adjust summary time font size */
+@media (max-width: 768px) {
+    .summary-time {
+        font-size: 1.1em;
+    }
+}
+
 .summary-time .arrow {
     margin: 0 8px;
     font-weight: normal;
     color: #a0a0a0;
 }
+
 .summary-time .duration {
     font-size: 0.8em;
     font-weight: normal;
-    color: #a0a0a0; /* Gray text from image */
+    color: #a0a0a0;
     margin-left: 10px;
+}
+
+/* Mobile: Adjust duration font size */
+@media (max-width: 768px) {
+    .summary-time .duration {
+        font-size: 0.75em;
+    }
 }
 
 .summary-details {
@@ -107,10 +198,20 @@ header h1 {
     margin-bottom: 12px;
     gap: 12px;
 }
+
+/* Mobile: Adjust details font size and gap */
+@media (max-width: 768px) {
+    .summary-details {
+        font-size: 0.9em;
+        gap: 8px;
+    }
+}
+
 .summary-details .detail-item {
     position: relative;
     padding-right: 12px;
 }
+
 .summary-details .detail-item:not(:last-child)::after {
     content: '';
     position: absolute;
@@ -132,35 +233,40 @@ header h1 {
     border-top: 1px solid #383838;
 }
 
-.summary-sequence > * {
-    position: relative;
-    margin-right: 15px; 
-    margin-left: 15px;
+/* Mobile: Adjust sequence margins and padding */
+@media (max-width: 768px) {
+    .summary-sequence {
+        margin-top: 8px;
+        padding-top: 8px;
+    }
 }
 
+.summary-sequence > * {
+    position: relative;
+    margin-right: 15px;
+    margin-left: 15px;
+}
 
 .summary-sequence > *:first-child {
     margin-left: 0;
 }
 
-
 .summary-sequence > *:last-child {
     margin-right: 0;
 }
 
-
 .summary-sequence > *:not(:first-child)::before {
-    content: '→'; 
-    color: #888; 
+    content: '→';
+    color: #888;
     position: absolute;
-    left: -15px; 
+    left: -15px;
     top: 50%;
     transform: translateY(-50%);
-    width: 10px; 
-    text-align: center; 
+    width: 10px;
+    text-align: center;
 }
 
-/* Base styling for sequence items (line bars: AEL, CTB, Walk, Arrived, etc.) */
+/* Base styling for sequence items */
 .sequence-item {
     display: inline-flex;
     align-items: center;
@@ -171,7 +277,15 @@ header h1 {
     font-weight: bold;
     min-width: 30px;
     text-align: center;
-    color: white; /* White text inside bars */
+    color: white;
+}
+
+/* Mobile: Increase sequence item font size */
+@media (max-width: 768px) {
+    .sequence-item {
+        font-size: 0.9em;
+        padding: 3px 6px;
+    }
 }
 
 /* Styling for station names */
@@ -183,23 +297,30 @@ header h1 {
     vertical-align: middle;
 }
 
+/* Mobile: Adjust station name font size */
+@media (max-width: 768px) {
+    .sequence-station-name {
+        font-size: 0.9em;
+    }
+}
+
 /* --- Color Definitions for Sequence Bars --- */
-.sequence-item.line-tag.ael { background-color: #00888A; } /* Teal for AEL */
-.sequence-item.line-tag.tcl { background-color: #F7943E; } /* Orange for TCL */
-.sequence-item.line-tag.tml { background-color: #923011; } /* Red for TML */
-.sequence-item.line-tag.tkl { background-color: #7D499D; } /* Purple for TKL */
-.sequence-item.line-tag.eal { background-color: #53B7E8; } /* Light blue for EAL */
-.sequence-item.line-tag.sil { background-color: #BAC429; } /* Lime green for SIL */
-.sequence-item.line-tag.twl { background-color: #ED1D24; } /* Bright red for TWL */
-.sequence-item.line-tag.isl { background-color: #007DC5; } /* Blue for ISL */
-.sequence-item.line-tag.ktl { background-color: #00AB4E; } /* Green for KTL */
-.sequence-item.line-tag.kmb { background-color: #FF0000; } /* Red for KMB */
-.sequence-item.line-tag.ctb { background-color: #F5A623; } /* Yellow for CTB */
-.sequence-item.line-tag.walk { background-color: #888; } /* Gray for Walk */
-.sequence-item.arrived { background-color: #6c757d; border: 1px solid #888; } /* Gray for Arrived */
+.sequence-item.line-tag.ael { background-color: #00888A; }
+.sequence-item.line-tag.tcl { background-color: #F7943E; }
+.sequence-item.line-tag.tml { background-color: #923011; }
+.sequence-item.line-tag.tkl { background-color: #7D499D; }
+.sequence-item.line-tag.eal { background-color: #53B7E8; }
+.sequence-item.line-tag.sil { background-color: #BAC429; }
+.sequence-item.line-tag.twl { background-color: #ED1D24; }
+.sequence-item.line-tag.isl { background-color: #007DC5; }
+.sequence-item.line-tag.ktl { background-color: #00AB4E; }
+.sequence-item.line-tag.kmb { background-color: #FF0000; }
+.sequence-item.line-tag.ctb { background-color: #F5A623; }
+.sequence-item.line-tag.walk { background-color: #888; }
+.sequence-item.arrived { background-color: #6c757d; border: 1px solid #888; }
 
 /* =========================================== */
-/* Detailed Timeline Styles (Shown on Click)   */
+/* Detailed Timeline Styles                   */
 /* =========================================== */
 
 #schedule {
@@ -208,16 +329,33 @@ header h1 {
     max-width: 600px;
     margin: 20px auto;
     display: none;
+    /* New: Space for bottom bar */
+    margin-bottom: 80px;
+}
+
+/* Mobile: Adjust schedule margins */
+@media (max-width: 768px) {
+    #schedule {
+        max-width: 100%;
+        margin: 15px 10px 60px;
+    }
 }
 
 .route-container {
     background-color: #fff;
     border: 1px solid #ddd;
-    border-radius: 8px;
+    border-radius: var(--border-radius);
     padding: 0;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-shadow: var(--shadow-light);
     overflow: hidden;
     color: #333;
+}
+
+/* Mobile: Adjust container padding */
+@media (max-width: 768px) {
+    .route-container {
+        border-radius: 6px;
+    }
 }
 
 /* Detail Header */
@@ -229,23 +367,50 @@ header h1 {
     align-items: center;
     border-bottom: 1px solid #ddd;
 }
+
+/* Mobile: Adjust header padding and font sizes */
+@media (max-width: 768px) {
+    .route-header {
+        padding: 8px 12px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    .route-header .time-info {
+        font-size: 1.2em;
+    }
+    .route-header .duration {
+        font-size: 0.85em;
+    }
+    .route-header .cost-transfers {
+        text-align: left;
+    }
+    .route-header .fare, .route-header .transfers {
+        font-size: 0.85em;
+    }
+}
+
 .route-header .time-info {
     font-size: 1.4em;
     font-weight: bold;
     color: #333;
 }
+
 .route-header .duration {
     font-size: 0.9em;
     color: #555;
     margin-left: 10px;
 }
+
 .route-header .cost-transfers {
     text-align: right;
 }
+
 .route-header .fare {
     font-size: 0.9em;
     color: #333;
 }
+
 .route-header .transfers {
     font-size: 0.9em;
     color: #555;
@@ -255,11 +420,20 @@ header h1 {
 .timeline {
     padding: 15px;
 }
+
+/* Mobile: Reduce timeline padding */
+@media (max-width: 768px) {
+    .timeline {
+        padding: 10px;
+    }
+}
+
 .timeline-item {
     display: flex;
     position: relative;
     padding-bottom: 25px;
 }
+
 .timeline-item:last-child {
     padding-bottom: 0;
 }
@@ -274,6 +448,14 @@ header h1 {
     flex-shrink: 0;
 }
 
+/* Mobile: Reduce marker width */
+@media (max-width: 768px) {
+    .timeline-marker {
+        width: 50px;
+        margin-right: 8px;
+    }
+}
+
 /* Detail Vertical Line */
 .timeline-item:not(:last-child) .timeline-marker::before {
     content: '';
@@ -286,6 +468,7 @@ header h1 {
     background-color: #ccc;
     z-index: 0;
 }
+
 /* Detail Line Colors */
 .timeline-item[data-line="AEL"]:not(:last-child) .timeline-marker::before { background-color: #00888A; }
 .timeline-item[data-line="TCL"]:not(:last-child) .timeline-marker::before { background-color: #F7943E; }
@@ -323,6 +506,14 @@ header h1 {
     width: 100%;
     color: #333;
 }
+
+/* Mobile: Adjust marker time font size */
+@media (max-width: 768px) {
+    .marker-time {
+        font-size: 0.85em;
+    }
+}
+
 .marker-icon {
     width: 18px;
     height: 18px;
@@ -335,6 +526,16 @@ header h1 {
     z-index: 1;
     box-sizing: border-box;
 }
+
+/* Mobile: Adjust marker icon size */
+@media (max-width: 768px) {
+    .marker-icon {
+        width: 16px;
+        height: 16px;
+        top: 23px;
+    }
+}
+
 /* Detail Segment Icon Colors */
 .timeline-item:not(.station-point)[data-line="AEL"] .marker-icon { background-color: #00888A; border: none; }
 .timeline-item:not(.station-point)[data-line="TCL"] .marker-icon { background-color: #F7943E; border: none; }
@@ -357,7 +558,17 @@ header h1 {
     background-color: #fff;
     border: 2px solid #555;
 }
-.timeline-item.start-point .marker-icon { border-color: #007bff; }
+
+/* Mobile: Adjust station point marker size */
+@media (max-width: 768px) {
+    .timeline-item.station-point .marker-icon {
+        width: 10px;
+        height: 10px;
+        top: 26px;
+    }
+}
+
+.timeline-item.start-point .marker-icon { border-color: var(--primary-blue); }
 .timeline-item.end-point .marker-icon { border-color: #dc3545; }
 
 /* Detail Segment Stats */
@@ -371,6 +582,15 @@ header h1 {
     line-height: 1.3;
     z-index: 1;
 }
+
+/* Mobile: Reposition segment stats */
+@media (max-width: 768px) {
+    .segment-stats {
+        left: 30px;
+        font-size: 0.8em;
+    }
+}
+
 .segment-stats span { display: block; }
 .segment-stats .stat-duration { font-weight: 500; }
 .segment-stats .stat-distance { color: #777; }
@@ -388,6 +608,14 @@ header h1 {
     margin-bottom: 3px;
     color: #333;
 }
+
+/* Mobile: Adjust station name font size */
+@media (max-width: 768px) {
+    .station-name {
+        font-size: 1em;
+    }
+}
+
 .tag {
     font-size: 0.75em;
     background-color: #6c757d;
@@ -400,7 +628,16 @@ header h1 {
     display: inline-block;
     margin-bottom: 2px;
 }
-.tag.from { background-color: #007bff; }
+
+/* Mobile: Adjust tag font size */
+@media (max-width: 768px) {
+    .tag {
+        font-size: 0.7em;
+        padding: 2px 5px;
+    }
+}
+
+.tag.from { background-color: var(--primary-blue); }
 .tag.to { background-color: #dc3545; }
 .tag.interchange { background-color: #fd7e14; }
 
@@ -416,6 +653,14 @@ header h1 {
     margin-bottom: 2px;
     vertical-align: middle;
 }
+
+/* Mobile: Increase line tag font size */
+@media (max-width: 768px) {
+    .station-name .line-tag {
+        font-size: 0.75em;
+    }
+}
+
 .station-name .line-tag.ael { background-color: #00888A; }
 .station-name .line-tag.tcl { background-color: #F7943E; }
 .station-name .line-tag.tml { background-color: #923011; }
@@ -436,6 +681,14 @@ header h1 {
     color: #555;
     padding-left: 0;
 }
+
+/* Mobile: Adjust detail text font size */
+@media (max-width: 768px) {
+    .interchange-info, .segment-details {
+        font-size: 0.85em;
+    }
+}
+
 .interchange-info { font-style: italic; }
 .segment-details .line-name { font-weight: bold; color: #333; }
 .segment-details .direction, .segment-details .stops, .segment-details .platform,
@@ -470,6 +723,18 @@ header h1 {
     width: 100%;
     height: 100%;
     background-color: rgba(0,0,0,0.5);
+    /* New: Center content */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+}
+
+/* Mobile: Adjust modal padding */
+@media (max-width: 768px) {
+    .modal {
+        padding: 8px;
+    }
 }
 
 .modal-content {
@@ -479,8 +744,18 @@ header h1 {
     border: 1px solid #333;
     width: 80%;
     max-width: 500px;
-    border-radius: 8px;
+    border-radius: var(--border-radius);
     color: #e0e0e0;
+}
+
+/* Mobile: Optimize modal size */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 90%;
+        max-width: 320px;
+        padding: 15px;
+        margin: 10% auto;
+    }
 }
 
 .close {
@@ -489,7 +764,23 @@ header h1 {
     font-size: 28px;
     font-weight: bold;
     cursor: pointer;
+    /* New: Touch-friendly size */
+    min-width: var(--min-touch-size);
+    min-height: var(--min-touch-size);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
+
+/* Mobile: Adjust close button size */
+@media (max-width: 768px) {
+    .close {
+        font-size: 24px;
+        min-width: 40px;
+        min-height: 40px;
+    }
+}
+
 .close:hover,
 .close:focus {
     color: #fff;
@@ -500,6 +791,14 @@ header h1 {
     text-align: center;
     margin-bottom: 15px;
 }
+
+/* Mobile: Adjust language switch layout */
+@media (max-width: 768px) {
+    .language-switch {
+        margin-bottom: 10px;
+    }
+}
+
 .language-switch button {
     background-color: #3a3a3a;
     color: #e0e0e0;
@@ -508,7 +807,21 @@ header h1 {
     margin: 0 5px;
     border-radius: 5px;
     cursor: pointer;
+    /* New: Touch-friendly size */
+    min-width: var(--min-touch-size);
+    min-height: var(--min-touch-size);
 }
+
+/* Mobile: Adjust language button padding */
+@media (max-width: 768px) {
+    .language-switch button {
+        padding: 6px 8px;
+        font-size: 0.85em;
+        min-width: 40px;
+        min-height: 40px;
+    }
+}
+
 .language-switch button:hover {
     background-color: #4a4a4a;
 }
@@ -519,28 +832,61 @@ header h1 {
     color: #b0b0b0;
     text-align: right;
 }
+
+/* Mobile: Adjust source reference font size */
+@media (max-width: 768px) {
+    .source-reference {
+        font-size: 0.85em;
+    }
+}
+
 .no-routes-container {
     background-color: #1a1a1a;
     border: 1px solid #333;
-    border-radius: 8px;
+    border-radius: var(--border-radius);
     padding: 20px;
     max-width: 600px;
     margin: 20px auto;
     text-align: center;
     color: #e0e0e0;
-    box-shadow: 0 2px 5px rgba(255, 255, 255, 0.05);
+    box-shadow: var(--shadow-dark);
+    /* New: Space for bottom bar */
+    margin-bottom: 80px;
+}
+
+/* Mobile: Adjust no routes container */
+@media (max-width: 768px) {
+    .no-routes-container {
+        max-width: 100%;
+        margin: 15px 10px 60px;
+        padding: 15px;
+    }
 }
 
 .no-routes-container h2 {
-    color: #ff4444; /* Red to indicate an issue */
+    color: #ff4444;
     margin-bottom: 15px;
     font-size: 1.5em;
+}
+
+/* Mobile: Adjust no routes heading */
+@media (max-width: 768px) {
+    .no-routes-container h2 {
+        font-size: 1.3em;
+    }
 }
 
 .no-routes-container p {
     font-size: 1em;
     color: #b0b0b0;
     margin-bottom: 15px;
+}
+
+/* Mobile: Adjust no routes text */
+@media (max-width: 768px) {
+    .no-routes-container p {
+        font-size: 0.9em;
+    }
 }
 
 .no-routes-container ul {
@@ -550,6 +896,14 @@ header h1 {
     padding-left: 20px;
     max-width: 400px;
     color: #b0b0b0;
+}
+
+/* Mobile: Adjust no routes list */
+@media (max-width: 768px) {
+    .no-routes-container ul {
+        padding-left: 15px;
+        max-width: 100%;
+    }
 }
 
 .no-routes-container li {
@@ -569,6 +923,19 @@ header h1 {
     cursor: pointer;
     font-size: 1em;
     transition: background-color 0.2s ease, border-color 0.2s ease;
+    /* New: Touch-friendly size */
+    min-width: var(--min-touch-size);
+    min-height: var(--min-touch-size);
+}
+
+/* Mobile: Adjust back button */
+@media (max-width: 768px) {
+    .back-button {
+        padding: 8px 15px;
+        font-size: 0.9em;
+        min-width: 40px;
+        min-height: 40px;
+    }
 }
 
 .back-button:hover {
@@ -582,15 +949,25 @@ header h1 {
 
 /* Flex container for route options and chart */
 .container > div[style*="display: flex"] {
-    flex-wrap: wrap; /* Allow wrapping on small screens */
+    flex-wrap: wrap;
 }
 
 /* Ensure route-options doesn’t shrink too much */
 #route-options {
-    min-width: 300px; /* Prevents it from squashing */
+    min-width: 300px;
 }
 
 /* Style the chart canvas */
 #routeAnalysisChart {
-    flex-shrink: 0; /* Prevents chart from shrinking */
+    flex-shrink: 0;
+    /* New: Constrain chart size on mobile */
+    max-width: 100%;
+}
+
+/* Mobile: Adjust chart size */
+@media (max-width: 768px) {
+    #routeAnalysisChart {
+        width: 100%;
+        height: auto; /* Ensure chart scales */
+    }
 }

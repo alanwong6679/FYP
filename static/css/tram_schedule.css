@@ -1,3 +1,15 @@
+:root {
+    --border-radius: 8px;
+    --transition-default: 0.3s ease;
+    --shadow-light: 0 2px 10px rgba(0,0,0,0.1);
+    --shadow-dark: 0 2px 10px rgba(0,0,0,0.3);
+    --primary-blue: #007bff;
+    --primary-blue-dark: #1e90ff;
+    --primary-green: #28a745;
+    --primary-green-dark: #2ecc71;
+    --min-touch-size: 44px; /* Minimum touch target size */
+}
+
 body {
     font-family: 'Roboto', sans-serif;
     margin: 0;
@@ -9,6 +21,17 @@ body {
     color: #000000;
     min-height: 100vh;
     transition: background var(--transition-default), color var(--transition-default);
+    /* New: Account for potential sidebar */
+    box-sizing: border-box;
+    padding-left: 170px; /* Matches navbar.css width + padding */
+}
+
+/* Mobile: Remove sidebar offset and adjust padding */
+@media (max-width: 768px) {
+    body {
+        padding-left: 0;
+        padding: 15px;
+    }
 }
 
 :where([data-theme="dark"]) body {
@@ -33,8 +56,19 @@ body {
     text-align: center;
     margin: 0 auto 20px auto;
     transition: transform 0.2s ease, background var(--transition-default), box-shadow var(--transition-default);
-    position: relative; /* Ensure container is a positioning context */
-    overflow: visible; /* Allow route-details to extend outside */
+    position: relative;
+    overflow: visible;
+    /* New: Space for bottom bar */
+    margin-bottom: 80px;
+}
+
+/* Mobile: Adjust container padding and margins */
+@media (max-width: 768px) {
+    .container {
+        width: 100%;
+        padding: 20px;
+        margin-bottom: 60px;
+    }
 }
 
 :where([data-theme="dark"]) .container {
@@ -54,6 +88,14 @@ h1 {
     transition: color var(--transition-default);
 }
 
+/* Mobile: Adjust h1 font size */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 24px;
+        margin-bottom: 15px;
+    }
+}
+
 :where([data-theme="dark"]) h1 {
     color: #ffffff;
 }
@@ -62,6 +104,13 @@ h1 {
     list-style: none;
     padding: 0;
     margin: 20px 0 0 0;
+}
+
+/* Mobile: Adjust route list margin */
+@media (max-width: 768px) {
+    .route-list {
+        margin: 15px 0 0 0;
+    }
 }
 
 .route-list li {
@@ -76,6 +125,14 @@ h1 {
     position: relative;
 }
 
+/* Mobile: Adjust route list item padding */
+@media (max-width: 768px) {
+    .route-list li {
+        padding: 10px;
+        margin: 4px 0;
+    }
+}
+
 :where([data-theme="dark"]) .route-list li {
     background: #444;
     color: #e0e0e0;
@@ -84,11 +141,18 @@ h1 {
 .route-name {
     flex: 1;
     text-align: left;
-    color: #000000; /* Explicitly black in light mode */
+    color: #000000;
+}
+
+/* Mobile: Adjust route name font size */
+@media (max-width: 768px) {
+    .route-name {
+        font-size: 14px;
+    }
 }
 
 :where([data-theme="dark"]) .route-name {
-    color: #e0e0e0; /* White in dark mode */
+    color: #e0e0e0;
 }
 
 .direction-btns {
@@ -96,9 +160,16 @@ h1 {
     gap: 10px;
 }
 
+/* Mobile: Adjust direction buttons gap */
+@media (max-width: 768px) {
+    .direction-btns {
+        gap: 8px;
+    }
+}
+
 .direction-btns button {
     padding: 8px 12px;
-    background-color: #007bff;
+    background-color: var(--primary-blue);
     color: #ffffff;
     border: none;
     border-radius: var(--border-radius);
@@ -106,10 +177,26 @@ h1 {
     font-size: 14px;
     font-weight: 500;
     transition: background-color var(--transition-default), transform 0.1s ease;
+    /* New: Touch-friendly size */
+    min-width: var(--min-touch-size);
+    min-height: var(--min-touch-size);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Mobile: Adjust direction button padding and font size */
+@media (max-width: 768px) {
+    .direction-btns button {
+        padding: 6px 10px;
+        font-size: 13px;
+        min-width: 40px;
+        min-height: 40px;
+    }
 }
 
 :where([data-theme="dark"]) .direction-btns button {
-    background-color: #1e90ff;
+    background-color: var(--primary-blue-dark);
 }
 
 .direction-btns button:hover {
@@ -129,7 +216,7 @@ h1 {
     display: none;
     position: absolute;
     left: 0;
-    top: calc(100% + 5px); /* Adjust spacing below li */
+    top: calc(100% + 5px);
     padding: 10px;
     background: #edf2f7;
     border-radius: var(--border-radius);
@@ -137,7 +224,17 @@ h1 {
     box-sizing: border-box;
     box-shadow: var(--shadow-light);
     transition: background var(--transition-default);
-    z-index: 10; /* Ensure it’s above other elements */
+    z-index: 10;
+}
+
+/* Mobile: Adjust route details positioning and size */
+@media (max-width: 768px) {
+    .route-details {
+        width: 90%;
+        left: 5%;
+        padding: 8px;
+        top: calc(100% + 3px);
+    }
 }
 
 :where([data-theme="dark"]) .route-details {
@@ -154,12 +251,32 @@ table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 10px;
+    /* New: Enable horizontal scrolling on mobile */
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+/* Mobile: Adjust table margin */
+@media (max-width: 768px) {
+    table {
+        margin-top: 8px;
+    }
 }
 
 th, td {
     padding: 8px;
     border: 1px solid #e2e8f0;
     text-align: left;
+    font-size: 14px; /* New: Explicit font size */
+}
+
+/* Mobile: Adjust table cell padding and font size */
+@media (max-width: 768px) {
+    th, td {
+        padding: 6px;
+        font-size: 13px;
+    }
 }
 
 :where([data-theme="dark"]) th,
@@ -168,13 +285,13 @@ th, td {
 }
 
 th {
-    background-color: #007bff;
+    background-color: var(--primary-blue);
     color: #ffffff;
     font-weight: 500;
 }
 
 :where([data-theme="dark"]) th {
-    background-color: #1e90ff;
+    background-color: var(--primary-blue-dark);
 }
 
 .route-info {
@@ -188,13 +305,22 @@ th {
     transition: color var(--transition-default);
 }
 
+/* Mobile: Adjust route info font size and gap */
+@media (max-width: 768px) {
+    .route-info {
+        font-size: 14px;
+        gap: 8px;
+        margin: 8px 0;
+    }
+}
+
 :where([data-theme="dark"]) .route-info {
     color: #e0e0e0;
 }
 
 .details-btn {
     padding: 8px 12px;
-    background-color: #28a745;
+    background-color: var(--primary-green);
     color: #ffffff;
     border: none;
     border-radius: var(--border-radius);
@@ -202,10 +328,26 @@ th {
     font-size: 14px;
     font-weight: 500;
     transition: background-color var(--transition-default), transform 0.1s ease;
+    /* New: Touch-friendly size */
+    min-width: var(--min-touch-size);
+    min-height: var(--min-touch-size);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Mobile: Adjust details button padding and font size */
+@media (max-width: 768px) {
+    .details-btn {
+        padding: 6px 10px;
+        font-size: 13px;
+        min-width: 40px;
+        min-height: 40px;
+    }
 }
 
 :where([data-theme="dark"]) .details-btn {
-    background-color: #2ecc71;
+    background-color: var(--primary-green-dark);
 }
 
 .details-btn:hover {
